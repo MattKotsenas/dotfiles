@@ -20,4 +20,6 @@ function New-Worktree
 
     git branch --no-track $BranchName $BaseBranch
     git worktree add $DirectoryName $BranchName
+
+    cd $DirectoryName
 }
