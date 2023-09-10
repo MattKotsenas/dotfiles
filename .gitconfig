@@ -6,3 +6,4 @@
 
 [alias]
         lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)%an <%ae>%Creset' --abbrev-commit
+        clone-for-worktrees = "!$HOME/Documents/PowerShell/clone-for-worktrees/entrypoint.sh"
