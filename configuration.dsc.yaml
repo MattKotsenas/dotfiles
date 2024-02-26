@@ -28,6 +28,10 @@ properties:
         # Use caution when setting `RestartExplorer: true` as this will force explorer to close.
         RestartExplorer: true # Required to apply changes
     # NOTE: Install packages
+    # TODO: Install posh-git Module
+    # TODO: Install Terminal-Icons module
+    # TODO: Install z module
+    # TODO: Install thefuck
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install PowerShell 7
