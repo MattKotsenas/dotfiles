@@ -10,6 +10,8 @@
 [delta]
         navigate = true
         dark = true
+        hyperlinks = true
+        hyperlinks-file-link-format = "vscode://file/{path}:{line}"
 
 [merge]
         conflictstyle = diff3
