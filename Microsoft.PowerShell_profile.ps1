@@ -13,7 +13,7 @@ function prompt {
     # Note: Load items in priority order
     Import-Module z
 
-    oh-my-posh init pwsh --config $Env:POSH_THEMES_PATH/jandedobbeleer.omp.json | Invoke-Expression
+    oh-my-posh init pwsh --config (Join-Path (Split-Path $PROFILE) matt.omp.json) | Invoke-Expression
     $Env:POSH_GIT_ENABLED = $true
 
     # PowerShell parameter completion shim for the dotnet CLI
