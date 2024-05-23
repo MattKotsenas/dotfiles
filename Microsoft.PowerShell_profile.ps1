@@ -10,9 +10,7 @@ function prompt {
 }
 
 . $PSScriptRoot\Import-ProfileAsync.ps1 -Deferred {
-    $Env:PYTHONIOENCODING='utf-8'
-    iex "$(thefuck --alias)"
-
+    # Note: Load items in priority order
     Import-Module z
 
     oh-my-posh init pwsh --config $Env:POSH_THEMES_PATH/jandedobbeleer.omp.json | Invoke-Expression
@@ -25,12 +23,23 @@ function prompt {
                 [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
             }
     }
-}
 
-# Load up everything in the scripts folder
-# TODO: Move into async
-foreach ($scriptFile in (Get-ChildItem -Path $PSScriptRoot\scripts -Recurse -Include *.ps1))
-{
-  . $scriptFile.FullName
+    # Load up everything in the scripts folder
+    $root = (Split-Path $PROFILE)
+    . $root\scripts\beep.ps1
+    . $root\scripts\Get-Clipboard.ps1
+    . $root\scripts\Get-Definition.ps1
+    . $root\scripts\Get-SpellingSuggestions.ps1
+    . $root\scripts\Get-Synonym.ps1
+    . $root\scripts\hiyo.ps1
+    . $root\scripts\horns.aiff.ps1
+    . $root\scripts\New-Gitignore.ps1
+    . $root\scripts\Out-Speech.ps1
+    . $root\scripts\tail.ps1
+    . $root\scripts\Update-EnvironmentVariables.ps1
+    . $root\scripts\which.ps1
+    . $root\aliases.ps1
+
+    $Env:PYTHONIOENCODING='utf-8'
+    iex "$(thefuck --alias)"
 }
-. $PSScriptRoot\aliases.ps1
