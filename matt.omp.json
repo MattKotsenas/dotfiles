@@ -12,10 +12,14 @@
           "properties": {
             "folder_separator_icon": " \ue0b1 ",
             "home_icon": "~",
-            "style": "folder"
+            "style": "agnoster_short",
+            "mapped_locations": {
+              "C:/Projects/": "\ue65d",
+              "D:/Projects/": "\ue65d"
+            }
           },
           "style": "diamond",
-          "template": " \uea83  {{ .Path }} ",
+          "template": " {{ .Path }} ",
           "type": "path"
         },
         {
