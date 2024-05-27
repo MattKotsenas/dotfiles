@@ -136,7 +136,7 @@
             "always_enabled": true
           },
           "style": "plain",
-          "template": "<parentBackground>\ue0b0</> \ueba2 {{ .FormattedMs }}<background>\ue0b0</>",
+          "template": "<parentBackground>\ue0b0</> \udb80\udc20 {{ .FormattedMs }}<background>\ue0b0</>",
           "type": "executiontime"
         },
         {
