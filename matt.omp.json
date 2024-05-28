@@ -136,7 +136,7 @@
             "always_enabled": true
           },
           "style": "plain",
-          "template": "<parentBackground>\ue0b0</> \udb80\udc20 {{ .FormattedMs }}<background>\ue0b0</>",
+          "template": "<parentBackground>\ue0b0</> \uf520 {{ .FormattedMs }}<background>\ue0b0</>",
           "type": "executiontime"
         },
         {
@@ -180,9 +180,9 @@
           ],
           "foreground": "#ffffff",
           "properties": {
-            "charged_icon": "\uead0  ",
-            "charging_icon": "\u26a1  ",
-            "discharging_icon": "\uf240  "
+            "charged_icon": "\uead0 ",
+            "charging_icon": "\u26a1 ",
+            "discharging_icon": "\uf240 "
           },
           "style": "plain",
           "template": "<background,parentBackground>\ue0b2</> {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}%<background>\ue0b2</>",
