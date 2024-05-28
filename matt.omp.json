@@ -140,6 +140,13 @@
           "type": "executiontime"
         },
         {
+          "background": "#c386f1",
+          "foreground": "#ffffff",
+          "type": "text",
+          "style": "plain",
+          "template": "{{if or .Env.POSH_JOBS_RUNNING .Env.POSH_JOBS_FINISHED }}<parentBackground>\ue0b0</> \udb86\udd35 {{ default 0 .Env.POSH_JOBS_RUNNING }} \udb86\udd37 {{ default 0 .Env.POSH_JOBS_FINISHED }}<background>\ue0b0</>{{ end }}"
+        },
+        {
           "background": "#00897b",
           "background_templates": [
             "{{ if gt .Code 0 }}#e91e63{{ end }}"
