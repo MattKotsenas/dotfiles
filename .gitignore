@@ -1,2 +1,3 @@
 # Ignore any installed PowerShell modules
-Modules
+Modules/**
+Help/**
