@@ -10,7 +10,7 @@
           "properties": {
             "folder_separator_icon": " \ue0b1 ",
             "home_icon": "~",
-            "style": "agnoster_short",
+            "style": "agnoster_full",
             "mapped_locations": {
               "C:/Projects/": "\ue65d",
               "D:/Projects/": "\ue65d"
