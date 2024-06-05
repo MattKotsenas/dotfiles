@@ -11,3 +11,7 @@
         root = rev-parse --show-toplevel
 [rerere]
 	enabled = true
+[pull]
+	ff = only
+[stash]
+	showIncludeUntracked = true
