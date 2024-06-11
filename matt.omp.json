@@ -32,12 +32,11 @@
           "properties": {
             "fetch_stash_count": true,
             "fetch_status": true,
-            "fetch_upstream_icon": true,
-            "fetch_user": true
+            "fetch_upstream_icon": true
           },
           "style": "plain",
           "_comment": "// TODO: Remove the nested replaceP functions if https://github.com/JanDeDobbeleer/oh-my-posh/issues/4979 lands",
-          "template": "<parentBackground>\ue0b0</> {{ .UpstreamIcon }}{{ (replaceP \"bugfix/\" (replaceP \"feature/\" (replaceP \"refactor/\" (replaceP \"users/mattkot/\" .HEAD \"\uf415/\") \"\uf1b8 /\") \"\udb80\udd4c /\") \"\uf46f /\") }}{{if not .User.Email }} \udb84\udfe4{{end}}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} <background>\ue0b0</>",
+          "template": "<parentBackground>\ue0b0</> {{ .UpstreamIcon }}{{ (replaceP \"bugfix/\" (replaceP \"feature/\" (replaceP \"refactor/\" (replaceP \"users/mattkot/\" .HEAD \"\uf415/\") \"\uf1b8 /\") \"\udb80\udd4c /\") \"\uf46f /\") }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} <background>\ue0b0</>",
           "type": "git"
         },
         {
