@@ -14,7 +14,8 @@ function prompt {
     {
         New-Module -ScriptBlock {
             function Set-PoshJobInfo {
-                $running = @(Get-Job -State Running).Count
+                $jobs = @(Get-Job)
+                $running = @($jobs | Where-Object { $_.State -eq "Running"}).Count
                 if ($running -gt 0)
                 {
                     $env:POSH_JOBS_RUNNING = $running
@@ -24,7 +25,7 @@ function prompt {
                     Remove-Item ENV:\POSH_JOBS_RUNNING -ErrorAction SilentlyContinue
                 }
 
-                $finished = @(Get-Job | Where-Object { $_.State -ne "Running" }).Count
+                $finished = ($jobs.Count - $running)
                 if ($finished -gt 0)
                 {
                     $env:POSH_JOBS_FINISHED = $finished
