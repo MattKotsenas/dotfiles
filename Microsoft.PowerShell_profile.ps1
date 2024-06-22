@@ -1,5 +1,8 @@
+Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
+
 # Disable the "make the prompt red during parse error" because it conflicts with oh-my-posh
 Set-PSReadLineOption -PromptText ''
+
 function prompt {
     # oh-my-posh will override this prompt, however because we're loading it async we want communicate that the
     # real prompt is still loading.
@@ -37,7 +40,6 @@ function prompt {
             }
 
             # Set-PoshContext is a function called before the prompt is rendered.
-            # Use to update ENV vars the prompt will use during rendering.
             New-Alias -Name 'Set-PoshContext' -Value 'Set-PoshContexts' -Scope Global -Force
         } | Import-Module -Global
 
