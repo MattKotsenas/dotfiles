@@ -70,6 +70,6 @@ function prompt {
     },
     {
         $Env:PYTHONIOENCODING='utf-8'
-        New-Module -Name thefuck -ScriptBlock { iex "$(thefuck --alias)" } | Import-Module -Global
+        New-Module -Name thefuck -ScriptBlock { iex "$(thefuck --alias fix)" } | Import-Module -Global
     }
 ) | Foreach-Object { Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -SupportEvent -Action $_ } | Out-Null
