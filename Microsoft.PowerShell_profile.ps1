@@ -54,7 +54,7 @@ function prompt {
         Import-Module -Name z -Global
     },
     {
-        Import-Module -Name Microsoft.WinGet.CommandNotFound
+        Import-Module -Name Microsoft.WinGet.CommandNotFound -Global
     },
     {
         Import-Module -Name (Join-Path (Split-Path $PROFILE) scripts UserScripts.psd1) -Global
