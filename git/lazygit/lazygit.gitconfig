@@ -1,0 +1,2 @@
+[alias]
+        lazy = "!$HOME/.config/git/lazygit/launch.sh"
