@@ -1,0 +1,12 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+      glob: true
+
+- clean: ['~']
+
+- link:
+    ~/Documents/PowerShell: pwsh/**
+    ~/.config/git: git/**
+    ~/.config/thefuck: thefuck/**
