@@ -51,7 +51,7 @@ function prompt {
         Import-Module -Name Terminal-Icons -Global
     },
     {
-        Import-Module -Name z -Global
+        Invoke-Expression (& { (zoxide init powershell | Out-String) })
     },
     {
         Import-Module -Name Microsoft.WinGet.CommandNotFound -Global
