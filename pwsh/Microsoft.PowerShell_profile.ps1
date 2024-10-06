@@ -1,7 +1,14 @@
-Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
-
 # Disable the "make the prompt red during parse error" because it conflicts with oh-my-posh
 Set-PSReadLineOption -PromptText ''
+
+# This function needs to be defined prior to the idle work, otherwise
+# `Push-Location` will be for the wrong runspace.
+function Invoke-PsFzfAltCCommandHandler
+{
+    param($Location)
+
+    Push-Location -Path $Location
+}
 
 function prompt {
     # oh-my-posh will override this prompt, however because we're loading it async we want communicate that the
@@ -52,6 +59,15 @@ function prompt {
     },
     {
         Import-Module -Name Microsoft.WinGet.CommandNotFound -Global
+    },
+    {
+        $Env:FZF_ALT_C_COMMAND = "fd --type dir --hidden --exclude .git"
+        $ENV:FZF_ALT_C_OPTS = "--preview 'eza --tree --color=always --icons=always {}'"
+
+        Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+        Set-PSReadLineKeyHandler -Key Tab -ScriptBlock { Invoke-FzfTabCompletion }
+        Set-PsFzfOption -TabExpansion
+        Set-PsFzfOption -AltCCommand ${function:Invoke-PsFzfAltCCommandHandler}
     },
     {
         Import-Module -Name (Join-Path (Split-Path $PROFILE) scripts UserScripts.psd1) -Global
