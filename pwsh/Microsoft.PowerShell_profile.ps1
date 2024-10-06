@@ -48,9 +48,6 @@ function prompt {
         $Env:POSH_GIT_ENABLED = $true
     },
     {
-        Import-Module -Name Terminal-Icons -Global
-    },
-    {
         Invoke-Expression (& { (zoxide init powershell | Out-String) })
     },
     {
