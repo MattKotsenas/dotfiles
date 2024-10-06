@@ -70,6 +70,9 @@ function prompt {
         Set-PsFzfOption -AltCCommand ${function:Invoke-PsFzfAltCCommandHandler}
     },
     {
+        $Env:EZA_CONFIG_DIR = "$env:USERPROFILE/.config/eza"
+    },
+    {
         Import-Module -Name (Join-Path (Split-Path $PROFILE) scripts UserScripts.psd1) -Global
     },
     {
