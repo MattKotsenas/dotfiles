@@ -1,6 +1,3 @@
-[include]
-        path = themes.gitconfig
-
 [core]
         pager = delta
 
