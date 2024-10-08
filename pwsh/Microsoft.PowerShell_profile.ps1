@@ -73,6 +73,10 @@ function prompt {
         $Env:EZA_CONFIG_DIR = "$env:USERPROFILE/.config/eza"
     },
     {
+        $Env:BAT_CONFIG_DIR="$Env:USERPROFILE/.config/bat"
+        $Env:BAT_CONFIG_PATH="$Env:USERPROFILE/.config/bat/bat.conf"
+    },
+    {
         Import-Module -Name (Join-Path (Split-Path $PROFILE) scripts UserScripts.psd1) -Global
     },
     {

@@ -123,6 +123,13 @@ properties:
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
+        description: Install bat
+        allowPrerelease: true
+      settings:
+        id: sharkdp.bat
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
         description: Install DevToys
         allowPrerelease: true
       settings:
