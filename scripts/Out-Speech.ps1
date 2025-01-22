@@ -17,7 +17,7 @@ function Out-Speech
 
         [Parameter(Mandatory = $false)]
         [string]
-        $Voice = "Microsoft Hazel Desktop",
+        $Voice = "Microsoft David Desktop",
 
         [switch]
         $PassThru
@@ -38,7 +38,6 @@ function Out-Speech
         if ($PassThru)
         {
             $synth.SpeakAsync($Text) | Out-Null
-            Write-Output $synth
         }
         else
         {
