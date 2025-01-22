@@ -1,5 +1,21 @@
 # From https://github.com/bvli/pwsh-srt
 
+<#
+.SYNOPSIS
+Download .srt files from anything supported by yt-dlp
+
+.PARAMETER Uri
+A link to the file to download.
+
+.PARAMETER AdditionalArguments
+Any additional arguments to pass to yt-dlp.
+
+.EXAMPLE
+Invoke-SrtDownload -Uri "https://my/file"
+
+.EXAMPLE
+Invoke-SrtDownload -Uri "https://my/file" -AdditionalArguments "--cookies ./path/to/cookies.txt"
+#>
 function Invoke-SrtDownload {
     [CmdletBinding()]
     param (
@@ -42,6 +58,44 @@ function Invoke-SrtDownload {
     }
 }
 
+<#
+.SYNOPSIS
+Converts the contents of an .srt file (as an array of lines) to plain text.
+
+.DESCRIPTION
+Converts the contents of an .srt file to plain text. Assumes that the input is an array of lines of text. Removes:
+  - time codes
+  - blank lines
+  - duplicate lines (common technique for incremental reveal)
+#>
+function Format-Srt {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false, ValueFromPipeline = $true)]
+        [string[]]
+        $SrtLines
+    )
+
+    begin {
+        Set-StrictMode -Version Latest
+        $ErrorActionPreference = "Stop"
+
+        $lines = [System.Collections.Generic.List[string]]::new()
+    }
+
+    process {
+        $lines.AddRange($SrtLines)
+    }
+
+    end {
+        $lines | ConvertFrom-Srt | Select-Object -ExpandProperty text | Foreach-Object { $_.Trim() } | Foreach-Object { $_ -split "`n" } | Get-Unique -AsString -CaseInsensitive 
+    }
+}
+
+<#
+.SYNOPSIS
+Convert the contents of an .srt file (as an array of lines) to SRT objects
+#>
 function ConvertFrom-Srt {
     [CmdletBinding()]
     param (
