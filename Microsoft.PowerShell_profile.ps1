@@ -1,3 +1,13 @@
+# Assert verions of modules
+@(
+    @{ Name = "z"; Version = [System.Version]"1.1.13" },
+    @{ Name = "Terminal-Icons"; Version = [System.Version]"0.11.0"}
+) | Foreach-Object {
+    if ((Get-Module -Name $_.Name -ListAvailable).Version -lt $_.Version) {
+        throw "Module '$($_.Name)' not installed or not at least version '$($_.Version)'"
+    }
+}
+
 # Import modules that don't work with async profile import
 # TODO: Get this to work with async profile
 Import-Module -Name Terminal-Icons
@@ -11,8 +21,6 @@ function prompt {
 
 . $PSScriptRoot\Import-ProfileAsync.ps1 -Deferred {
     # Note: Load items in priority order
-    Import-Module z
-
     oh-my-posh init pwsh --config (Join-Path (Split-Path $PROFILE) matt.omp.json) | Invoke-Expression
     $Env:POSH_GIT_ENABLED = $true
 
