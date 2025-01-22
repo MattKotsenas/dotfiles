@@ -30,7 +30,6 @@ properties:
     # NOTE: Install packages
     # TODO: Install posh-git Module
     # TODO: Install Terminal-Icons module
-    # TODO: Install z module
     # TODO: Install thefuck
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
@@ -93,6 +92,20 @@ properties:
         allowPrerelease: true
       settings:
         id: JesseDuffield.lazygit
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install zoxide
+        allowPrerelease: true
+      settings:
+        id: ajeetdsouza.zoxide
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install fzf
+        allowPrerelease: true
+      settings:
+        id: junegunn.fzf
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
