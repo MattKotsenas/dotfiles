@@ -1,14 +1,3 @@
-# Assert minimum verions of modules
-@(
-    @{ Name = "z"; RequiredVersion = [System.Version]"1.1.13"; ActualVersion = { (Get-Module -Name Name -ListAvailable).Version } },
-    @{ Name = "Terminal-Icons"; RequiredVersion = [System.Version]"0.11.0"; ActualVersion = { (Get-Module -Name Name -ListAvailable).Version } },
-    @{ Name = "oh-my-posh"; RequiredVersion = [System.Version]"19.29.1"; ActualVersion = { [System.Version](oh-my-posh --version) } }
-) | Foreach-Object {
-    if ($_.ActualVersion.Invoke() -lt $_.RequiredVersion) {
-        throw "Module '$($_.Name)' not installed or not at least version '$($_.RequiredVersion)'"
-    }
-}
-
 # Disable the "make the prompt red during parse error" because it conflicts with oh-my-posh
 Set-PSReadLineOption -PromptText ''
 function prompt {
