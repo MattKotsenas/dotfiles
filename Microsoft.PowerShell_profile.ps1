@@ -6,6 +6,8 @@ oh-my-posh --init --shell pwsh --config $env:POSH_THEMES_PATH/jandedobbeleer.omp
 
 Import-Module -Name Terminal-Icons
 
+Import-Module z
+
 # Load up everything in the scripts folder
 foreach ($scriptFile in (Get-ChildItem -Path $PSScriptRoot\scripts -Recurse -Include *.ps1))
 {
