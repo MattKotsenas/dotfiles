@@ -1,2 +1,2 @@
 [alias]
-        lazy = "!f() { lazygit; };f"
+        lazy = "!$HOME/Documents/PowerShell/lazygit/launch.sh"
