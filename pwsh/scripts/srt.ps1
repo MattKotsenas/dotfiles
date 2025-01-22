@@ -1,5 +1,47 @@
 # From https://github.com/bvli/pwsh-srt
 
+function Invoke-SrtDownload {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [Uri]
+        $Uri,
+
+        [Parameter(Mandatory = $false)]
+        [string]
+        $AdditionalArguments = ""
+    )
+
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = "Stop"
+    $PSNativeCommandUseErrorActionPreference = $false # So we can emit the error message
+
+    try {
+        $cmd = @(
+            "yt-dlp",
+            "-o $Env:Temp/subs", # Write files using prefix to %TEMP%/subs*
+            "--write-subs --write-auto-sub --sub-langs 'en.*'", # Write any english subs; prefer user authored but accept auto-generated
+            "--skip-download", # Don't download the video
+            "--convert-subtitles srt", # Convert from .vtt to .srt for easier extraction of text
+            "--dump-single-json --no-simulate", # If the output it valid JSON assume success; if output isn't valid JSON assume failure
+            "$AdditionalArguments $Uri",
+            "2>&1" # Redirect stderr to stdout
+        ) -join " "
+
+        $output = Invoke-Expression $cmd
+        if ($output | Out-String | Test-Json -ErrorAction SilentlyContinue) {
+            # Success
+            Get-Content $Env:Temp/subs.en.srt
+        } else {
+            # Error
+            $output | Write-Error
+        }
+    }
+    finally {
+        Remove-Item $Env:Temp/subs.*.srt
+    }
+}
+
 function ConvertFrom-Srt {
     [CmdletBinding()]
     param (
