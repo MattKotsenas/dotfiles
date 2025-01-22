@@ -132,6 +132,13 @@ properties:
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
+        description: Install yt-dlp
+        allowPrerelease: true
+      settings:
+        id: yt-dlp.yt-dlp
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
         description: Install DevToys
         allowPrerelease: true
       settings:
