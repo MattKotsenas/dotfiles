@@ -5,24 +5,16 @@
       "alignment": "left",
       "segments": [
         {
-          "background": "#c386f1",
-          "foreground": "#ffffff",
-          "leading_diamond": "\ue0b6",
-          "style": "diamond",
-          "template": " {{ .UserName }} ",
-          "trailing_diamond": "\ue0b0",
-          "type": "session"
-        },
-        {
           "background": "#ff479c",
           "foreground": "#ffffff",
-          "powerline_symbol": "\ue0b0",
+          "leading_diamond": "\ue0b6",
+          "trailing_diamond": "\ue0b0",
           "properties": {
             "folder_separator_icon": " \ue0b1 ",
             "home_icon": "~",
             "style": "folder"
           },
-          "style": "powerline",
+          "style": "diamond",
           "template": " \uea83  {{ .Path }} ",
           "type": "path"
         },
