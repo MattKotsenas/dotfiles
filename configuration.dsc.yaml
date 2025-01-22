@@ -144,3 +144,27 @@ properties:
       settings:
         id: '9PGCV4V3BK4W'
         source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: install-komorebi
+      directives:
+        description: Install komorebi
+        allowPrerelease: true
+      settings:
+        id: LGUG2Z.komorebi
+        source: winget
+    - resource: Environment # TODO: Can this be a user environment variable?
+      directives:
+       description: Set Komorebi config directory
+      dependsOn:
+        - install-komorebi
+      settings:
+       Name: KOMOREBI_CONFIG_HOME
+       Value: '%USERPROFILE%\.config\komorebi'
+       Ensure: Present
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install Windows Hotkey Daemon (whkd)
+        allowPrerelease: true
+      settings:
+        id: LGUG2Z.whkd
+        source: winget
