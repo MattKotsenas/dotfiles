@@ -21,6 +21,7 @@
           "type": "path"
         },
         {
+          "type": "git",
           "background": "#fffb38",
           "background_templates": [
             "{{ if or (.Working.Changed) (.Staging.Changed) }}#FF9248{{ end }}",
@@ -30,14 +31,20 @@
           ],
           "foreground": "#193549",
           "properties": {
+            "source": "pwsh",
+            "branch_max_length": 0,
             "fetch_stash_count": true,
             "fetch_status": true,
-            "fetch_upstream_icon": true
+            "fetch_upstream_icon": true,
+            "mapped_branches": {
+              "bugfix/*": "\ud83d\udc1b/",
+              "feature/*": "\ud83d\ude80/",
+              "refactor/*": " \uf1b8 /",
+              "users/mattkot/*": "\ud83e\uddd4/"
+            }
           },
           "style": "plain",
-          "_comment": "// TODO: Remove the nested replaceP functions if https://github.com/JanDeDobbeleer/oh-my-posh/issues/4979 lands",
-          "template": "<parentBackground>\ue0b0</> {{ .UpstreamIcon }}{{ (replaceP \"bugfix/\" (replaceP \"feature/\" (replaceP \"refactor/\" (replaceP \"users/mattkot/\" .HEAD \"\uf415/\") \"\uf1b8 /\") \"\udb80\udd4c /\") \"\uf46f /\") }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} <background>\ue0b0</>",
-          "type": "git"
+          "template": "<parentBackground>\ue0b0</> {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} <background>\ue0b0</>"
         },
         {
           "type": "dotnet",
