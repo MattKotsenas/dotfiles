@@ -11,12 +11,12 @@ function Invoke-PsFzfAltCCommandHandler
 }
 
 function prompt {
-    # oh-my-posh will override this prompt, however because we're loading it async we want communicate that the
+    # oh-my-posh will override this prompt, however because we're loading it async we want to communicate that the
     # real prompt is still loading.
     "[async init]: PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) ";
 }
 
-# Load modules asynchronously and in parallel to reduce shell startup time
+# Load modules asynchronously to reduce shell startup time
 [System.Collections.Queue]$__initQueue = @(
     {
         Invoke-Expression (& { (zoxide init powershell | Out-String) })
@@ -97,11 +97,11 @@ function prompt {
 )
 
 Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -SupportEvent -Action {
-    if ($__initQueue.Length -gt 0) {
+    if ($__initQueue.Count -gt 0) {
         & $__initQueue.Dequeue()
     } else {
-        # TODO: Is it possible to remove the temporary init queue?
+        Unregister-Event -SubscriptionId $EventSubscriber.SubscriptionId -Force
+        Remove-Variable -Name '__initQueue' -Scope Global -Force
         [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
-        Unregister-Event -SourceIdentifier $event.Sender.SourceIdentifier
     }
 }
