@@ -50,14 +50,6 @@ $ContextCACProperty.SetValue($RSContext, $CAC)
 $ContextNACProperty.SetValue($RSContext, $NAC)
 
 $Wrapper = {
-    # Without a sleep, you get issues:
-    #   - occasional crashes
-    #   - prompt not rendered
-    #   - no highlighting
-    # Assumption: this is related to PSReadLine.
-    # 20ms seems to be enough on my machine, but let's be generous - this is non-blocking
-    #Start-Sleep -Milliseconds 200
-
     . $GlobalState {
         try {
             . $Deferred

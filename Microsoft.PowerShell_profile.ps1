@@ -1,20 +1,22 @@
-# Ensure delay loaded modules are available
-# TODO: Remove this once errors are handled in async
-if (-not (Get-Module -Name z -ListAvailable)) { throw "z not installed" }
-
 # Import modules that don't work with async profile import
 # TODO: Get this to work with async profile
 Import-Module -Name Terminal-Icons
 
-# TODO: Fix caret when inside async
-oh-my-posh init pwsh --config $Env:POSH_THEMES_PATH/jandedobbeleer.omp.json | Invoke-Expression
-$Env:POSH_GIT_ENABLED = $true
+function prompt {
+    # oh-my-posh will override this prompt, however we want to customize it to prevent
+    # PowerShell's own customization from being added.
+
+    "[Loading...]: PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) ";
+}
 
 . $PSScriptRoot\Import-ProfileAsync.ps1 -Deferred {
     $Env:PYTHONIOENCODING='utf-8'
     iex "$(thefuck --alias)"
 
     Import-Module z
+
+    oh-my-posh init pwsh --config $Env:POSH_THEMES_PATH/jandedobbeleer.omp.json | Invoke-Expression
+    $Env:POSH_GIT_ENABLED = $true
 
     # PowerShell parameter completion shim for the dotnet CLI
     Register-ArgumentCompleter -Native -CommandName dotnet -ScriptBlock {
