@@ -1,213 +1,240 @@
 {
   "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "console_title_template": "./{{ .Folder }}",
+  "pwd": "osc99",
   "blocks": [
     {
+      "type": "prompt",
       "alignment": "left",
       "segments": [
         {
-          "background": "#ff479c",
-          "foreground": "#ffffff",
           "properties": {
+            "cache_duration": "none",
             "folder_separator_icon": " \ue0b1 ",
             "home_icon": "~",
-            "style": "agnoster_full",
             "mapped_locations": {
               "C:/Projects/": "\ue65d",
               "D:/Projects/": "\ue65d"
-            }
+            },
+            "style": "agnoster_full"
           },
-          "style": "plain",
           "template": "<background,transparent>\ue0b6</> {{ .Path }} <background>\ue0b0</>",
-          "type": "path"
+          "foreground": "#ffffff",
+          "background": "#ff479c",
+          "type": "path",
+          "style": "plain"
         },
         {
-          "type": "git",
+          "properties": {
+            "branch_max_length": 0,
+            "cache_duration": "none",
+            "fetch_stash_count": true,
+            "fetch_status": true,
+            "fetch_upstream_icon": true,
+            "mapped_branches": {
+              "bugfix/*": "🐛/",
+              "feature/*": "\ud83d\ude80/",
+              "refactor/*": " \uf1b8 /",
+              "users/mattkot/*": "🧔/"
+            },
+            "source": "pwsh"
+          },
+          "template": "<parentBackground>\ue0b0</> {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} <background>\ue0b0</>",
+          "foreground": "#193549",
           "background": "#fffb38",
+          "type": "git",
+          "style": "plain",
           "background_templates": [
             "{{ if or (.Working.Changed) (.Staging.Changed) }}#FF9248{{ end }}",
             "{{ if and (gt .Ahead 0) (gt .Behind 0) }}#ff4500{{ end }}",
             "{{ if gt .Ahead 0 }}#B388FF{{ end }}",
             "{{ if gt .Behind 0 }}#B388FF{{ end }}"
-          ],
-          "foreground": "#193549",
-          "properties": {
-            "source": "pwsh",
-            "branch_max_length": 0,
-            "fetch_stash_count": true,
-            "fetch_status": true,
-            "fetch_upstream_icon": true,
-            "mapped_branches": {
-              "bugfix/*": "\ud83d\udc1b/",
-              "feature/*": "\ud83d\ude80/",
-              "refactor/*": " \uf1b8 /",
-              "users/mattkot/*": "\ud83e\uddd4/"
-            }
-          },
-          "style": "plain",
-          "template": "<parentBackground>\ue0b0</> {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} <background>\ue0b0</>"
+          ]
         },
         {
-          "type": "dotnet",
-          "style": "plain",
+          "properties": {
+            "cache_duration": "none"
+          },
+          "template": "<parentBackground>\ue0b0</>{{ if .Unsupported }}\uf071{{ else }} \ue77f {{ .Full }} {{ end }}<background>\ue0b0</>",
           "foreground": "#000000",
           "background": "#01c4c4",
-          "template": "<parentBackground>\ue0b0</>{{ if .Unsupported }}\uf071{{ else }} \ue77f {{ .Full }} {{ end }}<background>\ue0b0</>"
+          "type": "dotnet",
+          "style": "plain"
         },
         {
-          "background": "#6CA35E",
-          "foreground": "#ffffff",
           "properties": {
+            "cache_duration": "none",
             "fetch_version": true
           },
-          "style": "plain",
           "template": "<parentBackground>\ue0b0</> \ue718 {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} <background>\ue0b0</>",
-          "type": "node"
+          "foreground": "#ffffff",
+          "background": "#6CA35E",
+          "type": "node",
+          "style": "plain"
         },
         {
-          "background": "#8ED1F7",
-          "foreground": "#111111",
           "properties": {
+            "cache_duration": "none",
             "fetch_version": true
           },
-          "style": "plain",
           "template": "<parentBackground>\ue0b0</> \ue626 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} <background>\ue0b0</>",
-          "type": "go"
+          "foreground": "#111111",
+          "background": "#8ED1F7",
+          "type": "go",
+          "style": "plain"
         },
         {
-          "background": "#4063D8",
-          "foreground": "#111111",
           "properties": {
+            "cache_duration": "none",
             "fetch_version": true
           },
-          "style": "plain",
           "template": "<parentBackground\ue0b0</> \ue624 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} <background>\ue0b0</>",
-          "type": "julia"
+          "foreground": "#111111",
+          "background": "#4063D8",
+          "type": "julia",
+          "style": "plain"
         },
         {
-          "background": "#FFDE57",
-          "foreground": "#111111",
           "properties": {
+            "cache_duration": "none",
             "display_mode": "files",
             "fetch_virtual_env": false
           },
-          "style": "plain",
           "template": "<parentBackground>\ue0b0</> \ue235 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} <background>\ue0b0</>",
-          "type": "python"
+          "foreground": "#111111",
+          "background": "#FFDE57",
+          "type": "python",
+          "style": "plain"
         },
         {
-          "background": "#AE1401",
-          "foreground": "#ffffff",
           "properties": {
+            "cache_duration": "none",
             "display_mode": "files",
             "fetch_version": true
           },
-          "style": "plain",
           "template": "<parentBackground>\ue0b0</> \ue791 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} <background>\ue0b0</>",
-          "type": "ruby"
+          "foreground": "#ffffff",
+          "background": "#AE1401",
+          "type": "ruby",
+          "style": "plain"
         },
         {
-          "background": "#FEAC19",
-          "foreground": "#ffffff",
           "properties": {
+            "cache_duration": "none",
             "display_mode": "files",
             "fetch_version": false
           },
-          "style": "plain",
           "template": "<parentBackground>\ue0b0</> \uf0e7{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} <background?>\ue0b0</>",
-          "type": "azfunc"
+          "foreground": "#ffffff",
+          "background": "#FEAC19",
+          "type": "azfunc",
+          "style": "plain"
         },
         {
+          "properties": {
+            "cache_duration": "none",
+            "display_default": false
+          },
+          "template": "<parentBackground>\ue0b0</> \ue7ad {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} <background>\ue0b0</>",
+          "foreground": "#ffffff",
+          "type": "aws",
+          "style": "plain",
           "background_templates": [
             "{{if contains \"default\" .Profile}}#FFA400{{end}}",
             "{{if contains \"jan\" .Profile}}#f1184c{{end}}"
-          ],
-          "foreground": "#ffffff",
-          "properties": {
-            "display_default": false
-          },
-          "style": "plain",
-          "template": "<parentBackground>\ue0b0</> \ue7ad {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} <background>\ue0b0</>",
-          "type": "aws"
+          ]
         },
         {
-          "background": "#ffff66",
-          "foreground": "#111111",
-          "style": "plain",
+          "properties": {
+            "cache_duration": "none"
+          },
           "template": "<parentBackground>\ue0b0</> \uf0ad <background>\ue0b0</>",
-          "type": "root"
+          "foreground": "#111111",
+          "background": "#ffff66",
+          "type": "root",
+          "style": "plain"
         },
         {
-          "background": "#83769c",
-          "foreground": "#ffffff",
           "properties": {
-            "always_enabled": true
+            "always_enabled": true,
+            "cache_duration": "none"
           },
-          "style": "plain",
           "template": "<parentBackground>\ue0b0</> \uf520 {{ .FormattedMs }}<background>\ue0b0</>",
-          "type": "executiontime"
-        },
-        {
-          "background": "#c386f1",
           "foreground": "#ffffff",
-          "type": "text",
-          "style": "plain",
-          "template": "{{if or .Env.POSH_JOBS_RUNNING .Env.POSH_JOBS_FINISHED }}<parentBackground>\ue0b0</> \udb86\udd35 {{ default 0 .Env.POSH_JOBS_RUNNING }} \udb86\udd37 {{ default 0 .Env.POSH_JOBS_FINISHED }}<background>\ue0b0</>{{ end }}"
+          "background": "#83769c",
+          "type": "executiontime",
+          "style": "plain"
         },
         {
+          "properties": {
+            "cache_duration": "none"
+          },
+          "template": "{{if or .Env.POSH_JOBS_RUNNING .Env.POSH_JOBS_FINISHED }}<parentBackground>\ue0b0</> \udb86\udd35 {{ default 0 .Env.POSH_JOBS_RUNNING }} \udb86\udd37 {{ default 0 .Env.POSH_JOBS_FINISHED }}<background>\ue0b0</>{{ end }}",
+          "foreground": "#ffffff",
+          "background": "#c386f1",
+          "type": "text",
+          "style": "plain"
+        },
+        {
+          "properties": {
+            "always_enabled": true,
+            "cache_duration": "none"
+          },
+          "template": "<parentBackground>\ue0b0</> {{ if eq .Code 0 }}\uf00c{{ else }}\uf00d{{ end }} <background,transparent>\ue0b4</>",
+          "foreground": "#ffffff",
           "background": "#00897b",
+          "type": "status",
+          "style": "plain",
           "background_templates": [
             "{{ if gt .Code 0 }}#e91e63{{ end }}"
-          ],
-          "foreground": "#ffffff",
-          "properties": {
-            "always_enabled": true
-          },
-          "style": "plain",
-          "template": "<parentBackground>\ue0b0</> {{ if eq .Code 0 }}\uf00c{{ else }}\uf00d{{ end }} <background,transparent>\ue0b4</>",
-          "type": "status"
+          ]
         }
-      ],
-      "type": "prompt"
+      ]
     },
     {
+      "type": "rprompt",
       "segments": [
         {
-          "background": "#0077c2",
-          "foreground": "#ffffff",
-          "style": "plain",
+          "properties": {
+            "cache_duration": "none"
+          },
           "template": "<background,transparent>\ue0b6</> \uf489 <background>\ue0b2</>",
-          "type": "shell"
+          "foreground": "#ffffff",
+          "background": "#0077c2",
+          "type": "shell",
+          "style": "plain"
         },
         {
+          "properties": {
+            "cache_duration": "none",
+            "charged_icon": "\uead0 ",
+            "charging_icon": "⚡ ",
+            "discharging_icon": "\uf240 "
+          },
+          "template": "<background,parentBackground>\ue0b2</> {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}%<background>\ue0b2</>",
+          "foreground": "#ffffff",
           "background": "#f36943",
+          "type": "battery",
+          "style": "plain",
           "background_templates": [
             "{{if eq \"Charging\" .State.String}}#40c4ff{{end}}",
             "{{if eq \"Discharging\" .State.String}}#ff5722{{end}}",
             "{{if eq \"Full\" .State.String}}#4caf50{{end}}"
-          ],
-          "foreground": "#ffffff",
-          "properties": {
-            "charged_icon": "\uead0 ",
-            "charging_icon": "\u26a1 ",
-            "discharging_icon": "\uf240 "
-          },
-          "style": "plain",
-          "template": "<background,parentBackground>\ue0b2</> {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}%<background>\ue0b2</>",
-          "type": "battery"
+          ]
         },
         {
-          "background": "#2e9599",
-          "foreground": "#111111",
-          "style": "plain",
+          "properties": {
+            "cache_duration": "none"
+          },
           "template": "<background,parentBackground>\ue0b2</> {{ .CurrentDate | date .Format }} <background,transparent>\ue0b4</>",
-          "type": "time"
+          "foreground": "#111111",
+          "background": "#2e9599",
+          "type": "time",
+          "style": "plain"
         }
-      ],
-      "type": "rprompt"
+      ]
     }
   ],
-  "console_title_template": "./{{ .Folder }}",
-  "final_space": true,
-  "pwd": "osc99",
-  "version": 2
+  "version": 3,
+  "final_space": true
 }
