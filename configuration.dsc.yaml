@@ -29,6 +29,7 @@ properties:
         RestartExplorer: true # Required to apply changes
     # NOTE: Install packages
     # TODO: Install posh-git Module
+    # TODO: Install: Install-Module -Name PSFzf
     # TODO: Install thefuck
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
@@ -112,6 +113,13 @@ properties:
         allowPrerelease: true
       settings:
         id: eza-community.eza
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install fd
+        allowPrerelease: true
+      settings:
+        id: sharkdp.fd
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
