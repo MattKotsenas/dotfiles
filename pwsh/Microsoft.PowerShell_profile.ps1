@@ -63,6 +63,7 @@ function prompt {
     {
         $Env:FZF_ALT_C_COMMAND = "fd --type dir --hidden --exclude .git"
         $ENV:FZF_ALT_C_OPTS = "--preview 'eza --tree --color=always --icons=always {}'"
+        $Env:FZF_CTRL_T_OPTS = "--preview 'bat -n --color=always --line-range :500 {}'"
 
         Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
         Set-PSReadLineKeyHandler -Key Tab -ScriptBlock { Invoke-FzfTabCompletion }
