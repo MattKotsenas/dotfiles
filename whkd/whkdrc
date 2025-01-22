@@ -1,14 +1,12 @@
 .shell pwsh
 
 # Reload whkd configuration
-# alt + o                 : taskkill /f /im whkd.exe && start /b whkd # if shell is cmd
 alt + o                 : taskkill /f /im whkd.exe; Start-Process whkd -WindowStyle hidden # if shell is pwsh / powershell
 alt + shift + o         : komorebic reload-configuration
 
 # App shortcuts - these require shell to be pwsh / powershell
 # The apps will be focused if open, or launched if not open
-# alt + f                 : if ($wshell.AppActivate('Firefox') -eq $False) { start firefox }
-# alt + b                 : if ($wshell.AppActivate('Chrome') -eq $False) { start chrome }
+alt + b                 : if ($wshell.AppActivate('Edge') -eq $False) { start microsoft-edge: }
 
 alt + q                 : komorebic close
 alt + m                 : komorebic minimize
