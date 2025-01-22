@@ -816,6 +816,29 @@
       }
     ]
   },
+  "JetBrains Client": {
+    "ignore": [
+      {
+        "kind": "Class",
+        "id": "SunAwtDialog",
+        "matching_strategy": "Equals"
+      }
+    ],
+    "tray_and_multi_window": [
+      {
+        "kind": "Exe",
+        "id": "jetbrains_client64.exe",
+        "matching_strategy": "Equals"
+      }
+    ],
+    "object_name_change": [
+      {
+        "kind": "Exe",
+        "id": "jetbrains_client64.exe",
+        "matching_strategy": "Equals"
+      }
+    ]
+  },
   "KOOK": {
     "tray_and_multi_window": [
       {
@@ -1124,6 +1147,13 @@
       {
         "kind": "Exe",
         "id": "WINWORD.EXE",
+        "matching_strategy": "Equals"
+      }
+    ],
+    "tray_and_multi_window": [
+      {
+        "kind": "Exe",
+        "id": "WINWORD.exe",
         "matching_strategy": "Equals"
       }
     ]
@@ -2266,6 +2296,15 @@
         "kind": "Class",
         "id": "android(splash)",
         "matching_strategy": "Legacy"
+      }
+    ]
+  },
+  "Windows Terminal": {
+    "tray_and_multi_window": [
+      {
+        "kind": "Exe",
+        "id": "WindowsTerminal.exe",
+        "matching_strategy": "Equals"
       }
     ]
   },
