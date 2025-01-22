@@ -58,7 +58,19 @@ $Wrapper = {
     # 20ms seems to be enough on my machine, but let's be generous - this is non-blocking
     #Start-Sleep -Milliseconds 200
 
-    . $GlobalState {. $Deferred; Remove-Variable Deferred}
+    . $GlobalState {
+        try {
+            . $Deferred
+        }
+        catch {
+            $color = $Host.UI.RawUI.ForegroundColor
+            $Host.UI.RawUI.ForegroundColor = $Host.PrivateData.ErrorForegroundColor
+            $Host.UI.WriteErrorLine("Error in async profile: $_ $($_.ScriptStackTrace)");
+            $Host.UI.RawUI.ForegroundColor = $color
+        }
+
+        Remove-Variable Deferred
+    }
 }
 
 $null = $Powershell.AddScript($Wrapper.ToString()).BeginInvoke()

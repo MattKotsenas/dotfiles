@@ -11,7 +11,6 @@ oh-my-posh init pwsh --config $Env:POSH_THEMES_PATH/jandedobbeleer.omp.json | In
 $Env:POSH_GIT_ENABLED = $true
 
 . $PSScriptRoot\Import-ProfileAsync.ps1 -Deferred {
-    # throw "foo"
     $Env:PYTHONIOENCODING='utf-8'
     iex "$(thefuck --alias)"
 
