@@ -202,5 +202,6 @@
   ],
   "console_title_template": "./{{ .Folder }}",
   "final_space": true,
+  "pwd": "osc99",
   "version": 2
 }

@@ -32,9 +32,13 @@ function prompt {
                 }
             }
 
+            function Set-PoshContexts {
+                Set-PoshJobInfo
+            }
+
             # Set-PoshContext is a function called before the prompt is rendered.
             # Use to update ENV vars the prompt will use during rendering.
-            New-Alias -Name 'Set-PoshContext' -Value 'Set-PoshJobInfo' -Scope Global -Force
+            New-Alias -Name 'Set-PoshContext' -Value 'Set-PoshContexts' -Scope Global -Force
         } | Import-Module -Global
 
         oh-my-posh init pwsh --config (Join-Path (Split-Path $PROFILE) matt.omp.json) | Invoke-Expression
