@@ -12,7 +12,7 @@ function New-Worktree
 
         [Parameter(Mandatory = $false)]
         [string]
-        $BaseBranch = "origin/main"
+        $BaseBranch = "$(git remote)/$(git symbolic-ref HEAD --short)"
     )
 
     Set-StrictMode -Version Latest
