@@ -15,6 +15,7 @@
     ~/.config/komorebi: komorebi/**
     $LOCALAPPDATA/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json: wt/settings.json
     ~/.config/whkdrc: whkd/whkdrc
+    ~/.config/wpm: wpm/**
 
 - shell:
   - command: winget configure configuration.dsc.yaml

@@ -33,6 +33,7 @@ properties:
     # TODO: Install thefuck
     # TODO: Install scoop
     # TODO: Install pipx
+    # TODO: Install wpm
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install PowerShell 7
