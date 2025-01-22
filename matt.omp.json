@@ -161,7 +161,7 @@
           "background": "#0077c2",
           "foreground": "#ffffff",
           "style": "plain",
-          "template": "<background,transparent>\ue0b6</> \uf489 {{ .Name }}<background>\ue0b2</>",
+          "template": "<background,transparent>\ue0b6</> \uf489 <background>\ue0b2</>",
           "type": "shell"
         },
         {
@@ -178,7 +178,7 @@
             "discharging_icon": "\uf240  "
           },
           "style": "plain",
-          "template": "<background,parentBackground>\ue0b2</> {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}\uf295 <background>\ue0b2</>",
+          "template": "<background,parentBackground>\ue0b2</> {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}%<background>\ue0b2</>",
           "type": "battery"
         },
         {
