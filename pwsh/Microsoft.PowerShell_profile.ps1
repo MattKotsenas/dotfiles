@@ -19,6 +19,9 @@ function prompt {
 # Load modules asynchronously and in parallel to reduce shell startup time
 [System.Collections.Queue]$__initQueue = @(
     {
+        Invoke-Expression (& { (zoxide init powershell | Out-String) })
+    },
+    {
         New-Module -ScriptBlock {
             function Set-PoshJobInfo {
                 $jobs = @(Get-Job)
@@ -54,9 +57,6 @@ function prompt {
         oh-my-posh init pwsh --config (Join-Path (Split-Path $PROFILE) matt.omp.json) | Invoke-Expression
         oh-my-posh completion powershell | Out-String | Invoke-Expression
         $Env:POSH_GIT_ENABLED = $true
-    },
-    {
-        Invoke-Expression (& { (zoxide init powershell | Out-String) })
     },
     {
         Import-Module -Name Microsoft.WinGet.CommandNotFound -Global
