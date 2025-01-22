@@ -31,6 +31,22 @@
             },
             "id": "User.splitPane.A6751878",
             "keys": "alt+shift+d"
+        },
+        {
+            "command":
+            {
+                "action": "splitPane",
+                "split": "auto",
+                "splitMode": "duplicate"
+            },
+            "keys": "ctrl+shift+k"
+        },
+        {
+            "command":
+            {
+                "action": "closeTab"
+            },
+            "keys": "ctrl+w"
         }
     ],
     "copyFormatting": "none",
@@ -150,7 +166,8 @@
             }
         ]
     },
-    "schemes": [
+    "schemes":
+    [
         {
             "background": "#300A24",
             "black": "#171421",
