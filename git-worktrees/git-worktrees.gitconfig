@@ -6,8 +6,7 @@
                                 echo \"Usage: git worktree-new <branch name>\"; \
                                 exit 0; \
                             fi; \
-                            default_branch=$(git remote)/$(git symbolic-ref HEAD --short); \
                             dir_name=\"$(basename -- $1)\"; \
-                            git worktree add --no-track -b $1 $dir_name $default_branch; \
+                            git worktree add --no-track -b $1 $dir_name ${@:2}; \
                         }; \
                         f"
