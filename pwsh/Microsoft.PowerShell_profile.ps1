@@ -17,7 +17,7 @@ function prompt {
 }
 
 # Load modules asynchronously and in parallel to reduce shell startup time
-@(
+[System.Collections.Queue]$__initQueue = @(
     {
         New-Module -ScriptBlock {
             function Set-PoshJobInfo {
@@ -94,4 +94,14 @@ function prompt {
         $Env:PYTHONIOENCODING='utf-8'
         New-Module -Name thefuck -ScriptBlock { iex "$(thefuck --alias fix)" } | Import-Module -Global
     }
-) | Foreach-Object { Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -SupportEvent -Action $_ } | Out-Null
+)
+
+Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -SupportEvent -Action {
+    if ($__initQueue.Length -gt 0) {
+        & $__initQueue.Dequeue()
+    } else {
+        # TODO: Is it possible to remove the temporary init queue?
+        [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+        Unregister-Event -SourceIdentifier $event.Sender.SourceIdentifier
+    }
+}
