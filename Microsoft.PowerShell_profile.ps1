@@ -9,6 +9,34 @@ function prompt {
 # Load modules asynchronously and in parallel to reduce shell startup time
 @(
     {
+        New-Module -ScriptBlock {
+            function Set-PoshJobInfo {
+                $running = @(Get-Job -State Running).Count
+                if ($running -gt 0)
+                {
+                    $env:POSH_JOBS_RUNNING = $running
+                }
+                else
+                {
+                    Remove-Item ENV:\POSH_JOBS_RUNNING -ErrorAction SilentlyContinue
+                }
+
+                $finished = @(Get-Job | Where-Object { $_.State -ne "Running" }).Count
+                if ($finished -gt 0)
+                {
+                    $env:POSH_JOBS_FINISHED = $finished
+                }
+                else
+                {
+                    Remove-Item ENV:\POSH_JOBS_FINISHED -ErrorAction SilentlyContinue
+                }
+            }
+
+            # Set-PoshContext is a function called before the prompt is rendered.
+            # Use to update ENV vars the prompt will use during rendering.
+            New-Alias -Name 'Set-PoshContext' -Value 'Set-PoshJobInfo' -Scope Global -Force
+        } | Import-Module -Global
+
         oh-my-posh init pwsh --config (Join-Path (Split-Path $PROFILE) matt.omp.json) | Invoke-Expression
         $Env:POSH_GIT_ENABLED = $true
     },
@@ -34,4 +62,4 @@ function prompt {
         $Env:PYTHONIOENCODING='utf-8'
         New-Module -Name thefuck -ScriptBlock { iex "$(thefuck --alias)" } | Import-Module -Global
     }
-) | Foreach-Object { Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -Action $_ } | Out-Null
+) | Foreach-Object { Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -SupportEvent -Action $_ } | Out-Null
