@@ -1,0 +1,5 @@
+[include]
+        path = ./delta/delta.gitconfig
+
+[diff]
+        submodule = log
