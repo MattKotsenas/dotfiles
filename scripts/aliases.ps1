@@ -4,3 +4,4 @@ Set-Alias -Name open -Value Invoke-Item
 Set-Alias -Name dict -Value Get-Definition
 Set-Alias -Name n -Value notepad
 Set-Alias -Name edit -Value code
+Set-Alias -Name sjb -Value Show-Job
