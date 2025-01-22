@@ -16,6 +16,7 @@ name=${2:-${basename%.*}}
 
 mkdir -p $name
 cd "$name"
+echo "Cloning for worktrees into '$name'..."
 
 # Moves all the administrative git files (a.k.a $GIT_DIR) under .bare directory.
 #
