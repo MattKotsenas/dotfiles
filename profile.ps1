@@ -2,3 +2,5 @@ foreach ($scriptFile in (Get-ChildItem -Path $PSScriptRoot -Recurse -Include *.p
 {
   . $scriptFile.FullName
 }
+
+iex "$(thefuck --alias)"
