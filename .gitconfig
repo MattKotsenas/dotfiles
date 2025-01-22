@@ -15,3 +15,6 @@
 	ff = only
 [stash]
 	showIncludeUntracked = true
+[core]
+	fsmonitor = true
+	untrackedcache = true
