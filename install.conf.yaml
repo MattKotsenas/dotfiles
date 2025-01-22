@@ -10,4 +10,5 @@
     ~/Documents/PowerShell: pwsh/**
     ~/.config/git: git/**
     ~/.config/thefuck: thefuck/**
+    ~/.config/eza: eza/**
     $LOCALAPPDATA/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json: wt/settings.json
