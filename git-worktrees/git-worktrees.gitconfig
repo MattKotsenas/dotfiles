@@ -1,3 +1,16 @@
 [alias]
         clone-for-worktrees = "!$HOME/Documents/PowerShell/git-worktrees/clone.sh"
-        worktree-new = "!f() { set -euo pipefail; default_branch=$(git remote)/$(git symbolic-ref HEAD --short); dir_name=\"$(basename -- $1)\"; common_base=${2:-${default_branch}}; branch_name=${3:-users/mattkot/$dir_name}; git branch --no-track $branch_name $common_base && git worktree add $dir_name $branch_name; }; f"
+        worktree-new = "!f() { \
+                            set -euo pipefail; \
+                            if [[ $# -eq 0 ]]; then \
+                                echo \"Usage: git worktree-new <dir name> [common base branch] [branch name]\"; \
+                                exit 0; \
+                            fi; \
+                            default_branch=$(git remote)/$(git symbolic-ref HEAD --short); \
+                            dir_name=\"$(basename -- $1)\"; \
+                            common_base=${2:-${default_branch}}; \
+                            branch_name=${3:-users/mattkot/$dir_name}; \
+                            git branch --no-track $branch_name $common_base \
+                            && git worktree add $dir_name $branch_name; \
+                        }; \
+                        f"
