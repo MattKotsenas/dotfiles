@@ -11,4 +11,16 @@
     ~/.config/git: git/**
     ~/.config/thefuck: thefuck/**
     ~/.config/eza: eza/**
+    ~/.config/bat: bat/**
     $LOCALAPPDATA/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json: wt/settings.json
+
+- shell:
+  - command: winget configure configuration.dsc.yaml
+    description: Running winget configure
+    stdin: true
+    stdout: true
+    stderr: true
+  - command: bat cache --build
+    description: Building bat cache
+    stdout: true
+    stderr: true
