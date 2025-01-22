@@ -1,7 +1,5 @@
-Import-Module posh-git
+oh-my-posh init pwsh --config $env:POSH_THEMES_PATH/jandedobbeleer.omp.json | Invoke-Expression
 $env:POSH_GIT_ENABLED = $true
-
-oh-my-posh --init --shell pwsh --config $env:POSH_THEMES_PATH/jandedobbeleer.omp.json | Invoke-Expression
 
 Import-Module -Name Terminal-Icons
 
