@@ -19,6 +19,7 @@
     "bar_accent": "Base0D"
   },
   "stackbar": {
+    "label": "Title",
     "height": 30,
     "mode": "OnStack",
     "tabs": {
