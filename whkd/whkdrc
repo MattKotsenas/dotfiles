@@ -1,9 +1,5 @@
 .shell pwsh
 
-# Reload whkd configuration
-alt + o                 : taskkill /f /im whkd.exe; Start-Process whkd -WindowStyle hidden # if shell is pwsh / powershell
-alt + shift + o         : komorebic reload-configuration
-
 # App shortcuts - these require shell to be pwsh / powershell
 # The apps will be focused if open, or launched if not open
 alt + b                 : if ($wshell.AppActivate('Edge') -eq $False) { start microsoft-edge: }
@@ -27,11 +23,11 @@ alt + shift + l         : komorebic move right
 alt + shift + return    : komorebic promote
 
 # Stack windows
-alt + left              : komorebic stack left
-alt + down              : komorebic stack down
-alt + up                : komorebic stack up
-alt + right             : komorebic stack right
-alt + oem_1             : komorebic unstack # oem_1 is ;
+alt + shift + left      : komorebic stack left
+alt + shift + down      : komorebic stack down
+alt + shift + up        : komorebic stack up
+alt + shift + right     : komorebic stack right
+alt + shift + oem_1     : komorebic unstack # oem_1 is ;
 alt + oem_4             : komorebic cycle-stack previous # oem_4 is [
 alt + oem_6             : komorebic cycle-stack next # oem_6 is ]
 
