@@ -16,11 +16,11 @@ function prompt {
     "[async init]: PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) ";
 }
 
+# I use these so early in my workflow that I'm willing to pay the cost to start them synchronously
+Invoke-Expression (& { (zoxide init powershell | Out-String) })
+
 # Load modules asynchronously to reduce shell startup time
 [System.Collections.Queue]$__initQueue = @(
-    {
-        Invoke-Expression (& { (zoxide init powershell | Out-String) })
-    },
     {
         New-Module -ScriptBlock {
             function Set-PoshJobInfo {
