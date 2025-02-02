@@ -153,15 +153,6 @@ properties:
       settings:
         id: LGUG2Z.komorebi
         source: winget
-    - resource: Environment # TODO: Can this be a user environment variable?
-      directives:
-       description: Set Komorebi config directory
-      dependsOn:
-        - install-komorebi
-      settings:
-       Name: KOMOREBI_CONFIG_HOME
-       Value: '%USERPROFILE%\.config\komorebi'
-       Ensure: Present
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install Windows Hotkey Daemon (whkd)

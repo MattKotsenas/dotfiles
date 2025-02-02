@@ -9,7 +9,8 @@ Environment = [[
     "KOMOREBI_CONFIG_HOME",
     "$USERPROFILE/.config/komorebi",
 ]]
-Restart = "Never"
+Restart = "OnFailure"
+RestartSec = 2
 
 [Service.ExecStart]
 Executable = "komorebi-bar.exe"

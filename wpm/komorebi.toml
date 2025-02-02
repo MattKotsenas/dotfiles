@@ -7,7 +7,8 @@ Requires = [
 
 [Service]
 Kind = "Simple"
-Restart = "Never"
+Restart = "OnFailure"
+RestartSec = 2
 
 [Service.ExecStart]
 Executable = "komorebi.exe"
@@ -31,3 +32,6 @@ Arguments = ["restore-windows"]
 [Service.Healthcheck.Command]
 Executable = "komorebic.exe"
 Arguments = ["state"]
+
+[Service.Healthcheck.Process]
+DelaySec = 1
