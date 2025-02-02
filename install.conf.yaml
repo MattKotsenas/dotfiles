@@ -16,6 +16,7 @@
     $LOCALAPPDATA/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json: wt/settings.json
     ~/.config/whkdrc: whkd/whkdrc
     ~/.config/wpm: wpm/**
+    ~/.config/kanata: kanata/**
 
 - shell:
   - command: winget configure configuration.dsc.yaml

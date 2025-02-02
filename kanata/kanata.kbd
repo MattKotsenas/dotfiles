@@ -1,0 +1,27 @@
+;; Simple mods
+;; Features:
+;;   - Tap caps for esc
+;;   - Hold caps to modify jikl to arrow keys
+
+(defcfg
+  process-unmapped-keys yes
+)
+(defsrc
+  caps j   i   k   l
+)
+(defvar
+  ;; Note: consider using different time values for your different fingers.
+  ;; For example, your pinkies might be slower to release keys and index
+  ;; fingers faster.
+  tap-time 200
+  hold-time 150
+)
+(deflayermap (base)
+  caps (tap-hold $tap-time $hold-time esc (layer-while-held nav))
+)
+(deflayermap (nav)
+  i up
+  j left
+  k down
+  l right
+)

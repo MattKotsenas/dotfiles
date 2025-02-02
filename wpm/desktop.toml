@@ -4,6 +4,7 @@ Description = "everything I need to work on Windows"
 Requires = [
     "komorebi",
     "komorebi-bar",
+    "kanata",
 ]
 
 [Service]
