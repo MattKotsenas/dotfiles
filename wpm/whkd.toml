@@ -9,6 +9,3 @@ RestartSec = 2
 
 [Service.ExecStart]
 Executable = "whkd.exe"
-
-[Service.Healthcheck.Process]
-DelaySec = 1

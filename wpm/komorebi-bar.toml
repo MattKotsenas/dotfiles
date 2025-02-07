@@ -18,6 +18,3 @@ Arguments = [
     "--config",
     "$USERPROFILE/.config/komorebi/komorebi.bar.json",
 ]
-
-[Service.Healthcheck.Process]
-DelaySec = 1
