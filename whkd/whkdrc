@@ -4,7 +4,8 @@
 # The apps will be focused if open, or launched if not open
 alt + b                 : if ($wshell.AppActivate('Edge') -eq $False) { start microsoft-edge: }
 
-alt + q                 : komorebic close
+alt + q                 : komorebic
+alt + shift + q         : komorebic close-workspace
 alt + m                 : komorebic minimize
 
 # Focus windows
