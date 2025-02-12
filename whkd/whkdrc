@@ -2,7 +2,8 @@
 
 # App shortcuts - these require shell to be pwsh / powershell
 # The apps will be focused if open, or launched if not open
-alt + b                 : if ($wshell.AppActivate('Edge') -eq $False) { start microsoft-edge: }
+alt + b                 : & "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe" --new-window
+alt + c                 : wt
 
 alt + q                 : komorebic
 alt + shift + q         : komorebic close-workspace
