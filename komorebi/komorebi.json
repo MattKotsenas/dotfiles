@@ -26,7 +26,23 @@
       "width": 200
     }
   },
+  "display_index_preferences": {
+    "0": "DELA0DE-5&42b49c9&0&UID260",
+    "1": "GSM76E4-5&42b49c9&0&UID264"
+  },
   "monitors": [
+    {
+      "workspaces": [
+        {
+          "name": "main",
+          "layout": "UltrawideVerticalStack"
+        },
+        {
+          "name": "scratch",
+          "layout": "UltrawideVerticalStack"
+        }
+      ]
+    },
     {
       "workspaces": [
         {
@@ -38,17 +54,22 @@
           "layout": "Columns",
           "initial_workspace_rules": [
             {
+              "id": "msedge.exe",
+              "kind": "Exe",
+              "matching_strategy": "Equals"
+            },
+            {
+              "id": "ms-teams.exe",
+              "kind": "Exe",
+              "matching_strategy": "Equals"
+            },
+            {
               "id": "outlook.exe",
               "kind": "Exe",
               "matching_strategy": "Equals"
             },
             {
               "id": "olk.exe",
-              "kind": "Exe",
-              "matching_strategy": "Equals"
-            },
-            {
-              "id": "ms-teams.exe",
               "kind": "Exe",
               "matching_strategy": "Equals"
             }
