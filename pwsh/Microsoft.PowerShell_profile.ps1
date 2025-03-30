@@ -16,9 +16,6 @@ function prompt {
     "[async init]: PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) ";
 }
 
-# I use these so early in my workflow that I'm willing to pay the cost to start them synchronously
-Invoke-Expression (& { (zoxide init powershell | Out-String) })
-
 # Load modules asynchronously to reduce shell startup time
 [System.Collections.Queue]$__initQueue = @(
     {
@@ -57,6 +54,10 @@ Invoke-Expression (& { (zoxide init powershell | Out-String) })
         oh-my-posh init pwsh --config (Join-Path (Split-Path $PROFILE) matt.omp.json) | Invoke-Expression
         oh-my-posh completion powershell | Out-String | Invoke-Expression
         $Env:POSH_GIT_ENABLED = $true
+    },
+    {
+        # This must be loaded _after_ omp, as zoxide hooks the prompt function
+        New-Module -Name zoxide -ScriptBlock { Invoke-Expression (& { (zoxide init powershell | Out-String) }) } | Import-Module -Global
     },
     {
         Import-Module -Name Microsoft.WinGet.CommandNotFound -Global
