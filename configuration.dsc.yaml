@@ -13,26 +13,12 @@ properties:
       settings:
         MinVersion: '10.0.22000'
   resources:
-    - resource: Microsoft.Windows.Developer/DeveloperMode
-      directives:
-        description: Enable Developer Mode
-        allowPrerelease: true
-      settings:
-        Ensure: Present
-    - resource: Microsoft.Windows.Developer/EnableDarkMode
-      directives:
-        description: Enable dark mode
-        allowPrerelease: true
-      settings:
-        Ensure: Absent
-        # Use caution when setting `RestartExplorer: true` as this will force explorer to close.
-        RestartExplorer: true # Required to apply changes
-    # NOTE: Install packages
+    # NOTE: Install these packages manually
+    # TODO: Install scoop
+    # TODO: Install pipx
     # TODO: Install posh-git Module
     # TODO: Install: Install-Module -Name PSFzf
     # TODO: Install thefuck
-    # TODO: Install scoop
-    # TODO: Install pipx
     # TODO: Install wpm
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
