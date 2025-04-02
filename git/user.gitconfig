@@ -19,3 +19,6 @@
 [core]
 	fsmonitor = true
 	untrackedcache = true
+
+[user]
+        useConfigOnly = true
