@@ -26,6 +26,13 @@
       "width": 200
     }
   },
+  "floating_applications": [
+    {
+      "kind": "Exe",
+      "id": "Microsoft.CmdPal.UI.exe",
+      "matching_strategy": "Equals"
+    }
+  ],
   "display_index_preferences": {
     "0": "DELA0DE-5&42b49c9&0&UID260",
     "1": "GSM76E4-5&42b49c9&0&UID264"
