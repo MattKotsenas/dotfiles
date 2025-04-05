@@ -35,6 +35,13 @@ properties:
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
+        description: Install vswhere
+        allowPrerelease: true
+      settings:
+        id: Microsoft.VisualStudio.Locator
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
         description: Install Oh My Posh
         allowPrerelease: true
       settings:
