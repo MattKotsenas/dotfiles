@@ -68,15 +68,43 @@
       }
     },
     {
-      "Date": {
+      "Time": {
         "enable": true,
-        "format": "DayDateMonthYear"
+        "changing_icon": true,
+        "format": {
+          "Custom": "%I:%M:%S %p %Z"
+        },
+          "timezone": "UTC"
       }
     },
     {
       "Time": {
         "enable": true,
-        "format": "TwelveHour"
+        "changing_icon": true,
+        "format": {
+          "Custom": "%I:%M:%S %p IDC"
+        },
+          "timezone": "Asia/Kolkata"
+      }
+    },
+    {
+      "Time": {
+        "enable": true,
+        "changing_icon": true,
+        "format": {
+          "Custom": "%I:%M:%S %p ILDC"
+        },
+          "timezone": "Asia/Tel_Aviv"
+      }
+    },
+    {
+      "Time": {
+        "enable": true,
+        "changing_icon": true,
+        "format": {
+          "Custom": "%a %m/%d %I:%M:%S %p %Z"
+        },
+          "timezone": "America/Los_Angeles"
       }
     },
     {
