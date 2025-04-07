@@ -19,12 +19,7 @@
     "bar_accent": "Base0D"
   },
   "stackbar": {
-    "label": "Title",
-    "height": 30,
-    "mode": "OnStack",
-    "tabs": {
-      "width": 200
-    }
+    "mode": "Never"
   },
   "display_index_preferences": {
     "0": "DELA0DE-5&42b49c9&0&UID260",
