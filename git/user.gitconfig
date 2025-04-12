@@ -28,7 +28,7 @@
 [diff]
         tool = bc4
 [mergetool "bc4"]
-        cmd = \"C:/Program Files/Beyond Compare 4/BCompare.exe\" -solo -ro -lefttitle=\"Local file\" -righttitle=\"Remote file\" -centertitle=\"Base file\" \"$LOCAL\" \"$REMOTE\" \"$BASE\" \"$MERGED\"
+        cmd = \"C:/Program Files/Beyond Compare 5/BCompare.exe\" -solo -ro -lefttitle=\"Local file\" -righttitle=\"Remote file\" -centertitle=\"Base file\" \"$LOCAL\" \"$REMOTE\" \"$BASE\" \"$MERGED\"
 [mergetool]
         prompt = false
         keepBackup = false
