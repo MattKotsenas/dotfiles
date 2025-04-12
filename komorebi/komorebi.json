@@ -4,7 +4,7 @@
   "window_hiding_behaviour": "Cloak",
   "cross_monitor_move_behaviour": "Insert",
   "animation": {
-    "enabled": true,
+    "enabled": false,
     "style": "EaseOutSine"
   },
   "default_workspace_padding": 5,
