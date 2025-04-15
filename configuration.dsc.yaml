@@ -13,6 +13,12 @@ properties:
       settings:
         MinVersion: '10.0.22000'
   resources:
+    - resource: Microsoft.Windows.Developer/DeveloperMode
+      directives:
+        description: Enable Developer Mode
+        allowPrerelease: true
+      settings:
+        Ensure: Present
     # NOTE: Install these packages manually
     # TODO: Install scoop
     # TODO: Install pipx
