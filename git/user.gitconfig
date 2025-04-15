@@ -24,10 +24,10 @@
         name = Matt Kotsenas
         useConfigOnly = true
 [merge]
-        tool = bc4
+        tool = bc5
 [diff]
-        tool = bc4
-[mergetool "bc4"]
+        tool = bc5
+[mergetool "bc5"]
         cmd = \"C:/Program Files/Beyond Compare 5/BCompare.exe\" -solo -ro -lefttitle=\"Local file\" -righttitle=\"Remote file\" -centertitle=\"Base file\" \"$LOCAL\" \"$REMOTE\" \"$BASE\" \"$MERGED\"
 [mergetool]
         prompt = false
