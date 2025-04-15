@@ -17,6 +17,7 @@
     ~/.config/whkdrc: whkd/whkdrc
     ~/.config/wpm: wpm/**
     ~/.config/kanata: kanata/**
+    $LOCALAPPDATA/nvim: nvim/**
 
 - shell:
   - command: winget configure configuration.dsc.yaml
