@@ -17,9 +17,9 @@
 [stash]
 	showIncludeUntracked = true
 [core]
-	fsmonitor = true
-	untrackedcache = true
-
+        fsmonitor = true
+        untrackedcache = true
+        editor = "nvim -f"
 [user]
         name = Matt Kotsenas
         useConfigOnly = true

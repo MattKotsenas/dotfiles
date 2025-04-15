@@ -34,6 +34,18 @@ properties:
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
+        description: Install Neovim
+      settings:
+        id: Neovim.Neovim
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install Glow (Markdown renderer)
+      settings:
+        id: charmbracelet.glow
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
         description: Install PowerToys x64
         allowPrerelease: true
       settings:
