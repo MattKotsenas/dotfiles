@@ -1,3 +1,6 @@
+[include]
+        path = ./catppuccin.gitconfig
+
 [core]
         pager = delta
 
@@ -9,8 +12,7 @@
         dark = true
         hyperlinks = true
         hyperlinks-file-link-format = "vscode://file/{path}:{line}"
-        features = line-numbers decorations
-        syntax-theme = Dracula
+        features = line-numbers decorations catppuccin-mocha
         plus-style = syntax "#003800"
         minus-style = syntax "#3f0001"
 
