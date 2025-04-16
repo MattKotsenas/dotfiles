@@ -56,7 +56,7 @@
           "properties": {
             "cache_duration": "none"
           },
-          "template": "<parentBackground>\ue0b0</>{{ if .Unsupported }}\uf071{{ else }} \ue77f {{ .Full }} {{ end }}<background>\ue0b0</>",
+          "template": "<parentBackground>\ue0b0</>{{ if .Unsupported }}\uf071{{ else }} \udb82\udeae {{ .Full }} {{ end }}<background>\ue0b0</>",
           "foreground": "p:text",
           "background": "p:dotnet",
           "type": "dotnet",
