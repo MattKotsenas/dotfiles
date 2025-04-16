@@ -27,6 +27,7 @@
         {
           "properties": {
             "branch_max_length": 0,
+            "branch_icon": " ",
             "cache_duration": "none",
             "fetch_stash_count": true,
             "fetch_status": true,
