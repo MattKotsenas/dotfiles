@@ -19,6 +19,12 @@ properties:
         allowPrerelease: true
       settings:
         Ensure: Present
+    - resource: Microsoft.Windows.Developer/EnableLongPathSupport
+      directives:
+        description: Enable long path support
+        allowPrerelease: true
+      settings:
+        Ensure: Present
     # NOTE: Install these packages manually
     # TODO: Install scoop
     # TODO: Install pipx

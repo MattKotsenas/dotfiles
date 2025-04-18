@@ -20,6 +20,7 @@
         fsmonitor = true
         untrackedcache = true
         editor = "nvim -f"
+        longpaths = true
 [user]
         name = Matt Kotsenas
         useConfigOnly = true
