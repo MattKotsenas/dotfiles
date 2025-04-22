@@ -1,20 +1,18 @@
 [Unit]
 Name = "komorebi-bar"
-Description = "status bar for komorebi"
-Requires = ["komorebi"]
+Description = "grouping of komorebi bars"
+Requires = [
+    "komorebi-bar-1",
+    "komorebi-bar-2",
+]
 
 [Service]
-Kind = "Simple"
-Environment = [[
-    "KOMOREBI_CONFIG_HOME",
-    "$USERPROFILE/.config/komorebi",
-]]
-Restart = "OnFailure"
-RestartSec = 2
+Kind = "Oneshot"
+Restart = "Never"
 
 [Service.ExecStart]
-Executable = "komorebi-bar.exe"
+Executable = "cmd.exe"
 Arguments = [
-    "--config",
-    "$USERPROFILE/.config/komorebi/komorebi.bar.json",
+    "/c",
+    "",
 ]

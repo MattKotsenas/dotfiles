@@ -11,8 +11,9 @@ Restart = "OnFailure"
 RestartSec = 2
 
 [Service.ExecStart]
-Executable = "komorebi.exe"
+Executable = "komorebic.exe"
 Arguments = [
+    "start",
     "--config",
     "$USERPROFILE/.config/komorebi/komorebi.json",
 ]

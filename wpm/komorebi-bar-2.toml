@@ -1,0 +1,20 @@
+[Unit]
+Name = "komorebi-bar-2"
+Description = "status bar for komorebi"
+Requires = ["komorebi"]
+
+[Service]
+Kind = "Simple"
+Environment = [[
+    "KOMOREBI_CONFIG_HOME",
+    "$USERPROFILE/.config/komorebi",
+]]
+Restart = "OnFailure"
+RestartSec = 2
+
+[Service.ExecStart]
+Executable = "komorebi-bar.exe"
+Arguments = [
+    "--config",
+    "$USERPROFILE/.config/komorebi/komorebi.bar.2.json",
+]
