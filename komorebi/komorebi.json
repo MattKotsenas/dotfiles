@@ -41,21 +41,12 @@
     {
       "workspaces": [
         {
-          "name": "main",
-          "layout": "UltrawideVerticalStack"
-        },
-        {
           "name": "chat",
-          "layout": "Columns",
+          "layout": "Rows",
           "initial_workspace_rules": [
             {
-              "id": "msedge.exe",
-              "kind": "Exe",
-              "matching_strategy": "Equals"
-            },
-            {
-              "id": "ms-teams.exe",
-              "kind": "Exe",
+              "id": "Microsoft To Do",
+              "kind": "Title",
               "matching_strategy": "Equals"
             },
             {
@@ -67,12 +58,13 @@
               "id": "olk.exe",
               "kind": "Exe",
               "matching_strategy": "Equals"
+            },
+            {
+              "id": "ms-teams.exe",
+              "kind": "Exe",
+              "matching_strategy": "Equals"
             }
           ]
-        },
-        {
-          "name": "scratch",
-          "layout": "UltrawideVerticalStack"
         }
       ]
     }
