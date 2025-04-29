@@ -1,3 +1,6 @@
+# Set the cursor to a solid bar
+Write-Output "`e[6 q"
+
 # Disable the "make the prompt red during parse error" because it conflicts with oh-my-posh
 Set-PSReadLineOption -PromptText ''
 
