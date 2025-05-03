@@ -1,0 +1,13 @@
+{
+    "editor.rulers": [
+        120
+    ],
+    "security.promptForLocalFileProtocolHandling": false,
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "workbench.colorTheme": "Catppuccin Mocha",
+    "workbench.iconTheme": "catppuccin-mocha",
+    "catppuccin-icons.associations.files": {
+    }
+}
