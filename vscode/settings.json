@@ -39,5 +39,6 @@
         "obj": "folder_dist",
         "TestResults": "folder_tests",
         ".vs": "folder_vscode"
-    }
+    },
+    "editor.multiCursorModifier": "ctrlCmd"
 }

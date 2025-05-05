@@ -19,6 +19,7 @@
     ~/.config/kanata: kanata/**
     $LOCALAPPDATA/nvim: nvim/**
     $APPDATA/Code/User/settings.json: vscode/settings.json
+    $APPDATA/Code/User/keybindings.json: vscode/keybindings.json
 
 - shell:
   - command: winget configure configuration.dsc.yaml
