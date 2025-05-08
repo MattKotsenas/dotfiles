@@ -1,18 +1,18 @@
 <#
 .SYNOPSIS
-Use vshwere to find Visual Studio, and start it with a dnvm fixup
+Use vshwere to find Visual Studio, and start it.
 
 .DESCRIPTION
-This script is a workaround for the fact that Visual Studio does not respect the
-DOTNET_ROOT environment variable, so we need to set the PATH environment variable
-to include it.
+This script uses vswhere to find the latest version of Visual Studio installed on the system and starts it with the
+provided arguments.
 
-Once that bug is fixed, we can remove this function and just call start directly.
+The main benefit of this over `Start-Process` directly is that we can pick which version of Visual Studio to use instead
+of relying on default file associations (which always seem to be messed up for me when installing / uninstalling
+preview versions).
 #>
 function vs {
     $where = vswhere -latest -property productPath
     Start-Process `
         -FilePath $where `
-        -ArgumentList $args `
-        -Environment @{ PATH = "$Env:DOTNET_ROOT;$Env:PATH" }
+        -ArgumentList $args
 }
