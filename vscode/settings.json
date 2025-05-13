@@ -12,10 +12,10 @@
         "OWNERS.txt": "codeowners",
         "OWNERS": "codeowners",
 
-        "Directory.Build.props": "xml",
-        "Directory.Build.targets": "xml",
-        "Directory.Packages.props": "xml",
-        "Directory.Build.rsp": "xml",
+        "Directory.Build.props": "msbuild",
+        "Directory.Build.targets": "msbuild",
+        "Directory.Packages.props": "msbuild",
+        "Directory.Build.rsp": "msbuild",
         "dirs.proj": "visual-studio"
     },
     "catppuccin-icons.associations.extensions": {
@@ -24,11 +24,9 @@
 
         "csproj.user": "vscode-ignore",
 
-        "props": "xml",
-        "targets": "xml",
-        "proj": "visual-studio",
-
-        "binlog": "log"
+        "props": "msbuild",
+        "targets": "msbuild",
+        "proj": "visual-studio"
     },
     "catppuccin-icons.associations.folders": {
         ".pipelines": "folder_azure-pipelines",
