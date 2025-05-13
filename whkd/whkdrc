@@ -1,29 +1,25 @@
 .shell pwsh
-# alt + q                 : komorebic close
-# alt + shift + q         : komorebic close-workspace
-# alt + m                 : komorebic minimize
 
 # Focus windows
-alt + j                 : komorebic focus left
-alt + k                 : komorebic focus down
-alt + i                 : komorebic focus up
-alt + l                 : komorebic focus right
-alt + tab               : komorebic cycle-focus next
+alt + a                 : komorebic focus left
+alt + s                 : komorebic focus down
+alt + w                 : komorebic focus up
+alt + d                 : komorebic focus right
 
 # Move windows
-alt + shift + j         : komorebic move left
-alt + shift + k         : komorebic move down
-alt + shift + i         : komorebic move up
-alt + shift + l         : komorebic move right
-alt + shift + return    : komorebic promote
+alt + shift + a         : komorebic move left
+alt + shift + s         : komorebic move down
+alt + shift + w         : komorebic move up
+alt + shift + d         : komorebic move right
+alt + shift + q         : komorebic promote
 
 # Stack windows
-alt + shift + left      : komorebic stack left
-alt + shift + down      : komorebic stack down
-alt + shift + up        : komorebic stack up
-alt + shift + right     : komorebic stack right
-alt + shift + oem_1     : komorebic unstack # oem_1 is ;
-alt + shift + tab       : komorebic cycle-stack next
+alt + ctrl + a          : komorebic stack left
+alt + ctrl + s          : komorebic stack down
+alt + ctrl + w          : komorebic stack up
+alt + ctrl + d          : komorebic stack right
+alt + ctrl + q          : komorebic unstack
+alt + tab               : komorebic cycle-stack next
 
 # Resize
 alt + oem_plus          : komorebic resize-axis horizontal increase
@@ -32,7 +28,7 @@ alt + shift + oem_plus  : komorebic resize-axis vertical increase
 alt + shift + oem_minus : komorebic resize-axis vertical decrease
 
 # Manipulate windows
-alt + t                 : komorebic toggle-float
+alt + shift + t         : komorebic toggle-float
 alt + shift + f         : komorebic toggle-monocle
 
 # Window manager options
