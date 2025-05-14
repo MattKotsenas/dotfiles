@@ -9,13 +9,12 @@
     "workbench.colorTheme": "Catppuccin Mocha",
     "workbench.iconTheme": "catppuccin-mocha",
     "catppuccin-icons.associations.files": {
-        "OWNERS.txt": "codeowners",
-        "OWNERS": "codeowners",
+        "owners.txt": "codeowners",
 
-        "Directory.Build.props": "msbuild",
-        "Directory.Build.targets": "msbuild",
-        "Directory.Packages.props": "msbuild",
-        "Directory.Build.rsp": "msbuild",
+        "directory.build.props": "msbuild",
+        "directory.build.targets": "msbuild",
+        "directory.packages.props": "msbuild",
+        "directory.build.rsp": "msbuild",
         "dirs.proj": "visual-studio"
     },
     "catppuccin-icons.associations.extensions": {
@@ -35,7 +34,7 @@
         "artifacts": "folder_dist",
         "publish": "folder_dist",
         "obj": "folder_dist",
-        "TestResults": "folder_tests",
+        "testresults": "folder_tests",
         ".vs": "folder_vscode"
     },
     "editor.multiCursorModifier": "ctrlCmd"
