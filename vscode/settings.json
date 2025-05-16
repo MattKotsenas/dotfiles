@@ -23,6 +23,8 @@
 
         "csproj.user": "vscode-ignore",
 
+        ".xlf": "xml",
+
         "props": "msbuild",
         "targets": "msbuild",
         "proj": "visual-studio"
