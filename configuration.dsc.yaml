@@ -40,6 +40,12 @@ properties:
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
+        description: Install NVM for Windows
+      settings:
+        id: CoreyButler.NVMforWindows
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
         description: Install Neovim
       settings:
         id: Neovim.Neovim
