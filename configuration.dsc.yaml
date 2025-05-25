@@ -32,6 +32,7 @@ properties:
     # TODO: Install: Install-Module -Name PSFzf
     # TODO: Install thefuck
     # TODO: Install wpm
+    # TODO: Install pyenv-win
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install PowerShell 7
