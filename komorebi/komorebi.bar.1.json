@@ -33,40 +33,28 @@
       "Komorebi": {
         "workspaces": {
           "enable": true,
-          "hide_empty_workspaces": false
+          "hide_empty_workspaces": true
         },
         "layout": {
           "enable": true
         },
-        "focused_window": {
+        "focused_container": {
           "enable": true,
-          "show_icon": true
+          "show_icon": true,
+          "display": "Icon"
         }
       }
     }
   ],
-  "right_widgets": [
+  "center_widgets": [
     {
-      "Media": {
-        "enable": true
-      }
-    },
-    {
-      "Cpu": {
-        "enable": true
-      }
-    },
-    {
-      "Memory": {
-        "enable": true
-      }
-    },
-    {
-      "Network": {
+      "Time": {
         "enable": true,
-        "show_default_interface": false,
-        "show_total_data_transmitted": false,
-        "show_network_activity": true
+        "changing_icon": true,
+        "format": {
+          "Custom": "%a %m/%d %I:%M:%S %p %Z"
+        },
+          "timezone": "America/Los_Angeles"
       }
     },
     {
@@ -98,15 +86,30 @@
         },
           "timezone": "Asia/Tel_Aviv"
       }
+    }
+  ],
+  "right_widgets" : [
+    {
+      "Media": {
+        "enable": true
+      }
     },
     {
-      "Time": {
+      "Cpu": {
+        "enable": true
+      }
+    },
+    {
+      "Memory": {
+        "enable": true
+      }
+    },
+    {
+      "Network": {
         "enable": true,
-        "changing_icon": true,
-        "format": {
-          "Custom": "%a %m/%d %I:%M:%S %p %Z"
-        },
-          "timezone": "America/Los_Angeles"
+        "show_default_interface": true,
+        "show_total_data_transmitted": false,
+        "show_network_activity": true,
       }
     },
     {
