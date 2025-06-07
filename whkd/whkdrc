@@ -18,8 +18,9 @@ alt + ctrl + a          : komorebic stack left
 alt + ctrl + s          : komorebic stack down
 alt + ctrl + w          : komorebic stack up
 alt + ctrl + d          : komorebic stack right
-alt + ctrl + q          : komorebic unstack
-alt + tab               : komorebic cycle-stack next
+alt + ctrl + z          : komorebic cycle-stack previous
+alt + ctrl + x          : komorebic cycle-stack next
+alt + ctrl + c          : komorebic unstack
 
 # Resize
 alt + oem_plus          : komorebic resize-axis horizontal increase
