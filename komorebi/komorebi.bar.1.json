@@ -9,11 +9,11 @@
       "bottom": 40
     }
   },
-  "font_family": "JetBrains Mono",
+  "font_family": "Segoe UI Semilight",
   "theme": {
     "palette": "Base16",
-    "name": "Ashes",
-    "accent": "Base0D"
+    "name": "CatppuccinMocha",
+    "accent": "Base0E"
   },
   "transparency_alpha": 0,
   "grouping": {

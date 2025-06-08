@@ -9,11 +9,11 @@
       "bottom": 40
     }
   },
-  "font_family": "JetBrains Mono",
+  "font_family": "Segoe UI Semilight",
   "theme": {
     "palette": "Base16",
-    "name": "Ashes",
-    "accent": "Base0D"
+    "name": "CatppuccinMocha",
+    "accent": "Base0E"
   },
   "transparency_alpha": 0,
   "grouping": {
@@ -33,14 +33,15 @@
       "Komorebi": {
         "workspaces": {
           "enable": true,
-          "hide_empty_workspaces": false
+          "hide_empty_workspaces": true
         },
         "layout": {
           "enable": true
         },
-        "focused_window": {
+        "focused_container": {
           "enable": true,
-          "show_icon": true
+          "show_icon": true,
+          "display": "Icon"
         }
       }
     }
