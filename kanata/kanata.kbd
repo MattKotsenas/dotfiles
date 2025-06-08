@@ -1,6 +1,7 @@
 ;; Simple mods
 ;; Features:
 ;;   - Tap caps for esc
+;;   - Long press caps for caps
 ;;   - Hold right alt to remap right arrow to right control
 
 (defcfg
@@ -10,14 +11,11 @@
   caps ralt right
 )
 (defvar
-  ;; Note: consider using different time values for your different fingers.
-  ;; For example, your pinkies might be slower to release keys and index
-  ;; fingers faster.
-  tap-time 200
-  hold-time 150
+  tap-time 150
+  long-press-time 400
 )
 (deflayermap (base)
-  caps esc
+  caps (tap-hold $tap-time $long-press-time esc caps)
   ralt (multi ralt (layer-while-held komorebi))
 )
 (deflayermap (komorebi)
