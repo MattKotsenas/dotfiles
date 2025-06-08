@@ -1,13 +1,13 @@
 ;; Simple mods
 ;; Features:
 ;;   - Tap caps for esc
-;;   - Hold caps to modify jikl to arrow keys
+;;   - Hold right alt to remap right arrow to right control
 
 (defcfg
   process-unmapped-keys yes
 )
 (defsrc
-  caps j   i   k   l
+  caps ralt right
 )
 (defvar
   ;; Note: consider using different time values for your different fingers.
@@ -17,11 +17,9 @@
   hold-time 150
 )
 (deflayermap (base)
-  caps (tap-hold $tap-time $hold-time esc (layer-while-held nav))
+  caps esc
+  ralt (multi ralt (layer-while-held komorebi))
 )
-(deflayermap (nav)
-  i up
-  j left
-  k down
-  l right
+(deflayermap (komorebi)
+  right rctrl
 )
