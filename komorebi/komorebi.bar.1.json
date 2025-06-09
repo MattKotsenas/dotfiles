@@ -52,7 +52,7 @@
         "enable": true,
         "changing_icon": true,
         "format": {
-          "Custom": "%a %m/%d %I:%M:%S %p %Z"
+          "Custom": "%a %m/%d %I:%M %p %Z"
         },
           "timezone": "America/Los_Angeles"
       }
@@ -62,7 +62,7 @@
         "enable": true,
         "changing_icon": true,
         "format": {
-          "Custom": "%I:%M:%S %p %Z"
+          "Custom": "%I:%M %p %Z"
         },
           "timezone": "UTC"
       }
@@ -72,7 +72,7 @@
         "enable": true,
         "changing_icon": true,
         "format": {
-          "Custom": "%I:%M:%S %p IDC"
+          "Custom": "%I:%M %p IDC"
         },
           "timezone": "Asia/Kolkata"
       }
@@ -82,7 +82,7 @@
         "enable": true,
         "changing_icon": true,
         "format": {
-          "Custom": "%I:%M:%S %p ILDC"
+          "Custom": "%I:%M %p ILDC"
         },
           "timezone": "Asia/Tel_Aviv"
       }
