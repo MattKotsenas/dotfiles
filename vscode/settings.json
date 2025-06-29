@@ -39,5 +39,6 @@
         "testresults": "folder_tests",
         ".vs": "folder_vscode"
     },
-    "editor.multiCursorModifier": "ctrlCmd"
+    "editor.multiCursorModifier": "ctrlCmd",
+    "github.copilot.nextEditSuggestions.enabled": true
 }
