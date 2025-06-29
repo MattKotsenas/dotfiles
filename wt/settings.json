@@ -106,7 +106,8 @@
                 "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
                 "hidden": false,
                 "name": "PowerShell",
-                "source": "Windows.Terminal.PowershellCore"
+                "source": "Windows.Terminal.PowershellCore",
+                "startingDirectory": "%PROJECTS_PATH%"
             },
             {
                 "guid": "{f7f1ec7e-c6fc-5257-a36b-dce8875e4c55}",
@@ -232,7 +233,6 @@
             "yellow": "#A2734C"
         }
     ],
-    "startOnUserLogin": true,
     "themes": 
     [
         {
