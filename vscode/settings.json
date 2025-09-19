@@ -40,5 +40,12 @@
         ".vs": "folder_vscode"
     },
     "editor.multiCursorModifier": "ctrlCmd",
-    "github.copilot.nextEditSuggestions.enabled": true
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "chat.tools.terminal.autoApprove": {
+        "dir": true,
+        "dotnet build": true,
+        "dotnet test": true,
+        "dotnet clean": true,
+        "dotnet restore": true
+    },
 }
