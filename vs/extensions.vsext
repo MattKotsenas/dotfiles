@@ -1,20 +1,26 @@
 {
-  "id": "e5eeace5-5db9-499e-a2a7-b4354efe00ae",
+  "id": "53061b32-b964-40db-8810-5b4c9437f406",
   "version": "1.0",
   "name": "My Visual Studio extensions",
   "description": "A collection of my Visual Studio extensions",
   "extensions": [
     {
+      "vsixId": "78bd8d04-5027-4329-814f-f8f90e13b29f",
+      "name": "Concurrency Visualizer for Visual Studio 2022",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=Diagnostics.DiagnosticsConcurrencyVisualizer2022",
+      "downloadUrl": "https://diagnostics.gallery.vsassets.io:443/_apis/public/gallery/publisher/Diagnostics/extension/DiagnosticsConcurrencyVisualizer2022/17.0.1/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
+      "vsixId": "Microsoft.VisualStudio.LiveShare.2022",
+      "name": "Live Share 2022",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MS-vsliveshare.vsls-vs-2022",
+      "downloadUrl": "https://ms-vsliveshare.gallery.vsassets.io:443/_apis/public/gallery/publisher/MS-vsliveshare/extension/vsls-vs-2022/1.0.5949.0/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
       "vsixId": "MarkdownEditor2022.2347dc70-1875-4775-bf48-f2b9fdfee8d4",
       "name": "Markdown Editor v2",
       "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MadsKristensen.MarkdownEditor2",
       "downloadUrl": "https://madskristensen.gallery.vsassets.io:443/_apis/public/gallery/publisher/MadsKristensen/extension/MarkdownEditor2/2.0.199/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
-    },
-    {
-      "vsixId": "KeyboardHero.a180ac1b-e008-4a04-8d2b-30266ce0e9a6",
-      "name": "Keyboard Hero",
-      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MadsKristensen.KeyboardHero",
-      "downloadUrl": "https://madskristensen.gallery.vsassets.io:443/_apis/public/gallery/publisher/MadsKristensen/extension/KeyboardHero/1.0.15/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
     },
     {
       "vsixId": "A274A0E2-E41E-40CC-A694-8D5D14BBD2D0",
@@ -23,16 +29,16 @@
       "downloadUrl": "https://mlnet.gallery.vsassets.io:443/_apis/public/gallery/publisher/MLNET/extension/ModelBuilder2022/17.19.2.2511501/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
     },
     {
-      "vsixId": "78bd8d04-5027-4329-814f-f8f90e13b29f",
-      "name": "Concurrency Visualizer for Visual Studio 2022",
-      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=Diagnostics.DiagnosticsConcurrencyVisualizer2022",
-      "downloadUrl": "https://diagnostics.gallery.vsassets.io:443/_apis/public/gallery/publisher/Diagnostics/extension/DiagnosticsConcurrencyVisualizer2022/17.0.1/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+      "vsixId": "0c8bd9fa-77d5-4563-ab57-9e01608c3d05",
+      "name": "Tweaks 2022",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MadsKristensen.Tweaks2022",
+      "downloadUrl": "https://madskristensen.gallery.vsassets.io:443/_apis/public/gallery/publisher/MadsKristensen/extension/Tweaks2022/1.1.143/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
     },
     {
-      "vsixId": "VSOutputEnhancer.Nikolay Balakin.a06be4c3-f97e-425c-8a0d-bdef08ac2abb",
-      "name": "Output enhancer",
-      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=NikolayBalakin.Outputenhancer",
-      "downloadUrl": "https://nikolaybalakin.gallery.vsassets.io:443/_apis/public/gallery/publisher/NikolayBalakin/extension/Outputenhancer/1.8/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+      "vsixId": "WorkspaceFiles.e5308ac4-ca47-4992-945b-9b144a10c2d0",
+      "name": "File Explorer",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MadsKristensen.WorkflowBrowser",
+      "downloadUrl": "https://madskristensen.gallery.vsassets.io:443/_apis/public/gallery/publisher/MadsKristensen/extension/WorkflowBrowser/1.0.93/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
     },
     {
       "vsixId": "Catppuccin_for_Visual_Studio.cf093970-131b-4883-8405-0577339048c3",
@@ -41,10 +47,28 @@
       "downloadUrl": "https://catppuccin.gallery.vsassets.io:443/_apis/public/gallery/publisher/Catppuccin/extension/CatppuccinVS/1.6.3/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
     },
     {
+      "vsixId": "Disasmo.39513ef5-c3ee-4547-b7be-f29c752b591d",
+      "name": "Disasmo",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=EgorBogatov.Disasmo",
+      "downloadUrl": "https://egorbogatov.gallery.vsassets.io:443/_apis/public/gallery/publisher/EgorBogatov/extension/Disasmo/5.9.2/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
       "vsixId": "0a987da3-4577-4eec-aaa9-a4c2cdd5d22b",
       "name": "Reset Zoom",
       "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MadsKristensen.ResetZoom",
       "downloadUrl": "https://madskristensen.gallery.vsassets.io:443/_apis/public/gallery/publisher/MadsKristensen/extension/ResetZoom/1.3.4/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
+      "vsixId": "ea5c68d6-cdae-4e79-bd46-2a39e95bb256",
+      "name": "File Differ",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileDiffer",
+      "downloadUrl": "https://madskristensen.gallery.vsassets.io:443/_apis/public/gallery/publisher/MadsKristensen/extension/FileDiffer/3.0.53/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
+      "vsixId": "EditorConfigGuidelines.b132e8b2-41e6-4df6-b226-bfabfd00e717",
+      "name": "EditorConfig Guidelines",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=Ivan.EditorConfigGuidelines",
+      "downloadUrl": "https://ivan.gallery.vsassets.io:443/_apis/public/gallery/publisher/Ivan/extension/EditorConfigGuidelines/1.1.0/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
     },
     {
       "vsixId": "VSShortcutsManager.d8578b8b-cb70-49ee-b009-9e659c413f4b",
@@ -53,10 +77,40 @@
       "downloadUrl": "https://justinclareburtmsft.gallery.vsassets.io:443/_apis/public/gallery/publisher/JustinClareburtMSFT/extension/VSShortcutsManager/3.2.0/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
     },
     {
-      "vsixId": "Microsoft.VisualStudio.LiveShare.2022",
-      "name": "Live Share 2022",
-      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MS-vsliveshare.vsls-vs-2022",
-      "downloadUrl": "https://ms-vsliveshare.gallery.vsassets.io:443/_apis/public/gallery/publisher/MS-vsliveshare/extension/vsls-vs-2022/1.0.5949.0/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+      "vsixId": "KeyboardHero.a180ac1b-e008-4a04-8d2b-30266ce0e9a6",
+      "name": "Keyboard Hero",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MadsKristensen.KeyboardHero",
+      "downloadUrl": "https://madskristensen.gallery.vsassets.io:443/_apis/public/gallery/publisher/MadsKristensen/extension/KeyboardHero/1.0.15/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
+      "vsixId": "3a7b4930-a5fb-46ec-a9b8-9610c8f953b8",
+      "name": "File Icons",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MadsKristensen.FileIcons",
+      "downloadUrl": "https://madskristensen.gallery.vsassets.io:443/_apis/public/gallery/publisher/MadsKristensen/extension/FileIcons/2.8.244/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
+      "vsixId": "dac582ef-fc73-42f6-ad45-afaad93d88a4",
+      "name": "Trailing Whitespace Visualizer",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=MadsKristensen.TrailingWhitespace64",
+      "downloadUrl": "https://madskristensen.gallery.vsassets.io:443/_apis/public/gallery/publisher/MadsKristensen/extension/TrailingWhitespace64/2.6.108/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
+      "vsixId": "ebf12ca7-a1fd-4aee-a894-4a0c5682fc2f",
+      "name": "ILSpy 2022",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=SharpDevelopTeam.ILSpy2022",
+      "downloadUrl": "https://sharpdevelopteam.gallery.vsassets.io:443/_apis/public/gallery/publisher/SharpDevelopTeam/extension/ILSpy2022/9.1.0.7988/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
+      "vsixId": "PowerShellTools.VS2022",
+      "name": "PowerShell Tools for Visual Studio 2022",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=AdamRDriscoll.PowerShellToolsVS2022",
+      "downloadUrl": "https://adamrdriscoll.gallery.vsassets.io:443/_apis/public/gallery/publisher/AdamRDriscoll/extension/PowerShellToolsVS2022/2024.12.0/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
+    },
+    {
+      "vsixId": "VSOutputEnhancer.Nikolay Balakin.a06be4c3-f97e-425c-8a0d-bdef08ac2abb",
+      "name": "Output enhancer",
+      "moreInfoUrl": "https://marketplace.visualstudio.com/items?itemName=NikolayBalakin.Outputenhancer",
+      "downloadUrl": "https://nikolaybalakin.gallery.vsassets.io:443/_apis/public/gallery/publisher/NikolayBalakin/extension/Outputenhancer/1.8/assetbyname/Microsoft.VisualStudio.Ide.Payload?redirect=true\u0026update=true"
     }
   ]
 }
