@@ -11,11 +11,11 @@
         root = rev-parse --show-toplevel
         nuke = "!f() { export GIT_ASK_YESNO=false; git clean -xdf ; git reset --hard; }; f"
 [rerere]
-	enabled = true
+        enabled = true
 [pull]
-	ff = only
+        ff = only
 [stash]
-	showIncludeUntracked = true
+        showIncludeUntracked = true
 [core]
         fsmonitor = true
         untrackedcache = true
