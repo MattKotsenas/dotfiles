@@ -1,0 +1,3 @@
+git:
+  paging:
+    externalDiffCommand: 'pwsh -NoProfile -File ~/.config/git/lazygit/delta-diff.ps1'
