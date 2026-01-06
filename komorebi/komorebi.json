@@ -51,7 +51,7 @@
       "workspaces": [
         {
           "name": "chat",
-          "layout": "Rows",
+          "layout": "VerticalStack",
           "initial_workspace_rules": [
             {
               "id": "Microsoft To Do",

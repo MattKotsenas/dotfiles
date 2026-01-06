@@ -48,4 +48,8 @@
         "dotnet clean": true,
         "dotnet restore": true
     },
+    "diffEditor.renderSideBySide": false,
+    "[yaml]": {
+        "diffEditor.ignoreTrimWhitespace": false
+    },
 }
