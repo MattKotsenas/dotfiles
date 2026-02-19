@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "aspire": {
+      "type": "local",
+      "command": "aspire",
+      "tools": [
+        "*"
+      ],
+      "args": [
+        "mcp",
+        "start"
+      ]
+    }
+  }
+}

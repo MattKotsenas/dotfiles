@@ -1,0 +1,6 @@
+{
+  "log_level": "all",
+  "banner": "never",
+  "render_markdown": true,
+  "experimental": true
+}

@@ -94,6 +94,13 @@ properties:
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
+        description: Install GitHub Copilot CLI
+        allowPrerelease: true
+      settings:
+        id: GitHub.Copilot
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
         description: Install Microsoft Visual Studio Code (User)
         allowPrerelease: true
       settings:
