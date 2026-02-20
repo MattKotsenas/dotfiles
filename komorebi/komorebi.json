@@ -23,10 +23,6 @@
   "stackbar": {
     "mode": "Never"
   },
-  "display_index_preferences": {
-    "0": "DELA0DE-5&42b49c9&0&UID260",
-    "1": "GSM76E4-5&42b49c9&0&UID264"
-  },
   "manage_rules": [
     {
       "kind": "Title",
@@ -39,25 +35,14 @@
       "workspaces": [
         {
           "name": "main",
-          "layout": "UltrawideVerticalStack"
+          "layout": "UltrawideVerticalStack",
+          "workspace_rules": []
         },
-        {
-          "name": "scratch",
-          "layout": "UltrawideVerticalStack"
-        }
-      ]
-    },
-    {
-      "workspaces": [
         {
           "name": "chat",
           "layout": "Columns",
+          "window_container_behaviour": "Create",
           "workspace_rules": [
-            {
-              "id": "Microsoft To Do",
-              "kind": "Title",
-              "matching_strategy": "Equals"
-            },
             {
               "id": "outlook.exe",
               "kind": "Exe",
@@ -72,8 +57,33 @@
               "id": "ms-teams.exe",
               "kind": "Exe",
               "matching_strategy": "Equals"
+            },
+            {
+              "id": "slack.exe",
+              "kind": "Exe",
+              "matching_strategy": "Equals"
+            },
+            {
+              "id": "Discord.exe",
+              "kind": "Exe",
+              "matching_strategy": "Equals"
             }
           ]
+        }
+      ]
+    },
+    {
+      "workspaces": [
+        {
+          "name": "main",
+          "layout": "UltrawideVerticalStack",
+          "workspace_rules": []
+        },
+        {
+          "name": "chat",
+          "layout": "Columns",
+          "window_container_behaviour": "Create",
+          "workspace_rules": []
         }
       ]
     }
