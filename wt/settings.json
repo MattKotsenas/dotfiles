@@ -12,6 +12,14 @@
             "id": "User.copy.644BA8F2"
         },
         {
+            "command": 
+            {
+                "action": "moveFocus",
+                "direction": "right"
+            },
+            "id": "User.moveFocus.right"
+        },
+        {
             "command": "paste",
             "id": "User.paste"
         },
@@ -25,6 +33,61 @@
                 "action": "closeTab"
             },
             "id": "User.closeTab.0"
+        },
+        {
+            "command": 
+            {
+                "action": "moveFocus",
+                "direction": "left"
+            },
+            "id": "User.moveFocus.left"
+        },
+        {
+            "command": 
+            {
+                "action": "moveFocus",
+                "direction": "down"
+            },
+            "id": "User.moveFocus.down"
+        },
+        {
+            "command": 
+            {
+                "action": "splitPane",
+                "split": "right",
+                "splitMode": "duplicate"
+            },
+            "id": "User.splitPane.right"
+        },
+        {
+            "command": 
+            {
+                "action": "moveFocus",
+                "direction": "up"
+            },
+            "id": "User.moveFocus.up"
+        },
+        {
+            "command": 
+            {
+                "action": "splitPane",
+                "split": "auto",
+                "splitMode": "duplicate"
+            },
+            "id": "User.splitPane.auto"
+        },
+        {
+            "command": "closePane",
+            "id": "User.closePane"
+        },
+        {
+            "command": 
+            {
+                "action": "splitPane",
+                "split": "down",
+                "splitMode": "duplicate"
+            },
+            "id": "User.splitPane.down"
         }
     ],
     "copyFormatting": "none",
@@ -37,7 +100,7 @@
             "keys": "ctrl+c"
         },
         {
-            "id": "Terminal.DuplicatePaneAuto",
+            "id": "User.moveFocus.up",
             "keys": "ctrl+shift+k"
         },
         {
@@ -49,12 +112,36 @@
             "keys": "ctrl+shift+f"
         },
         {
-            "id": "Terminal.DuplicatePaneAuto",
-            "keys": "alt+shift+d"
-        },
-        {
             "id": "User.closeTab.0",
             "keys": "ctrl+w"
+        },
+        {
+            "id": "User.moveFocus.left",
+            "keys": "ctrl+shift+h"
+        },
+        {
+            "id": "User.moveFocus.down",
+            "keys": "ctrl+shift+j"
+        },
+        {
+            "id": "User.moveFocus.right",
+            "keys": "ctrl+shift+l"
+        },
+        {
+            "id": "User.splitPane.auto",
+            "keys": "ctrl+shift+;"
+        },
+        {
+            "id": "User.splitPane.down",
+            "keys": "ctrl+shift+["
+        },
+        {
+            "id": "User.splitPane.right",
+            "keys": "ctrl+shift+]"
+        },
+        {
+            "id": "User.closePane",
+            "keys": "ctrl+shift+/"
         }
     ],
     "newTabMenu": 
@@ -205,6 +292,12 @@
                 "hidden": false,
                 "name": "Developer PowerShell for VS 18",
                 "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "guid": "{6d98840e-ad42-59bf-a688-50446bfe6ea1}",
+                "hidden": false,
+                "name": "Ubuntu-24.04",
+                "source": "Microsoft.WSL"
             }
         ]
     },
