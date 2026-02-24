@@ -1,3 +1,6 @@
 # Ignore any installed PowerShell modules
 Modules/**
 Help/**
+
+# Work email config (not checked in)
+git/user.azdo.gitconfig

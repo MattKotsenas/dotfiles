@@ -24,6 +24,14 @@
 [user]
         name = Matt Kotsenas
         useConfigOnly = true
+[includeIf "hasconfig:remote.*.url:https://github.com/**"]
+        path = ./user.github.gitconfig
+[includeIf "hasconfig:remote.*.url:git@github.com:**"]
+        path = ./user.github.gitconfig
+[includeIf "hasconfig:remote.*.url:https://dev.azure.com/**"]
+        path = ./user.azdo.gitconfig
+[includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com:**"]
+        path = ./user.azdo.gitconfig
 [merge]
         tool = bc5
 [diff]
