@@ -13,6 +13,8 @@ Before implementing:
 - If multiple interpretations exist, present them - don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- Search the codebase for relevant context. Consult skills or tools. Prefer gathered knowledge over pre-trained knowledge.
+- For significant design decisions, justify against idiomatic patterns and reference official documentation. Separate planning from implementation - do not implement until explicitly told to start.
 
 ## 2. Simplicity First
 
@@ -51,6 +53,9 @@ Transform tasks into verifiable goals:
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
+For bug fixes, go red then green: reproduce the failure in a test first, then fix the code to make it pass.
+Do not claim something is fixed or completed without verifying it against the acceptance criteria.
+
 For multi-step tasks, state a brief plan:
 ```
 1. [Step] → verify: [check]
@@ -59,16 +64,6 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
-# Communication
-
-Do not state that something is fixed or completed without verifying it. If it's new code, check the acceptance criteria.
-If it's a bug fix, reproduce the bug first, then verify the fix.
-
-# Reasoning
-
-When reasoning, start with the prompt or task description, then search the codebase for relevant information. Next,
-consult releveant skills or tools. Prefer this gathered knowledge over pre-trained knowledge.
 
 # Principles
 
@@ -104,18 +99,8 @@ The following instructions are derived from repeated corrections across real ses
 
 Never guess at outputs or implementation details. Run the real tool, test, or command to experiment or
 generate actual data. If you cannot verify something, say so explicitly. Do not make up plausible-looking
-content or explanations and present it as real.
-
-## Stay In Scope
-
-Do not add features or opinionated defaults that were not explicitly requested.
-Do not rename things, add prefixes, or restructure beyond what was asked. Every changed line must trace
-directly to the user's request.
-
-## Check Before Answering
-
-Always inspect the actual code, config files, or runtime state before answering questions about current
-behavior. Do not answer from assumptions about what the code "probably" does. When in doubt, read the file.
+content or explanations and present it as real. Always inspect actual code, config files, or runtime state
+before answering questions about current behavior. When in doubt, read the file.
 
 ## Think Through Edge Cases First
 
@@ -141,12 +126,6 @@ naming inconsistencies rather than waiting for the user to notice.
 After each logical unit of work, create a git commit with a clear message. Do not accumulate large sets
 of uncommitted changes. Prefer reverts with a "REVERT" prefix over rebasing to drop commits when working autonomously.
 Note to the user that you've done so in case they want to clean up history
-
-## Justify Design Decisions
-
-Before implementing significant design decisions, explain your rationale and justify against idiomatic
-patterns for the technology in use. Reference official documentation. Separate planning and questions
-from implementation - do not implement until explicitly told to start.
 
 ## Writing High-Value Tests
 
