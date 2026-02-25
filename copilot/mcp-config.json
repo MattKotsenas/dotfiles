@@ -1,14 +1,25 @@
 {
   "mcpServers": {
     "aspire": {
+      "tools": [
+        "*"
+      ],
       "type": "local",
       "command": "aspire",
+      "args": [
+        "mcp",
+        "start"
+      ],
+      "source": "user"
+    },
+    "playwright": {
+      "type": "local",
+      "command": "npx",
       "tools": [
         "*"
       ],
       "args": [
-        "mcp",
-        "start"
+        "@playwright/mcp@latest"
       ]
     }
   }
