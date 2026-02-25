@@ -148,11 +148,27 @@ Before implementing significant design decisions, explain your rationale and jus
 patterns for the technology in use. Reference official documentation. Separate planning and questions
 from implementation - do not implement until explicitly told to start.
 
-## Automated Tests Over E2E Discovery
+## Writing High-Value Tests
 
-When fixing bugs found during E2E testing, add tests that would have caught the issue locally.
-Serialization, state transitions, and data model issues should always have fast local test coverage. Prefer tests
-with real behavior over mocks when possible.
+**Test real behavior, not wiring.** Don't test that constructors set properties, that DI resolves, or that mocks were called. Test observable outcomes: given this input, does the system produce the correct output? Given the feature is disabled, does nothing happen?
+
+**Use real infrastructure, not mocks of the thing under test.** Prefer Docker containers, emulators, and in-memory databases over mocking the system under test. Mocks are fine for *collecting* output (in-memory exporters, recorded activity lists) — not for replacing the thing you're testing.
+
+**Use realistic test data.** Copy real log messages, real query strings, real wire formats. Don't invent minimal synthetic strings that skip the hard parts.
+
+**Test edge cases at boundaries.** For any limit or parser: test valid input, exact boundary, one past the boundary, malformed input, empty/null. Test alternative formats (IPv6, HTTPS vs HTTP, different URI schemes).
+
+**Test the negative path.** Every feature needs at least one test verifying behavior when the feature is off, input is invalid, or the operation fails.
+
+**Use parameterized tests to document behavior.** `[Theory]` with `[InlineData]` or `[MemberData]` serves as both coverage and living documentation. Add comments for non-obvious cases.
+
+**Use snapshot testing for complex outputs.** When a test produces multi-property results (activities with tags, serialized objects), use Verify instead of dozens of individual assertions. Use custom scrubbers for non-deterministic values.
+
+**Test the API surface consumers actually use.** Test through the same DI extension methods, builder patterns, and configuration a consumer would write in `Program.cs`.
+
+**Test at multiple layers.** Fast unit tests for parsing/logic (milliseconds). Integration tests for real infrastructure (Docker). Don't collapse everything into one layer.
+
+**Keep test helpers minimal.** No elaborate test base classes. Small, focused helpers with clear names.
 
 ## Be Honest About Limitations
 
