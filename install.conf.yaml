@@ -18,7 +18,6 @@
     ~/.config/wpm: wpm/**
     ~/.config/kanata: kanata/**
     ~/.copilot/copilot-instructions.md: copilot/copilot-instructions.md
-    ~/.copilot/config.json: copilot/config.json
     ~/.copilot/mcp-config.json: copilot/mcp-config.json
     $LOCALAPPDATA/nvim: nvim/**
     $APPDATA/Code/User/settings.json: vscode/settings.json
@@ -30,31 +29,62 @@
     stdin: true
     stdout: true
     stderr: true
-  - command: bat cache --build
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      bat cache --build"
     description: Building bat cache
     stdout: true
     stderr: true
-  - command: copilot plugin marketplace add aaronontheweb/dotnet-skills || echo "Marketplace already registered"
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      $t = Join-Path $env:USERPROFILE '.copilot\config.json';
+      New-Item (Split-Path $t) -ItemType Directory -Force | Out-Null;
+      if (-not (Test-Path $t)) { '{}' | Set-Content $t };
+      jq -s '.[0] * .[1]' $t 'copilot/config.json' | Set-Content $t"
+    description: Merging Copilot preferences
+    stdout: true
+    stderr: true
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      copilot plugin marketplace add aaronontheweb/dotnet-skills || echo 'Marketplace already registered'"
     description: Registering dotnet-skills marketplace
     stdout: true
     stderr: true
-  - command: copilot plugin marketplace add mattkotsenas/agent-plugins || echo "Marketplace already registered"
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      copilot plugin marketplace add mattkotsenas/agent-plugins || echo 'Marketplace already registered'"
     description: Registering agent-plugins marketplace
     stdout: true
     stderr: true
-  - command: copilot plugin install dotnet-skills@dotnet-skills
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      copilot plugin install dotnet-skills@dotnet-skills"
     description: Installing dotnet-skills plugin
     stdout: true
     stderr: true
-  - command: copilot plugin install delve@agent-plugins
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      copilot plugin install delve@agent-plugins"
     description: Installing delve plugin
     stdout: true
     stderr: true
-  - command: copilot plugin install yes-milord@agent-plugins
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      copilot plugin install yes-milord@agent-plugins"
     description: Installing yes-milord plugin
     stdout: true
     stderr: true
-  - command: copilot plugin install richlander/dotnet-inspect
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      copilot plugin install richlander/dotnet-inspect"
     description: Installing dotnet-inspect plugin
     stdout: true
     stderr: true

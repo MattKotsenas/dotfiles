@@ -101,6 +101,13 @@ properties:
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
+        description: Install jq
+        allowPrerelease: true
+      settings:
+        id: jqlang.jq
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
         description: Install Microsoft Visual Studio Code (User)
         allowPrerelease: true
       settings:
