@@ -49,42 +49,12 @@
   - command: >-
       pwsh -NoProfile -Command "
       $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      copilot plugin marketplace add aaronontheweb/dotnet-skills || echo 'Marketplace already registered'"
-    description: Registering dotnet-skills marketplace
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      copilot plugin marketplace add mattkotsenas/agent-plugins || echo 'Marketplace already registered'"
-    description: Registering agent-plugins marketplace
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      copilot plugin install dotnet-skills@dotnet-skills"
-    description: Installing dotnet-skills plugin
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      copilot plugin install delve@agent-plugins"
-    description: Installing delve plugin
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      copilot plugin install yes-milord@agent-plugins"
-    description: Installing yes-milord plugin
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      copilot plugin marketplace add aaronontheweb/dotnet-skills;
+      copilot plugin marketplace add mattkotsenas/agent-plugins;
+      copilot plugin install dotnet-skills@dotnet-skills;
+      copilot plugin install delve@agent-plugins;
+      copilot plugin install yes-milord@agent-plugins;
       copilot plugin install richlander/dotnet-inspect"
-    description: Installing dotnet-inspect plugin
+    description: Installing Copilot plugins
     stdout: true
     stderr: true
