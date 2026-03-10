@@ -88,6 +88,13 @@
                 "splitMode": "duplicate"
             },
             "id": "User.splitPane.down"
+        },
+        {
+            "command": {
+                "action": "sendInput",
+                "input": "\u001b\r"
+            },
+            "keys": "shift+enter"
         }
     ],
     "copyFormatting": "none",
