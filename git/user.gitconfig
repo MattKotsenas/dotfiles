@@ -30,6 +30,8 @@
         path = ./user.github.gitconfig
 [includeIf "hasconfig:remote.*.url:https://dev.azure.com/**"]
         path = ./user.azdo.gitconfig
+[includeIf "hasconfig:remote.*.url:https://*@dev.azure.com/**"]
+        path = ./user.azdo.gitconfig
 [includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com:**"]
         path = ./user.azdo.gitconfig
 [merge]
