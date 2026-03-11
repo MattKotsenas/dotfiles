@@ -149,6 +149,10 @@ Note to the user that you've done so in case they want to clean up history
 
 **Keep test helpers minimal.** No elaborate test base classes. Small, focused helpers with clear names.
 
+## No Em-Dashes
+
+Never use an em-dash (—) in any output. If an em-dash is warranted, use a single hyphen (-) instead.
+
 ## Be Honest About Limitations
 
 If you are losing context, drifting, or uncertain, say so. Execute one plan fully before starting the
