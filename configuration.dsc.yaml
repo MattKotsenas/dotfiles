@@ -27,10 +27,8 @@ properties:
         Ensure: Present
     # NOTE: Install these packages manually
     # TODO: Install scoop
-    # TODO: Install pipx
     # TODO: Install posh-git Module
     # TODO: Install: Install-Module -Name PSFzf
-    # TODO: Install thefuck
     # TODO: Install wpm
     # TODO: Install pyenv-win
     - resource: Microsoft.WinGet.DSC/WinGetPackage
@@ -198,3 +196,24 @@ properties:
       settings:
         id: LGUG2Z.whkd
         source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: install-uv
+      directives:
+        description: Install uv (Python package manager)
+        allowPrerelease: true
+      settings:
+        id: astral-sh.uv
+        source: winget
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-uv
+      directives:
+        description: Install thefuck via uv tool
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          @{ Result = (uv tool list 2>$null | Select-String 'thefuck') }
+        TestScript: |
+          (uv tool list 2>$null | Select-String 'thefuck') -ne $null
+        SetScript: |
+          uv tool install thefuck --python 3.11
