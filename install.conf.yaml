@@ -7,7 +7,17 @@
 - clean: ['~']
 
 - link:
-    ~/Documents/PowerShell: pwsh/**
+    # Don't use /** for powershell, as otherwise each file gets its own symlink, which is annoying when testing changes
+    # to the scripts. Instead use glob: false for the scripts directory, so that only one symlink is created for the
+    # whole directory.
+    # You shouldn't symlink the whole powershell directory, as that would include the module manifest, which would cause
+    # problems with importing the module.
+    ~/Documents/PowerShell:
+      path: pwsh/*
+      exclude: [pwsh/scripts]
+    ~/Documents/PowerShell/scripts:
+      path: pwsh/scripts
+      glob: false
     ~/.config/git: git/**
     ~/.config/thefuck: thefuck/**
     ~/.config/eza: eza/**
