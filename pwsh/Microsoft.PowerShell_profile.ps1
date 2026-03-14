@@ -19,8 +19,13 @@ function prompt {
     "[async init]: PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) ";
 }
 
-# Load modules asynchronously to reduce shell startup time
+# Load modules asynchronously to reduce shell startup time.
+# Chunks are ordered by priority: most-needed commands first.
+# Each chunk costs ~335ms of OnIdle scheduling overhead, so trivial chunks are merged.
 [System.Collections.Queue]$__initQueue = @(
+    {
+        Import-Module -Name (Join-Path (Split-Path $PROFILE) scripts UserScripts.psd1) -Global
+    },
     {
         New-Module -ScriptBlock {
             function Set-PoshJobInfo {
@@ -60,9 +65,7 @@ function prompt {
     {
         # This must be loaded _after_ omp, as zoxide hooks the prompt function
         New-Module -Name zoxide -ScriptBlock { Invoke-Expression (& { (zoxide init powershell | Out-String) }) } | Import-Module -Global
-    },
-    {
-        Import-Module -Name Microsoft.WinGet.CommandNotFound -Global
+        Set-Alias -Name cd -Value z -Option AllScope
     },
     {
         $Env:FZF_ALT_C_COMMAND = "fd --type dir --hidden --exclude .git"
@@ -75,16 +78,14 @@ function prompt {
         Set-PsFzfOption -AltCCommand ${function:Invoke-PsFzfAltCCommandHandler}
     },
     {
-        $Env:EZA_CONFIG_DIR = "$env:USERPROFILE/.config/eza"
+        Import-Module -Name Microsoft.WinGet.CommandNotFound -Global
     },
     {
+        # Env vars and completions - merged to reduce OnIdle scheduling overhead
+        $Env:EZA_CONFIG_DIR = "$env:USERPROFILE/.config/eza"
         $Env:BAT_CONFIG_DIR="$Env:USERPROFILE/.config/bat"
         $Env:BAT_CONFIG_PATH="$Env:USERPROFILE/.config/bat/bat.conf"
-    },
-    {
-        Import-Module -Name (Join-Path (Split-Path $PROFILE) scripts UserScripts.psd1) -Global
-    },
-    {
+
         # PowerShell parameter completion shim for the dotnet CLI
         Register-ArgumentCompleter -Native -CommandName dotnet -ScriptBlock {
             param($wordToComplete, $commandAst, $cursorPosition)
