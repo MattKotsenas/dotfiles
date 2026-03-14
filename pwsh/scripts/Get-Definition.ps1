@@ -25,5 +25,7 @@ function Get-Definition
     $response = Invoke-WebRequest -Uri "http://services.aonaware.com/DictService/DictService.asmx/Define?word=$Word"
     $xml = [xml]($response.Content)
 
-    $xml.WordDefinition.Definitions.Definition | fl
+    $xml.WordDefinition.Definitions.Definition | Format-List
 }
+
+Set-Alias -Name dict -Value Get-Definition

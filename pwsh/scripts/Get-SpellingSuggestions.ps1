@@ -33,7 +33,7 @@ function Get-SpellingSuggestions
 
     process
     {
-        $app.GetSpellingSuggestions($Word) | %{ Write-Output $_.Name }
+        $app.GetSpellingSuggestions($Word) | ForEach-Object{ Write-Output $_.Name }
     }
 
     end
@@ -45,3 +45,5 @@ function Get-SpellingSuggestions
         [GC]::Collect()
     }
 }
+
+Set-Alias -Name spell -Value Get-SpellingSuggestions

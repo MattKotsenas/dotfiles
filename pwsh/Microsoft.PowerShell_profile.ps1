@@ -65,7 +65,7 @@ function prompt {
     {
         # This must be loaded _after_ omp, as zoxide hooks the prompt function
         New-Module -Name zoxide -ScriptBlock { Invoke-Expression (& { (zoxide init powershell | Out-String) }) } | Import-Module -Global
-        Set-Alias -Name cd -Value z -Option AllScope
+        Set-Alias -Name cd -Value z -Option AllScope -Scope Global -Force
     },
     {
         $Env:FZF_ALT_C_COMMAND = "fd --type dir --hidden --exclude .git"

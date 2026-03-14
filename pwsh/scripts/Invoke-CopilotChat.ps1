@@ -64,4 +64,4 @@ This is a general-purpose question and answer session, not tied to any specific 
     }
 }
 
-Set-Alias -Name ask -Value Invoke-CopilotChat -Scope Global
+Set-Alias -Name ask -Value Invoke-CopilotChat

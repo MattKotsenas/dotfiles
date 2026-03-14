@@ -50,3 +50,5 @@ function Out-Speech
 
     }
 }
+
+Set-Alias -Name say -Value Out-Speech

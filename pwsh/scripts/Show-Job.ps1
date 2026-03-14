@@ -18,3 +18,5 @@ function Show-Job {
 
     }
 }
+
+Set-Alias -Name sjb -Value Show-Job
