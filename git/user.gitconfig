@@ -17,6 +17,7 @@
 [stash]
         showIncludeUntracked = true
 [core]
+        excludesFile = ~/.config/git/ignore
         fsmonitor = true
         untrackedcache = true
         editor = "nvim -f"
