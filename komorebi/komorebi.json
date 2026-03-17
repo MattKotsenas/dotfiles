@@ -11,14 +11,19 @@
   "window_container_behaviour": "Append",
   "default_workspace_padding": 5,
   "default_container_padding": 5,
+  "transparency": true,
+  "transparency_alpha": 215,
   "border": true,
   "border_width": 8,
   "border_offset": -1,
   "theme": {
-    "palette": "Base16",
-    "name": "Ashes",
-    "unfocused_border": "Base03",
-    "bar_accent": "Base0D"
+    "palette": "Catppuccin",
+    "name": "Mocha",
+    "unfocused_border": "Surface1",
+    "focused_border": "Mauve",
+    "stack_border": "Mauve",
+    "single_border": "Sapphire",
+    "bar_accent": "Mauve"
   },
   "stackbar": {
     "mode": "Never"

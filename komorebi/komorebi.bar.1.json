@@ -11,9 +11,9 @@
   },
   "font_family": "Segoe UI Semilight",
   "theme": {
-    "palette": "Base16",
-    "name": "CatppuccinMocha",
-    "accent": "Base0E"
+    "palette": "Catppuccin",
+    "name": "Mocha",
+    "accent": "Mauve"
   },
   "transparency_alpha": 0,
   "grouping": {
