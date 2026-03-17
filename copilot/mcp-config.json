@@ -21,6 +21,13 @@
       "args": [
         "@playwright/mcp@latest"
       ]
+    },
+    "azure-devops": {
+      "type": "http",
+      "url": "https://mcp.dev.azure.com/",
+      "tools": [
+        "*"
+      ]
     }
   }
 }
