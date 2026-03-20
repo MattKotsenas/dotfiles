@@ -217,3 +217,13 @@ properties:
           (uv tool list 2>$null | Select-String 'thefuck') -ne $null
         SetScript: |
           uv tool install thefuck --python 3.11
+    - resource: PSDscResources/Registry
+      directives:
+        description: Enable UTF-8 for worldwide language support (Beta)
+        allowPrerelease: true
+      settings:
+        Key: HKLM:\SYSTEM\CurrentControlSet\Control\Nls\CodePage
+        ValueName: ACP
+        ValueData: ['65001']
+        ValueType: String
+        Ensure: Present
