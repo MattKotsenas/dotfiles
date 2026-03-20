@@ -5,6 +5,11 @@ alt + a                 : komorebic focus left
 alt + s                 : komorebic focus down
 alt + w                 : komorebic focus up
 alt + d                 : komorebic focus right
+# focus-last-workspace only toggles the focused monitor; since we use focus-workspaces
+# (plural) to sync all monitors, we toggle the focused monitor then use
+# focus-monitor-workspace to sync the rest without cycling focus (avoids flicker)
+alt + tab               : komorebic focus-last-workspace; $s=(komorebic state|ConvertFrom-Json).monitors; $f=$s.focused; $ws=$s.elements[$f].workspaces.focused; 0..($s.elements.Count-1)|?{$_ -ne $f}|%{komorebic focus-monitor-workspace $_ $ws}
+alt + shift + tab       : komorebic cycle-focus next
 
 # Move windows
 alt + shift + a         : komorebic move left
@@ -51,11 +56,11 @@ alt + 7                 : komorebic focus-workspaces 6
 alt + 8                 : komorebic focus-workspaces 7
 
 # Move windows across workspaces
-alt + shift + 1         : komorebic send-to-workspace 0
-alt + shift + 2         : komorebic send-to-workspace 1
-alt + shift + 3         : komorebic send-to-workspace 2
-alt + shift + 4         : komorebic send-to-workspace 3
-alt + shift + 5         : komorebic send-to-workspace 4
-alt + shift + 6         : komorebic send-to-workspace 5
-alt + shift + 7         : komorebic send-to-workspace 6
-alt + shift + 8         : komorebic send-to-workspace 7
+alt + shift + 1         : komorebic move-to-workspace 0
+alt + shift + 2         : komorebic move-to-workspace 1
+alt + shift + 3         : komorebic move-to-workspace 2
+alt + shift + 4         : komorebic move-to-workspace 3
+alt + shift + 5         : komorebic move-to-workspace 4
+alt + shift + 6         : komorebic move-to-workspace 5
+alt + shift + 7         : komorebic move-to-workspace 6
+alt + shift + 8         : komorebic move-to-workspace 7
