@@ -95,22 +95,8 @@ function prompt {
         }
     },
     {
-        $Env:PYTHONIOENCODING='utf-8'
-        # Inlined output of `thefuck --alias fix` to avoid ~700ms Python startup cost.
-        # To regenerate: run `thefuck --alias fix` and replace the ScriptBlock below.
-        New-Module -Name thefuck -ScriptBlock {
-            function fix {
-                $history = (Get-History -Count 1).CommandLine;
-                if (-not [string]::IsNullOrWhiteSpace($history)) {
-                    $fuck = $(thefuck $args $history);
-                    if (-not [string]::IsNullOrWhiteSpace($fuck)) {
-                        if ($fuck.StartsWith("echo")) { $fuck = $fuck.Substring(5); }
-                        else { iex "$fuck"; }
-                    }
-                }
-                [Console]::ResetColor()
-            }
-        } | Import-Module -Global
+        $Env:_PR_LIB = Join-Path $env:USERPROFILE '.config' 'pay-respects' 'modules'
+        New-Module -Name pay-respects -ScriptBlock ([scriptblock]::Create((pay-respects pwsh --alias fix | Out-String))) | Import-Module -Global
     }
 )
 

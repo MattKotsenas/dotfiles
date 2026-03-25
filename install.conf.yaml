@@ -19,7 +19,7 @@
       path: pwsh/scripts
       glob: false
     ~/.config/git: git/**
-    ~/.config/thefuck: thefuck/**
+    ~/.config/pay-respects: pay-respects/**
     ~/.config/eza: eza/**
     ~/.config/bat: bat/**
     ~/.config/komorebi: komorebi/**
@@ -38,6 +38,13 @@
   - command: winget configure configuration.dsc.yaml
     description: Running winget configure
     stdin: true
+    stdout: true
+    stderr: true
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      cargo install pay-respects pay-respects-module-runtime-rules"
+    description: Installing pay-respects
     stdout: true
     stderr: true
   - command: >-

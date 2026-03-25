@@ -204,19 +204,14 @@ properties:
       settings:
         id: astral-sh.uv
         source: winget
-    - resource: PSDscResources/Script
-      dependsOn:
-        - install-uv
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: install-rustup
       directives:
-        description: Install thefuck via uv tool
+        description: Install Rust (via rustup)
         allowPrerelease: true
       settings:
-        GetScript: |
-          @{ Result = (uv tool list 2>$null | Select-String 'thefuck') }
-        TestScript: |
-          (uv tool list 2>$null | Select-String 'thefuck') -ne $null
-        SetScript: |
-          uv tool install thefuck --python 3.11
+        id: Rustlang.Rustup
+        source: winget
     - resource: PSDscResources/Registry
       directives:
         description: Enable UTF-8 for worldwide language support (Beta)
