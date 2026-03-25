@@ -1,0 +1,29 @@
+preferences:
+  # Git branch naming - GitHub repos
+  - when:
+      remote: github.com
+    content: |
+      Use branch prefixes: `bugfix/`, `feature/`, or `refactor/`.
+
+  # .NET project conventions
+  - when:
+      fileExists: "**/*.csproj"
+    content: |
+      If the project uses snapshot tests (*.verified.*), use `dotnet verify accept` to
+      accept snapshots rather than editing them manually. The `verify.tool` package should be in
+      the project's dotnet-tools.json; if not, add it with `dotnet tool install verify.tool`.
+      Document the snapshot workflow in CONTRIBUTING.md or a similar file so other contributors
+      know the process.
+      For XML doc references to language keywords (e.g. null, true, false), use `<see langword="null"/>` instead
+      of `<c>null</c>`.
+
+  # Node.js project conventions
+  - when:
+      fileExists: package.json
+    content: |
+      When adding dependencies, use `npm install` not manual edits to package.json.
+
+  # Always-on preferences
+  - content: |
+      When generating PR descriptions or summaries, pipe the output to `clip` to put it on the clipboard.
+      Do not use conventional commits unless the project explicitly follows that convention.

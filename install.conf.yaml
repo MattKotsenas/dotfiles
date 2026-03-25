@@ -28,6 +28,7 @@
     ~/.config/wpm: wpm/**
     ~/.config/kanata: kanata/**
     ~/.copilot/copilot-instructions.md: copilot/copilot-instructions.md
+    ~/.copilot/preferences.yaml: copilot/preferences.yaml
     ~/.copilot/mcp-config.json: copilot/mcp-config.json
     $LOCALAPPDATA/nvim: nvim/**
     $APPDATA/Code/User/settings.json: vscode/settings.json
