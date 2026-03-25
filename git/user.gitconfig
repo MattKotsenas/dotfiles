@@ -37,6 +37,10 @@
         path = ./user.azdo.gitconfig
 [includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com:**"]
         path = ./user.azdo.gitconfig
+[includeIf "hasconfig:remote.*.url:https://codeberg.org/**"]
+        path = ./user.codeberg.gitconfig
+[includeIf "hasconfig:remote.*.url:git@codeberg.org:**"]
+        path = ./user.codeberg.gitconfig
 [merge]
         tool = bc5
 [diff]
