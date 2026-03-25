@@ -1,3 +1,6 @@
 # Squad - AI team state (https://bradygaster.github.io/squad/)
 .ai-team/
 .squad/
+
+# Adversarial review artifacts (ephemeral, not source code)
+.claude/reviews/

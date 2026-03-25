@@ -182,3 +182,9 @@ content demands it.
 
 If you are losing context, drifting, or uncertain, say so. Execute one plan fully before starting the
 next. Do not produce increasingly unreliable output rather than admitting you need to re-center.
+
+## Self-Review Before Completion
+
+For multi-step tasks with >50 lines of changes, run `/adversarial-review:run` before presenting
+the work as complete. If the review surfaces Critical or High findings, address them before stopping.
+Treat the review output like a failing test - it's part of the "loop until verified" pattern.

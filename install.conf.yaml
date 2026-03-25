@@ -73,7 +73,8 @@
       copilot plugin install delve@agent-plugins;
       copilot plugin install yes-milord@agent-plugins;
       copilot plugin install richlander/dotnet-inspect;
-      copilot plugin install workiq@copilot-plugins"
+      copilot plugin install workiq@copilot-plugins;
+      copilot plugin install ng/adversarial-review"
     description: Installing Copilot plugins
     stdout: true
     stderr: true
