@@ -11,7 +11,7 @@
   "window_container_behaviour": "Append",
   "default_workspace_padding": 5,
   "default_container_padding": 5,
-  "transparency": true,
+  "transparency": false,
   "transparency_alpha": 215,
   "border": true,
   "border_width": 8,
