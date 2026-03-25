@@ -1,5 +1,7 @@
-# Set the cursor to a solid bar
-Write-Output "`e[6 q"
+# Set the cursor to a solid bar (reset after neovim changes it).
+# Guard against stdout redirection so escape codes don't leak when the profile
+# is loaded non-interactively (e.g. pwsh -c).
+if (-not [Console]::IsOutputRedirected) { [Console]::Write("`e[6 q") }
 
 # Disable the "make the prompt red during parse error" because it conflicts with oh-my-posh
 Set-PSReadLineOption -PromptText ''
