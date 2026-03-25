@@ -22,6 +22,8 @@
         untrackedcache = true
         editor = "nvim -f"
         longpaths = true
+[init]
+        defaultBranch = main
 [user]
         name = Matt Kotsenas
         useConfigOnly = true
