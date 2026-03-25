@@ -9,13 +9,18 @@ preferences:
   - when:
       fileExists: "**/*.csproj"
     content: |
-      If the project uses snapshot tests (*.verified.*), use `dotnet verify accept` to
-      accept snapshots rather than editing them manually. The `verify.tool` package should be in
-      the project's dotnet-tools.json; if not, add it with `dotnet tool install verify.tool`.
-      Document the snapshot workflow in CONTRIBUTING.md or a similar file so other contributors
-      know the process.
+      If the project uses snapshot tests (*.verified.*), use `dotnet verify accept` to accept snapshots rather than
+      editing them manually. The `verify.tool` package should be in the project's dotnet-tools.json; if not, add it with
+      `dotnet tool install verify.tool`. Document the snapshot workflow in CONTRIBUTING.md or a similar file so other
+      contributors know the process.
+
       For XML doc references to language keywords (e.g. null, true, false), use `<see langword="null"/>` instead
       of `<c>null</c>`.
+
+      When you need a quick script or one-off utility (e.g. data migration, code generation, test harness), prefer .NET
+      file-based apps (`dotnet run script.cs`) over Python or Perl. File-based apps require no project file; add NuGet
+      references with `#:package Foo@1.0.0` and set the SDK with `#:sdk Microsoft.NET.Sdk.Web` for web scenarios.
+      See https://learn.microsoft.com/en-us/dotnet/core/sdk/file-based-apps for details.
 
   # Node.js project conventions
   - when:
@@ -26,4 +31,5 @@ preferences:
   # Always-on preferences
   - content: |
       When generating PR descriptions or summaries, pipe the output to `clip` to put it on the clipboard.
+
       Do not use conventional commits unless the project explicitly follows that convention.
