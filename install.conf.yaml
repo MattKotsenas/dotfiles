@@ -29,7 +29,6 @@
     ~/.config/kanata: kanata/**
     ~/.copilot/copilot-instructions.md: copilot/copilot-instructions.md
     ~/.copilot/preferences.yaml: copilot/preferences.yaml
-    ~/.copilot/mcp-config.json: copilot/mcp-config.json
     $LOCALAPPDATA/nvim: nvim/**
     $APPDATA/Code/User/settings.json: vscode/settings.json
     $APPDATA/Code/User/keybindings.json: vscode/keybindings.json
@@ -61,7 +60,17 @@
       New-Item (Split-Path $t) -ItemType Directory -Force | Out-Null;
       if (-not (Test-Path $t)) { '{}' | Set-Content $t };
       jq -s '.[0] * .[1]' $t 'copilot/config.json' | Set-Content $t"
-    description: Merging Copilot preferences
+    description: Merging Copilot preferences (deep-merge repo config into existing on-disk config)
+    stdout: true
+    stderr: true
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      $t = Join-Path $env:USERPROFILE '.copilot\mcp-config.json';
+      New-Item (Split-Path $t) -ItemType Directory -Force | Out-Null;
+      if (-not (Test-Path $t)) { '{}' | Set-Content $t };
+      jq -s '.[0] * .[1]' $t 'copilot/mcp-config.json' | Set-Content $t"
+    description: Merging MCP server config (deep-merge so per-machine servers are preserved)
     stdout: true
     stderr: true
   - command: >-
