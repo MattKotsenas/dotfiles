@@ -6,7 +6,7 @@ Start a Copilot session for general Q&A, detached from any codebase.
 An optional prompt to seed the conversation. The session remains interactive.
 
 .PARAMETER Model
-The AI model to use. Defaults to claude-opus-4.6-fast.
+The AI model to use. Defaults to claude-opus-4.6.
 
 .EXAMPLE
 Invoke-CopilotChat
@@ -49,7 +49,15 @@ This is a general-purpose question and answer session, not tied to any specific 
 - Use web search when the question requires current information.
 "@ | Set-Content -Path "AGENTS.md" -Encoding utf8
 
-    $copilotArgs = @("--yolo", "--model", $Model, "--add-dir", $tempDir)
+    $copilotArgs = @(
+        "--yolo",
+        "--model", $Model,
+        "--add-dir", $tempDir,
+        "--disable-mcp-server", "playwright",
+        "--disable-mcp-server", "azure-devops",
+        "--disable-mcp-server", "enghub",
+        "--disable-mcp-server", "workiq"
+    )
 
     if ($Prompt) {
         $copilotArgs += @("-i", $Prompt)
