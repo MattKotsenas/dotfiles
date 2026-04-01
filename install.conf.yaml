@@ -30,6 +30,7 @@
     ~/.copilot/copilot-instructions.md: copilot/copilot-instructions.md
     ~/.copilot/preferences.yaml: copilot/preferences.yaml
     $LOCALAPPDATA/nvim: nvim/**
+    $APPDATA/tuicr/config.toml: tuicr/config.toml
     $APPDATA/Code/User/settings.json: vscode/settings.json
     $APPDATA/Code/User/keybindings.json: vscode/keybindings.json
 
@@ -44,6 +45,13 @@
       $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
       cargo install pay-respects pay-respects-module-runtime-rules"
     description: Installing pay-respects
+    stdout: true
+    stderr: true
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      cargo install tuicr"
+    description: Installing tuicr
     stdout: true
     stderr: true
   - command: >-
