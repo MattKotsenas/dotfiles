@@ -24,6 +24,8 @@
         longpaths = true
 [init]
         defaultBranch = main
+[branch]
+        autoSetupMerge = simple
 [user]
         name = Matt Kotsenas
         useConfigOnly = true
