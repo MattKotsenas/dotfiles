@@ -127,6 +127,11 @@ After each logical unit of work, create a git commit with a clear message. Do no
 of uncommitted changes. Prefer reverts with a "REVERT" prefix over rebasing to drop commits when working autonomously.
 Note to the user that you've done so in case they want to clean up history
 
+## Git Safety
+
+Before any git operation (commit, push, rebase, merge, conflict resolution, branch delete), invoke the
+`git-good` skill for safety guardrails.
+
 ## Writing High-Value Tests
 
 **Test real behavior, not wiring.** Don't test that constructors set properties, that DI resolves, or that mocks were called. Test observable outcomes: given this input, does the system produce the correct output? Given the feature is disabled, does nothing happen?
