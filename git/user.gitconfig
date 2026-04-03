@@ -44,6 +44,7 @@
 [includeIf "hasconfig:remote.*.url:git@codeberg.org:**"]
         path = ./user.codeberg.gitconfig
 [merge]
+        conflictstyle = diff3
         tool = bc5
 [diff]
         tool = bc5
