@@ -88,6 +88,8 @@
       copilot plugin marketplace add mattkotsenas/agent-plugins;
       copilot plugin install dotnet-skills@dotnet-skills;
       copilot plugin install delve@agent-plugins;
+      copilot plugin install git-good@agent-plugins;
+      copilot plugin install prune@agent-plugins;
       copilot plugin install yes-milord@agent-plugins;
       copilot plugin install richlander/dotnet-inspect;
       copilot plugin install workiq@copilot-plugins;
