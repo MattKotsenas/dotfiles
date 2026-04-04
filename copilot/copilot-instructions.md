@@ -63,6 +63,11 @@ For multi-step tasks, state a brief plan:
 3. [Step] → verify: [check]
 ```
 
+Build checks are not sufficient exit criteria. "Code compiles and tests pass" verifies each step, not the task. Before
+starting a multi-step task, state what "done" looks like as an observable outcome: a command you can run, a
+behavior you can demonstrate, a workflow that completes end-to-end. If the user's request doesn't make the
+exit criteria obvious, ask: "What should I be able to demonstrate when this is complete?"
+
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
 # Principles
