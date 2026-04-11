@@ -52,11 +52,7 @@ This is a general-purpose question and answer session, not tied to any specific 
     $copilotArgs = @(
         "--yolo",
         "--model", $Model,
-        "--add-dir", $tempDir,
-        "--disable-mcp-server", "playwright",
-        "--disable-mcp-server", "azure-devops",
-        "--disable-mcp-server", "enghub",
-        "--disable-mcp-server", "workiq"
+        "--add-dir", $tempDir
     )
 
     if ($Prompt) {
