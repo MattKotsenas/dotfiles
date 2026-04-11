@@ -4,3 +4,4 @@
 
 # Adversarial review artifacts (ephemeral, not source code)
 .claude/reviews/
+.reviews/
