@@ -29,7 +29,6 @@
     ~/.config/kanata: kanata/**
     ~/.copilot/copilot-instructions.md: copilot/copilot-instructions.md
     ~/.copilot/preferences.yaml: copilot/preferences.yaml
-    ~/.copilot/statusline.ps1: copilot/statusline.ps1
     $LOCALAPPDATA/nvim: nvim/**
     $APPDATA/tuicr/config.toml: tuicr/config.toml
     $APPDATA/Code/User/settings.json: vscode/settings.json
