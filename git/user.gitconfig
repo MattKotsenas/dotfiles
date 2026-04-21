@@ -4,6 +4,7 @@
         path = ./lazygit/lazygit.gitconfig
 
 [diff]
+        algorithm = patience
         submodule = log
 
 [alias]
