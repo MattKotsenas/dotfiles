@@ -197,6 +197,13 @@ properties:
         id: LGUG2Z.whkd
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install psmux (Windows terminal multiplexer)
+        allowPrerelease: true
+      settings:
+        id: marlocarlo.psmux
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-uv
       directives:
         description: Install uv (Python package manager)

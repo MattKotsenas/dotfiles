@@ -25,6 +25,7 @@
     ~/.config/komorebi: komorebi/**
     $LOCALAPPDATA/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json: wt/settings.json
     ~/.config/whkdrc: whkd/whkdrc
+    ~/.psmux.conf: psmux/.psmux.conf
     ~/.config/wpm: wpm/**
     ~/.config/kanata: kanata/**
     ~/.copilot/copilot-instructions.md: copilot/copilot-instructions.md
@@ -95,5 +96,22 @@
       copilot plugin install richlander/dotnet-inspect;
       copilot plugin install ng/adversarial-review"
     description: Installing Copilot plugins
+    stdout: true
+    stderr: true
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      $pluginDir = Join-Path $env:USERPROFILE '.psmux/plugins';
+      $tmpDir = Join-Path $env:TEMP 'psmux-plugins';
+      if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force };
+      git clone --depth 1 https://github.com/psmux/psmux-plugins.git $tmpDir;
+      $plugins = @('ppm','psmux-sensible','psmux-pain-control','psmux-resurrect','psmux-continuum','psmux-theme-catppuccin');
+      foreach ($p in $plugins) {
+        $dest = Join-Path $pluginDir $p;
+        if (-not (Test-Path $dest)) { New-Item $dest -ItemType Directory -Force | Out-Null };
+        Copy-Item (Join-Path $tmpDir $p '*') $dest -Recurse -Force
+      };
+      Remove-Item $tmpDir -Recurse -Force"
+    description: Installing psmux plugins
     stdout: true
     stderr: true
