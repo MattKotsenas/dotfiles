@@ -52,16 +52,6 @@
         "enable": true,
         "changing_icon": true,
         "format": {
-          "Custom": "%I:%M %p %Z"
-        },
-          "timezone": "America/Chicago"
-      }
-    },
-    {
-      "Time": {
-        "enable": true,
-        "changing_icon": true,
-        "format": {
           "Custom": "%a %m/%d %I:%M %p %Z"
         },
           "timezone": "America/Los_Angeles"
