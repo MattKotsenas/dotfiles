@@ -1,2 +1,17 @@
-[user]
-	email = 51421+MattKotsenas@users.noreply.github.com
+# Route GitHub credentials by repo path so multiple github.com accounts
+# (e.g. personal + enterprise/EMU) can coexist. With useHttpPath=true and
+# no pinned username, the first access to each new repo triggers one
+# browser login; the token is then cached per-path and reused silently.
+[credential "https://github.com"]
+	useHttpPath = true
+
+# Auto-set commit identity on clone / branch checkout based on which
+# authenticated gh account has push access to origin. If neither account
+# has push (e.g. OSS contributions), falls back to the active gh account
+# — use `gh auth switch` to control that default. Requires git 2.54+
+# (config-based hooks) and the gh CLI; with useConfigOnly = true, missing
+# either fails loudly via "tell me who you are" rather than silently
+# committing with the wrong identity.
+[hook "auto-identity"]
+	event = post-checkout
+	command = "sh -c '[ \"$3\" = \"1\" ] || exit 0; git config --local user.email >/dev/null 2>&1 && exit 0; r=$(git remote get-url origin 2>/dev/null) || exit 0; case \"$r\" in *github.com*) ;; *) exit 0 ;; esac; p=\"${r#*github.com[:/]}\"; p=\"${p%.git}\"; o=\"${p%%/*}\"; n=\"${p#*/}\"; n=\"${n%%/*}\"; [ -n \"$o\" ] && [ -n \"$n\" ] || exit 0; W=\"\"; for U in $(gh auth status --json hosts --jq \".hosts.\\\"github.com\\\"[].login\" 2>/dev/null); do T=$(gh auth token -h github.com -u \"$U\" 2>/dev/null) || continue; [ \"$(GH_TOKEN=\"$T\" gh api \"repos/$o/$n\" --jq .permissions.push 2>/dev/null)\" = \"true\" ] && { W=\"$U\"; break; }; done; [ -z \"$W\" ] && W=$(gh auth status --json hosts --jq \".hosts.\\\"github.com\\\" | map(select(.active)) | .[0].login\" 2>/dev/null); [ -n \"$W\" ] || exit 0; T=$(gh auth token -h github.com -u \"$W\" 2>/dev/null) || exit 0; I=$(GH_TOKEN=\"$T\" gh api user --jq .id 2>/dev/null); L=$(GH_TOKEN=\"$T\" gh api user --jq .login 2>/dev/null); [ -n \"$I\" ] && [ -n \"$L\" ] && git config --local user.email \"$I+$L@users.noreply.github.com\"' _"
