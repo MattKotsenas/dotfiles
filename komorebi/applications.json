@@ -486,6 +486,15 @@
       }
     ]
   },
+  "Dell Display Manager": {
+    "ignore": [
+      {
+        "kind": "Exe",
+        "id": "DDM.exe",
+        "matching_strategy": "Equals"
+      }
+    ]
+  },
   "Delphi applications": {
     "ignore": [
       {
@@ -1594,13 +1603,6 @@
   },
   "Microsoft Teams": {
     "tray_and_multi_window": [
-      {
-        "kind": "Class",
-        "id": "TeamsWebView",
-        "matching_strategy": "Equals"
-      }
-    ],
-    "object_name_change": [
       {
         "kind": "Class",
         "id": "TeamsWebView",
@@ -2758,7 +2760,7 @@
         {
           "kind": "Title",
           "id": " - Microsoft Visual Studio",
-          "matching_strategy": "DoesNotEndWith"
+          "matching_strategy": "DoesNotContain"
         }
       ]
     ],
