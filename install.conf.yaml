@@ -97,13 +97,20 @@
     description: Installing Copilot plugins
     stdout: true
     stderr: true
+  # Cloning from MattKotsenas/psmux-plugins (fork) instead of psmux/psmux-plugins
+  # (upstream) to dogfood the A+B @plugin syntax extensions proposed in upstream
+  # issue psmux/psmux-plugins#16, which is what enables cleanly dogfooding the
+  # psmux-continuum auto-restore fix in upstream PR psmux/psmux-plugins#15.
+  # When both #15 and #16 land upstream, switch the URL below back to upstream.
+  #
+  # was: git clone --depth 1 https://github.com/psmux/psmux-plugins.git $tmpDir;
   - command: >-
       pwsh -NoProfile -Command "
       $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
       $pluginDir = Join-Path $env:USERPROFILE '.psmux/plugins';
       $tmpDir = Join-Path $env:TEMP 'psmux-plugins';
       if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force };
-      git clone --depth 1 https://github.com/psmux/psmux-plugins.git $tmpDir;
+      git clone --depth 1 https://github.com/MattKotsenas/psmux-plugins.git $tmpDir;
       $plugins = @('ppm','psmux-sensible','psmux-pain-control','psmux-resurrect','psmux-continuum','psmux-theme-catppuccin');
       foreach ($p in $plugins) {
         $dest = Join-Path $pluginDir $p;
