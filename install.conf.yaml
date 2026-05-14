@@ -28,6 +28,9 @@
     $LOCALAPPDATA/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json: wt/settings.json
     ~/.config/whkdrc: whkd/whkdrc
     ~/.psmux.conf: psmux/.psmux.conf
+    ~/.psmux/strategies:
+      path: psmux/strategies
+      glob: false
     ~/.config/wpm: wpm/**
     ~/.config/kanata: kanata/**
     ~/.copilot/copilot-instructions.md: copilot/copilot-instructions.md
