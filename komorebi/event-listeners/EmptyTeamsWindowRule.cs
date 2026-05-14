@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using EventListeners.Models;
-using EventListeners.Win32;
 using Microsoft.Extensions.Logging;
 
 namespace EventListeners;
@@ -17,11 +15,13 @@ namespace EventListeners;
 /// </summary>
 public sealed class EmptyTeamsWindowRule : IKomorebiEventRule
 {
-    private const int CloseDelayMilliseconds = 2000;
+    private static readonly TimeSpan CloseDelay = TimeSpan.FromSeconds(2);
     private const string TeamsExeName = "ms-teams.exe";
     private const string EmptyTeamsTitle = "Microsoft Teams";
 
     private readonly ILogger<EmptyTeamsWindowRule> _logger;
+    private readonly IWindowAction _windowAction;
+    private readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Tracks windows pending close. Key is HWND, value is the CancellationTokenSource to cancel the close.
@@ -35,20 +35,23 @@ public sealed class EmptyTeamsWindowRule : IKomorebiEventRule
 
     public string Name => "EmptyTeamsWindowRule";
 
-    public EmptyTeamsWindowRule(ILogger<EmptyTeamsWindowRule> logger)
+    public EmptyTeamsWindowRule(
+        ILogger<EmptyTeamsWindowRule> logger,
+        IWindowAction windowAction,
+        TimeProvider timeProvider)
     {
         _logger = logger;
+        _windowAction = windowAction;
+        _timeProvider = timeProvider;
     }
 
     public void ProcessEvent(string eventType, JsonElement? content, JsonElement? state)
     {
-        // Check state for title changes on every event (if we have pending closes)
-        if (state.HasValue && _pendingCloses.Count > 0)
+        if (state.HasValue && !_pendingCloses.IsEmpty)
         {
             CheckStateForTitleChanges(state.Value);
         }
 
-        // Handle "Show" events to detect new Teams popup windows
         if (eventType == "Show" && content.HasValue)
         {
             HandleShowEvent(content.Value);
@@ -82,13 +85,11 @@ public sealed class EmptyTeamsWindowRule : IKomorebiEventRule
         _logger.LogDebug("Show event: {Exe} - {Title} (HWND: {Hwnd})",
             window.Exe, window.Title, window.Hwnd);
 
-        // Check if this is a Teams popup window that should be closed
         if (window.Exe != TeamsExeName || window.Title != EmptyTeamsTitle)
         {
             return;
         }
 
-        // If already tracking this window, don't start another timer
         if (_pendingCloses.ContainsKey(window.Hwnd))
         {
             _logger.LogDebug("Window {Hwnd} is already pending close", window.Hwnd);
@@ -96,98 +97,35 @@ public sealed class EmptyTeamsWindowRule : IKomorebiEventRule
         }
 
         _logger.LogInformation(
-            "Teams popup detected (HWND: {Hwnd}), scheduling close in {Delay}ms",
-            window.Hwnd, CloseDelayMilliseconds);
+            "Teams popup detected (HWND: {Hwnd}), scheduling close in {Delay}",
+            window.Hwnd, CloseDelay);
 
         var cts = new CancellationTokenSource();
         if (!_pendingCloses.TryAdd(window.Hwnd, cts))
         {
-            // Another thread added it first
             cts.Dispose();
             return;
         }
 
-        // Start the delayed close (fire and forget)
         _ = CloseWindowAfterDelayAsync(window.Hwnd, cts.Token);
     }
 
-    /// <summary>
-    /// Scans the state for any tracked windows whose titles have changed away from "Microsoft Teams".
-    /// </summary>
     private void CheckStateForTitleChanges(JsonElement state)
     {
-        try
+        foreach (var window in state.EnumerateAllWindows())
         {
-            // Navigate: state.monitors.elements[*].workspaces.elements[*].containers.elements[*].windows.elements[*]
-            if (!state.TryGetProperty("monitors", out var monitors) ||
-                !monitors.TryGetProperty("elements", out var monitorElements))
+            if (!_pendingCloses.TryGetValue(window.Hwnd, out var cts))
             {
-                return;
+                continue;
             }
 
-            foreach (var monitor in monitorElements.EnumerateArray())
+            if (window.Title != EmptyTeamsTitle)
             {
-                if (!monitor.TryGetProperty("workspaces", out var workspaces) ||
-                    !workspaces.TryGetProperty("elements", out var workspaceElements))
-                {
-                    continue;
-                }
-
-                foreach (var workspace in workspaceElements.EnumerateArray())
-                {
-                    if (!workspace.TryGetProperty("containers", out var containers) ||
-                        !containers.TryGetProperty("elements", out var containerElements))
-                    {
-                        continue;
-                    }
-
-                    foreach (var container in containerElements.EnumerateArray())
-                    {
-                        if (!container.TryGetProperty("windows", out var windows) ||
-                            !windows.TryGetProperty("elements", out var windowElements))
-                        {
-                            continue;
-                        }
-
-                        foreach (var windowElement in windowElements.EnumerateArray())
-                        {
-                            CheckWindowForTitleChange(windowElement);
-                        }
-                    }
-                }
+                _logger.LogInformation(
+                    "Window {Hwnd} title changed to '{Title}', cancelling scheduled close",
+                    window.Hwnd, window.Title);
+                CancelPendingClose(window.Hwnd, cts);
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error scanning state for title changes");
-        }
-    }
-
-    private void CheckWindowForTitleChange(JsonElement windowElement)
-    {
-        if (!windowElement.TryGetProperty("hwnd", out var hwndElement) ||
-            !windowElement.TryGetProperty("title", out var titleElement))
-        {
-            return;
-        }
-
-        var hwnd = hwndElement.GetInt64();
-        var title = titleElement.GetString();
-
-        // Check if we're tracking this window
-        if (!_pendingCloses.TryGetValue(hwnd, out var cts))
-        {
-            return;
-        }
-
-        // If the title changed away from "Microsoft Teams", cancel the pending close
-        if (title != EmptyTeamsTitle)
-        {
-            _logger.LogInformation(
-                "Window {Hwnd} title changed to '{Title}', cancelling scheduled close",
-                hwnd, title);
-
-            CancelPendingClose(hwnd, cts);
         }
     }
 
@@ -195,17 +133,10 @@ public sealed class EmptyTeamsWindowRule : IKomorebiEventRule
     {
         try
         {
-            await Task.Delay(CloseDelayMilliseconds, cancellationToken);
+            await Task.Delay(CloseDelay, _timeProvider, cancellationToken);
 
-            // Timer expired, close the window
             _logger.LogInformation("Closing Teams popup window (HWND: {Hwnd})", hwnd);
-
-            var hwndPtr = (nint)hwnd;
-            if (!NativeMethods.PostMessageW(hwndPtr, NativeMethods.WM_CLOSE, nint.Zero, nint.Zero))
-            {
-                var error = Marshal.GetLastWin32Error();
-                _logger.LogWarning("PostMessage failed with error code: {ErrorCode}", error);
-            }
+            _windowAction.Close(hwnd);
         }
         catch (OperationCanceledException)
         {
@@ -213,7 +144,6 @@ public sealed class EmptyTeamsWindowRule : IKomorebiEventRule
         }
         finally
         {
-            // Clean up tracking
             if (_pendingCloses.TryRemove(hwnd, out var removedCts))
             {
                 removedCts.Dispose();
@@ -229,7 +159,6 @@ public sealed class EmptyTeamsWindowRule : IKomorebiEventRule
         }
         catch (ObjectDisposedException)
         {
-            // Already disposed, ignore
         }
 
         if (_pendingCloses.TryRemove(hwnd, out var removed))

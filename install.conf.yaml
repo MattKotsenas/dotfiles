@@ -22,7 +22,9 @@
     ~/.config/pay-respects: pay-respects/**
     ~/.config/eza: eza/**
     ~/.config/bat: bat/**
-    ~/.config/komorebi: komorebi/**
+    ~/.config/komorebi:
+      path: komorebi
+      glob: false
     $LOCALAPPDATA/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json: wt/settings.json
     ~/.config/whkdrc: whkd/whkdrc
     ~/.psmux.conf: psmux/.psmux.conf

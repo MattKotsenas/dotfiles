@@ -10,6 +10,10 @@ public static class Program
     {
         var builder = Host.CreateApplicationBuilder(args);
 
+        // Register infrastructure
+        builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton<IWindowAction, WindowAction>();
+
         // Register event rules
         builder.Services.AddSingleton<IKomorebiEventRule, EmptyTeamsWindowRule>();
         // Add additional rules here:

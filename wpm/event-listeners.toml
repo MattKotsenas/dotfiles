@@ -1,0 +1,24 @@
+[Unit]
+Name = "event-listeners"
+Description = "Komorebi event listener rules"
+Requires = [
+    "komorebi",
+]
+
+[Service]
+Kind = "Simple"
+Restart = "OnFailure"
+RestartSec = 2
+
+[Service.ExecStart]
+Executable = "dotnet.exe"
+Arguments = [
+    "run",
+    "--project",
+    "$USERPROFILE/.config/komorebi/event-listeners/EventListeners.csproj",
+    "-c",
+    "Release",
+    "--no-launch-profile",
+    "--verbosity",
+    "quiet",
+]
