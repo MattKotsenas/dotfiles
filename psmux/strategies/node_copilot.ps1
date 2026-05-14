@@ -1,17 +1,22 @@
 #!/usr/bin/env pwsh
-# copilot_auto strategy for psmux-resurrect
+# node_copilot strategy for psmux-resurrect
 #
-# Activated via: set -g @resurrect-strategy-copilot 'auto'
+# Activated via: set -g @resurrect-strategy-node 'copilot'
 #
 # Restores a copilot CLI pane by re-attaching to the most recent session whose
 # `cwd` matches the pane's directory. If no recent match exists, falls back to
-# starting a fresh `copilot`.
+# the original command (`node` - which means re-launching whatever node-based
+# process was there, or just a node REPL).
+#
+# Why this is keyed on `node`: copilot CLI is a node app, and psmux on Windows
+# reports `pane_current_command` as `node` for it (not `copilot`). Confirmed
+# against actual `~/.psmux/resurrect/last` save data.
 #
 # Why this exists: copilot prints its session GUID on clean exit, but a crash
 # (machine reboot, process kill, terminal close) skips that print. Resuming
-# from psmux-resurrect's auto-restore therefore re-launches `copilot` with no
-# session context. This strategy reads ~/.copilot/session-store.db directly to
-# recover the lost GUID.
+# from psmux-resurrect's auto-restore therefore re-launches a bare process
+# with no session context. This strategy reads ~/.copilot/session-store.db
+# directly to recover the lost GUID.
 #
 # Implementation note: uses winsqlite3.dll (Windows 10+) via P/Invoke so no
 # external sqlite tooling is required.
