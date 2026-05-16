@@ -318,6 +318,28 @@ properties:
         allowPrerelease: true
       settings:
         CrateName: tuicr
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-rustup
+      directives:
+        # wpm has no crates.io publish and no GitHub releases (its license also
+        # forbids third-party packaging), so cargo install --git is the only
+        # supported path. RustDsc/CargoToolInstall doesn't yet support --git,
+        # so this stays a Script. Test always returns $false to keep the
+        # dogfood-HEAD intent — cargo itself is a no-op when the git rev hasn't
+        # moved, so re-running on every winget configure is cheap.
+        description: Install wpm from git master (dogfood HEAD; crates.io lags behind)
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $bin = Join-Path $env:USERPROFILE '.cargo\bin\wpmctl.exe'
+          @{ Result = if (Test-Path -LiteralPath $bin) { 'present' } else { 'absent' } }
+        TestScript: |
+          $false
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          cargo install --git https://github.com/LGUG2Z/wpm.git wpmctl wpmd
+          if ($LASTEXITCODE -ne 0) { throw "cargo install --git wpm failed with exit code $LASTEXITCODE" }
     - resource: PSDscResources/Registry
       directives:
         description: Enable UTF-8 for worldwide language support (Beta)
