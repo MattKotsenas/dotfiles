@@ -96,12 +96,61 @@ properties:
         id: GitHub.Copilot
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: install-jq
       directives:
         description: Install jq
         allowPrerelease: true
       settings:
         id: jqlang.jq
         source: winget
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-jq
+      directives:
+        # Deep-merge the repo's copilot/settings.json into ~/.copilot/settings.json
+        # so existing on-disk settings (e.g., per-machine tweaks) are preserved.
+        # Test returns false so the merge runs every winget configure — cheap,
+        # and the source can change between runs.
+        description: Merge Copilot user settings into ~/.copilot/settings.json
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $t = Join-Path $env:USERPROFILE '.copilot\settings.json'
+          @{ Result = if (Test-Path -LiteralPath $t) { 'present' } else { 'absent' } }
+        TestScript: |
+          $false
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          $t = Join-Path $env:USERPROFILE '.copilot\settings.json'
+          $null = New-Item -ItemType Directory -Force -Path (Split-Path $t)
+          if (-not (Test-Path -LiteralPath $t)) { '{}' | Set-Content -LiteralPath $t }
+          $src = Join-Path '${WinGetConfigRoot}' 'copilot\settings.json'
+          $merged = jq -s '.[0] * .[1]' $t $src
+          if ($LASTEXITCODE -ne 0) { throw "jq merge of $src into $t failed with exit code $LASTEXITCODE" }
+          $merged | Set-Content -LiteralPath $t
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-jq
+      directives:
+        # Same deep-merge pattern as the settings merge above; preserves
+        # per-machine MCP servers while applying repo-managed updates.
+        description: Merge MCP server config into ~/.copilot/mcp-config.json
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $t = Join-Path $env:USERPROFILE '.copilot\mcp-config.json'
+          @{ Result = if (Test-Path -LiteralPath $t) { 'present' } else { 'absent' } }
+        TestScript: |
+          $false
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          $t = Join-Path $env:USERPROFILE '.copilot\mcp-config.json'
+          $null = New-Item -ItemType Directory -Force -Path (Split-Path $t)
+          if (-not (Test-Path -LiteralPath $t)) { '{}' | Set-Content -LiteralPath $t }
+          $src = Join-Path '${WinGetConfigRoot}' 'copilot\mcp-config.json'
+          $merged = jq -s '.[0] * .[1]' $t $src
+          if ($LASTEXITCODE -ne 0) { throw "jq merge of $src into $t failed with exit code $LASTEXITCODE" }
+          $merged | Set-Content -LiteralPath $t
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install Microsoft Visual Studio Code (User)

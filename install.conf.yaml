@@ -49,26 +49,6 @@
   - command: >-
       pwsh -NoProfile -Command "
       $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      $t = Join-Path $env:USERPROFILE '.copilot\settings.json';
-      New-Item (Split-Path $t) -ItemType Directory -Force | Out-Null;
-      if (-not (Test-Path $t)) { '{}' | Set-Content $t };
-      jq -s '.[0] * .[1]' $t 'copilot/settings.json' | Set-Content $t"
-    description: Merging Copilot user settings (deep-merge repo settings into existing on-disk settings)
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      $t = Join-Path $env:USERPROFILE '.copilot\mcp-config.json';
-      New-Item (Split-Path $t) -ItemType Directory -Force | Out-Null;
-      if (-not (Test-Path $t)) { '{}' | Set-Content $t };
-      jq -s '.[0] * .[1]' $t 'copilot/mcp-config.json' | Set-Content $t"
-    description: Merging MCP server config (deep-merge so per-machine servers are preserved)
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
       copilot plugin marketplace add aaronontheweb/dotnet-skills;
       copilot plugin marketplace add mattkotsenas/agent-plugins;
       copilot plugin install dotnet-skills@dotnet-skills;
