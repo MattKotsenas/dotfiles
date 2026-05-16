@@ -233,6 +233,56 @@ properties:
       settings:
         id: astral-sh.uv
         source: winget
+    - resource: PSDscResources/Script
+      id: install-uv-python
+      dependsOn:
+        - install-uv
+      directives:
+        # uv manages Python; --default also drops python/python3 shims into
+        # ~/.local/bin so a bare `python` works without a separate runtime.
+        description: Install uv-managed Python with --default shims
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $py = Join-Path $env:USERPROFILE '.local\bin\python.exe'
+          @{ Result = if (Test-Path -LiteralPath $py) { 'present' } else { 'absent' } }
+        TestScript: |
+          $py = Join-Path $env:USERPROFILE '.local\bin\python.exe'
+          Test-Path -LiteralPath $py
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          uv python install --default --preview-features python-install-default 3.13
+          if ($LASTEXITCODE -ne 0) { throw "uv python install failed with exit code $LASTEXITCODE" }
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-uv-python
+      directives:
+        # Disable the Microsoft Store Python app-execution aliases so `python`
+        # resolves to the uv-managed shim in ~/.local/bin instead of the Store
+        # stub. Versioned aliases (python3.13.exe, pythonw3.13.exe) are left
+        # alone. Stubs are renamed to .disabled (reversible) rather than deleted.
+        description: Disable Microsoft Store Python app-execution aliases
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $apps = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
+          $stubs = @('python.exe','python3.exe','pythonw.exe','pythonw3.exe')
+          $active = @($stubs | Where-Object { Test-Path -LiteralPath (Join-Path $apps $_) })
+          @{ Result = if ($active.Count -eq 0) { 'all disabled' } else { "active: $($active -join ',')" } }
+        TestScript: |
+          $apps = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
+          $stubs = @('python.exe','python3.exe','pythonw.exe','pythonw3.exe')
+          $active = @($stubs | Where-Object { Test-Path -LiteralPath (Join-Path $apps $_) })
+          $active.Count -eq 0
+        SetScript: |
+          $apps = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
+          $stubs = @('python.exe','python3.exe','pythonw.exe','pythonw3.exe')
+          foreach ($n in $stubs) {
+            $src = Join-Path $apps $n
+            if (Test-Path -LiteralPath $src) {
+              Move-Item -LiteralPath $src -Destination "$src.disabled" -Force
+            }
+          }
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-rustup
       directives:
