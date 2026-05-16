@@ -49,20 +49,6 @@
   - command: >-
       pwsh -NoProfile -Command "
       $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      cargo install pay-respects pay-respects-module-runtime-rules"
-    description: Installing pay-respects
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      cargo install tuicr"
-    description: Installing tuicr
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
       cargo install --git https://github.com/LGUG2Z/wpm.git wpmctl wpmd"
     description: Installing wpm (from git master; crates.io lags behind)
     stdout: true

@@ -218,6 +218,30 @@ properties:
       settings:
         id: Rustlang.Rustup
         source: winget
+    - resource: RustDsc/CargoToolInstall
+      dependsOn:
+        - install-rustup
+      directives:
+        description: Install pay-respects
+        allowPrerelease: true
+      settings:
+        CrateName: pay-respects
+    - resource: RustDsc/CargoToolInstall
+      dependsOn:
+        - install-rustup
+      directives:
+        description: Install pay-respects-module-runtime-rules
+        allowPrerelease: true
+      settings:
+        CrateName: pay-respects-module-runtime-rules
+    - resource: RustDsc/CargoToolInstall
+      dependsOn:
+        - install-rustup
+      directives:
+        description: Install tuicr
+        allowPrerelease: true
+      settings:
+        CrateName: tuicr
     - resource: PSDscResources/Registry
       directives:
         description: Enable UTF-8 for worldwide language support (Beta)
