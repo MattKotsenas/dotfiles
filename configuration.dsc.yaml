@@ -29,7 +29,6 @@ properties:
     # TODO: Install scoop
     # TODO: Install posh-git Module
     # TODO: Install: Install-Module -Name PSFzf
-    # TODO: Install pyenv-win
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install PowerShell 7
