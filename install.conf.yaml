@@ -63,6 +63,13 @@
   - command: >-
       pwsh -NoProfile -Command "
       $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
+      cargo install --git https://github.com/LGUG2Z/wpm.git wpmctl wpmd"
+    description: Installing wpm (from git master; crates.io lags behind)
+    stdout: true
+    stderr: true
+  - command: >-
+      pwsh -NoProfile -Command "
+      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
       bat cache --build"
     description: Building bat cache
     stdout: true
