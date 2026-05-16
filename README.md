@@ -6,6 +6,15 @@ Managed with [anishathalye/dotbot](https://github.com/anishathalye/dotbot).
 
 ## Install
 
+On a fresh machine, install uv first so `install.ps1` has a Python to run dotbot (open a new shell after so `~/.local/bin` is on PATH):
+
+```pwsh
+winget install astral-sh.uv
+uv python install --default 3.13
+```
+
+Then:
+
 ```pwsh
 git clone
 git submodule update --init --recursive
