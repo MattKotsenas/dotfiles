@@ -56,13 +56,6 @@
   - command: >-
       pwsh -NoProfile -Command "
       $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      bat cache --build"
-    description: Building bat cache
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
       $t = Join-Path $env:USERPROFILE '.copilot\settings.json';
       New-Item (Split-Path $t) -ItemType Directory -Force | Out-Null;
       if (-not (Test-Path $t)) { '{}' | Set-Content $t };

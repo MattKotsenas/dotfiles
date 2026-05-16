@@ -160,12 +160,36 @@ properties:
         id: sharkdp.fd
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: install-bat
       directives:
         description: Install bat
         allowPrerelease: true
       settings:
         id: sharkdp.bat
         source: winget
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-bat
+      directives:
+        # Sentinel-based: delete ~/.config/bat/.dsc-cache-built to force a rebuild
+        # after adding custom themes or syntaxes under ~/.config/bat
+        description: Rebuild bat syntax and theme cache
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $sentinel = Join-Path $env:USERPROFILE '.config\bat\.dsc-cache-built'
+          @{ Result = if (Test-Path $sentinel) { 'present' } else { 'absent' } }
+        TestScript: |
+          $sentinel = Join-Path $env:USERPROFILE '.config\bat\.dsc-cache-built'
+          Test-Path $sentinel
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          bat cache --build
+          if ($LASTEXITCODE -ne 0) { throw "bat cache --build failed with exit code $LASTEXITCODE" }
+          $cacheDir = Join-Path $env:USERPROFILE '.config\bat'
+          $null = New-Item -ItemType Directory -Force -Path $cacheDir
+          $sentinel = Join-Path $cacheDir '.dsc-cache-built'
+          $null = New-Item -ItemType File -Force -Path $sentinel
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install yt-dlp
