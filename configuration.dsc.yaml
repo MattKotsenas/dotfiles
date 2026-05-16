@@ -260,7 +260,10 @@ properties:
         # Disable the Microsoft Store Python app-execution aliases so `python`
         # resolves to the uv-managed shim in ~/.local/bin instead of the Store
         # stub. Versioned aliases (python3.13.exe, pythonw3.13.exe) are left
-        # alone. Stubs are renamed to .disabled (reversible) rather than deleted.
+        # alone. Matches what the Settings UI does internally (file deletion).
+        # When https://github.com/microsoft/winget-dsc/pull/146 lands and ships
+        # an official Microsoft.Windows.Setting.Apps/AppExecutionAliases
+        # resource, replace this Script with that resource.
         description: Disable Microsoft Store Python app-execution aliases
         allowPrerelease: true
       settings:
@@ -280,7 +283,7 @@ properties:
           foreach ($n in $stubs) {
             $src = Join-Path $apps $n
             if (Test-Path -LiteralPath $src) {
-              Move-Item -LiteralPath $src -Destination "$src.disabled" -Force
+              Remove-Item -LiteralPath $src -Force
             }
           }
     - resource: Microsoft.WinGet.DSC/WinGetPackage
