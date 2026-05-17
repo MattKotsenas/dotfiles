@@ -265,13 +265,69 @@ properties:
       settings:
         id: LGUG2Z.whkd
         source: winget
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
+    - resource: PSDscResources/Script
+      id: install-psmux
+      dependsOn:
+        - install-rustup
       directives:
-        description: Install psmux (Windows terminal multiplexer)
+        # psmux from MattKotsenas/psmux (fork) instead of marlocarlo.psmux (winget)
+        # to pick up a copy/paste fix being upstreamed. master is the integration
+        # branch with all in-flight fixes already merged. cargo install is a no-op
+        # when the git rev hasn't moved, so re-running on every winget configure
+        # is cheap. When the fix lands upstream, revert to:
+        #   - resource: Microsoft.WinGet.DSC/WinGetPackage
+        #       id: install-psmux
+        #       settings: { id: marlocarlo.psmux, source: winget }
+        description: Install psmux from fork (master = all in-flight fixes merged)
         allowPrerelease: true
       settings:
-        id: marlocarlo.psmux
-        source: winget
+        GetScript: |
+          $bin = Join-Path $env:USERPROFILE '.cargo\bin\psmux.exe'
+          @{ Result = if (Test-Path -LiteralPath $bin) { 'present' } else { 'absent' } }
+        TestScript: |
+          $false
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          cargo install --git https://github.com/MattKotsenas/psmux.git psmux
+          if ($LASTEXITCODE -ne 0) { throw "cargo install --git psmux failed with exit code $LASTEXITCODE" }
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-psmux
+      directives:
+        # Bootstrap PPM (psmux's plugin manager) by cloning the fork and copying
+        # its ppm/ subdir to ~/.psmux/plugins/ppm. install_plugins.ps1 then reads
+        # ~/.psmux.conf and installs the @plugin entries declared there.
+        # Test dot-sources ppm.ps1 to reuse PPM's own spec parser, so subsequent
+        # runs report "in desired state" once every declared plugin is on disk.
+        # Soft dependency on Get-DeclaredPlugins/Resolve-PluginSpec function
+        # names in the fork's ppm.ps1; revisit if PPM is restructured upstream.
+        description: Bootstrap PPM and install psmux plugins from .psmux.conf
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $ppm = Join-Path $env:USERPROFILE '.psmux\plugins\ppm\ppm.ps1'
+          @{ Result = if (Test-Path -LiteralPath $ppm) { 'present' } else { 'absent' } }
+        TestScript: |
+          $ppm = Join-Path $env:USERPROFILE '.psmux\plugins\ppm\ppm.ps1'
+          if (-not (Test-Path -LiteralPath $ppm)) { return $false }
+          . $ppm
+          $declared = Get-DeclaredPlugins
+          foreach ($spec in $declared) {
+            $info = Resolve-PluginSpec $spec
+            if (-not (Test-Path -LiteralPath $info.Path)) { return $false }
+          }
+          return $true
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          $ppmDest = Join-Path $env:USERPROFILE '.psmux\plugins\ppm'
+          $tmpDir  = Join-Path $env:TEMP 'psmux-plugins'
+          if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
+          git clone --depth 1 https://github.com/MattKotsenas/psmux-plugins.git $tmpDir
+          $null = New-Item $ppmDest -ItemType Directory -Force
+          Copy-Item (Join-Path $tmpDir 'ppm\*') $ppmDest -Recurse -Force
+          Remove-Item $tmpDir -Recurse -Force
+          & (Join-Path $ppmDest 'scripts\install_plugins.ps1')
+          if ($LASTEXITCODE -ne 0) { throw "install_plugins.ps1 failed with exit code $LASTEXITCODE" }
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-uv
       directives:
