@@ -25,8 +25,23 @@ properties:
         allowPrerelease: true
       settings:
         Ensure: Present
-    # NOTE: Install these packages manually
-    # TODO: Install scoop
+    - resource: PSDscResources/Script
+      directives:
+        # Scoop isn't in winget, so install via its official installer
+        # (https://scoop.sh). Buckets beyond the default `main` are not declared
+        # here -- add a follow-up Script if you need extras/versions/etc.
+        description: Install scoop (user-scope package manager)
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $bin = Join-Path $env:USERPROFILE 'scoop\shims\scoop.ps1'
+          @{ Result = if (Test-Path -LiteralPath $bin) { 'present' } else { 'absent' } }
+        TestScript: |
+          $bin = Join-Path $env:USERPROFILE 'scoop\shims\scoop.ps1'
+          Test-Path -LiteralPath $bin
+        SetScript: |
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+          Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)}"
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install PowerShell 7
