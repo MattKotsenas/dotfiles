@@ -27,8 +27,6 @@ properties:
         Ensure: Present
     # NOTE: Install these packages manually
     # TODO: Install scoop
-    # TODO: Install posh-git Module
-    # TODO: Install: Install-Module -Name PSFzf
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install PowerShell 7
@@ -302,6 +300,24 @@ properties:
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
           uv python install --default --preview-features python-install-default 3.13
           if ($LASTEXITCODE -ne 0) { throw "uv python install failed with exit code $LASTEXITCODE" }
+    - resource: PowerShellGet/PSModule
+      directives:
+        description: Install posh-git from PSGallery (git tab completion + status)
+        allowPrerelease: true
+      settings:
+        Name: posh-git
+        Repository: PSGallery
+        Ensure: Present
+        InstallationPolicy: Trusted
+    - resource: PowerShellGet/PSModule
+      directives:
+        description: Install PSFzf from PSGallery (fzf-powered tab completion)
+        allowPrerelease: true
+      settings:
+        Name: PSFzf
+        Repository: PSGallery
+        Ensure: Present
+        InstallationPolicy: Trusted
     - resource: PSDscResources/Script
       dependsOn:
         - install-uv-python
