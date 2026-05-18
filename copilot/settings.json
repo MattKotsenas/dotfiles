@@ -4,9 +4,5 @@
   "renderMarkdown": true,
   "experimental": true,
   "includeCoAuthoredBy": false,
-  "keepAlive": "busy",
-  "statusLine": {
-    "type": "command",
-    "command": "pwsh -NoProfile -File ~/.copilot/statusline.ps1"
-  }
+  "keepAlive": "busy"
 }
