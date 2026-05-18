@@ -297,13 +297,14 @@ properties:
         allowPrerelease: true
       settings:
         GetScript: |
-          $bin = Join-Path $env:USERPROFILE '.cargo\bin\psmux.exe'
+          $cargoBin = if ($env:CARGO_HOME) { Join-Path $env:CARGO_HOME 'bin' } else { Join-Path $env:USERPROFILE '.cargo\bin' }
+          $bin = Join-Path $cargoBin 'psmux.exe'
           @{ Result = if (Test-Path -LiteralPath $bin) { 'present' } else { 'absent' } }
         TestScript: |
           $false
         SetScript: |
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-          cargo install --git https://github.com/MattKotsenas/psmux.git psmux
+          cargo install --git https://github.com/MattKotsenas/psmux.git psmux 2>&1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "cargo install --git psmux failed with exit code $LASTEXITCODE" }
     - resource: PSDscResources/Script
       dependsOn:
@@ -337,11 +338,11 @@ properties:
           $ppmDest = Join-Path $env:USERPROFILE '.psmux\plugins\ppm'
           $tmpDir  = Join-Path $env:TEMP 'psmux-plugins'
           if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
-          git clone --depth 1 https://github.com/MattKotsenas/psmux-plugins.git $tmpDir
+          git clone --depth 1 https://github.com/MattKotsenas/psmux-plugins.git $tmpDir 2>&1 | Out-Host
           $null = New-Item $ppmDest -ItemType Directory -Force
           Copy-Item (Join-Path $tmpDir 'ppm\*') $ppmDest -Recurse -Force
           Remove-Item $tmpDir -Recurse -Force
-          & (Join-Path $ppmDest 'scripts\install_plugins.ps1')
+          & (Join-Path $ppmDest 'scripts\install_plugins.ps1') 2>&1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "install_plugins.ps1 failed with exit code $LASTEXITCODE" }
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-uv
@@ -369,7 +370,7 @@ properties:
           Test-Path -LiteralPath $py
         SetScript: |
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-          uv python install --default --preview-features python-install-default 3.13
+          uv python install --default --preview-features python-install-default 3.13 2>&1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "uv python install failed with exit code $LASTEXITCODE" }
     - resource: PowerShellGet/PSModule
       directives:
@@ -468,13 +469,14 @@ properties:
         allowPrerelease: true
       settings:
         GetScript: |
-          $bin = Join-Path $env:USERPROFILE '.cargo\bin\wpmctl.exe'
+          $cargoBin = if ($env:CARGO_HOME) { Join-Path $env:CARGO_HOME 'bin' } else { Join-Path $env:USERPROFILE '.cargo\bin' }
+          $bin = Join-Path $cargoBin 'wpmctl.exe'
           @{ Result = if (Test-Path -LiteralPath $bin) { 'present' } else { 'absent' } }
         TestScript: |
           $false
         SetScript: |
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-          cargo install --git https://github.com/LGUG2Z/wpm.git wpmctl wpmd
+          cargo install --git https://github.com/LGUG2Z/wpm.git wpmctl wpmd 2>&1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "cargo install --git wpm failed with exit code $LASTEXITCODE" }
     - resource: PSDscResources/Registry
       directives:
@@ -485,4 +487,5 @@ properties:
         ValueName: ACP
         ValueData: ['65001']
         ValueType: String
+        Force: true
         Ensure: Present
