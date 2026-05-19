@@ -70,6 +70,14 @@ function prompt {
         Set-Alias -Name cd -Value z -Option AllScope -Scope Global -Force
     },
     {
+        # Shell integration: emit OSC 7 (cwd), OSC 133 state markers, and
+        # OSC 133;C;cmdline_url= (kitty-style command identity) for terminal
+        # multiplexers and terminals that consume shell-integration signals.
+        # Loaded after omp + zoxide so the prompt wrapper wraps the final
+        # composed prompt. See script docblock for details.
+        . (Join-Path (Split-Path $PROFILE) scripts Enable-OSC133Integration.ps1)
+    },
+    {
         $Env:FZF_ALT_C_COMMAND = "fd --type dir --hidden --exclude .git"
         $ENV:FZF_ALT_C_OPTS = "--preview 'eza --tree --color=always --icons=always {}'"
         $Env:FZF_CTRL_T_OPTS = "--preview 'bat -n --color=always --line-range :500 {}'"
