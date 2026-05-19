@@ -1,17 +1,27 @@
-# Route GitHub credentials by repo path so multiple github.com accounts
-# (e.g. personal + enterprise/EMU) can coexist. With useHttpPath=true and
-# no pinned username, the first access to each new repo triggers one
-# browser login; the token is then cached per-path and reused silently.
+# Route GitHub credentials per repo by probing both gh-authenticated accounts
+# and returning a token from whichever has push access to <owner>/<repo>. No
+# global default, no per-repo config. See ../auto-identity.sh for the logic
+# and ../README.md for the broader pitch.
+#
+# helper = "" clears the system-level GCM helper so it doesn't also prompt
+# for github.com. Nothing else touches credential.https://github.com -- the
+# gh auth setup-git blocks were removed from ~/.gitconfig.
 [credential "https://github.com"]
 	useHttpPath = true
+	helper = ""
+	helper = "!sh \"$HOME/.config/git/auto-identity.sh\" credential"
 
-# Auto-set commit identity on clone / branch checkout based on which
-# authenticated gh account has push access to origin. If neither account
-# has push (e.g. OSS contributions), falls back to the active gh account
-# — use `gh auth switch` to control that default. Requires git 2.54+
-# (config-based hooks) and the gh CLI; with useConfigOnly = true, missing
-# either fails loudly via "tell me who you are" rather than silently
-# committing with the wrong identity.
+# Gist: strict ownership probe via `gh api gists/<id>`. useHttpPath = true
+# is required so the gist id reaches the helper.
+[credential "https://gist.github.com"]
+	useHttpPath = true
+	helper = ""
+	helper = "!sh \"$HOME/.config/git/auto-identity.sh\" credential"
+
+# Auto-set commit identity on clone / branch checkout to the noreply email of
+# whichever gh account has push access to origin. With useConfigOnly = true
+# in user.gitconfig, missing identity fails loudly via "tell me who you are"
+# instead of committing with the wrong one. Requires git 2.54+.
 [hook "auto-identity"]
 	event = post-checkout
-	command = "sh -c '[ \"$3\" = \"1\" ] || exit 0; git config --local user.email >/dev/null 2>&1 && exit 0; r=$(git remote get-url origin 2>/dev/null) || exit 0; case \"$r\" in *github.com*) ;; *) exit 0 ;; esac; p=\"${r#*github.com[:/]}\"; p=\"${p%.git}\"; o=\"${p%%/*}\"; n=\"${p#*/}\"; n=\"${n%%/*}\"; [ -n \"$o\" ] && [ -n \"$n\" ] || exit 0; W=\"\"; for U in $(gh auth status --json hosts --jq \".hosts.\\\"github.com\\\"[].login\" 2>/dev/null); do T=$(gh auth token -h github.com -u \"$U\" 2>/dev/null) || continue; [ \"$(GH_TOKEN=\"$T\" gh api \"repos/$o/$n\" --jq .permissions.push 2>/dev/null)\" = \"true\" ] && { W=\"$U\"; break; }; done; [ -z \"$W\" ] && W=$(gh auth status --json hosts --jq \".hosts.\\\"github.com\\\" | map(select(.active)) | .[0].login\" 2>/dev/null); [ -n \"$W\" ] || exit 0; T=$(gh auth token -h github.com -u \"$W\" 2>/dev/null) || exit 0; I=$(GH_TOKEN=\"$T\" gh api user --jq .id 2>/dev/null); L=$(GH_TOKEN=\"$T\" gh api user --jq .login 2>/dev/null); [ -n \"$I\" ] && [ -n \"$L\" ] && git config --local user.email \"$I+$L@users.noreply.github.com\"' _"
+	command = "sh \"$HOME/.config/git/auto-identity.sh\" post-checkout"
