@@ -1,15 +1,20 @@
 <#
 .SYNOPSIS
-Emits OSC 7 (cwd) + OSC 133 (state markers) + OSC 133;C;cmdline_url= (kitty-style
-command identity) from pwsh, for terminal multiplexers and terminals that consume
+Emits OSC 133 (state markers) + OSC 133;C;cmdline_url= (kitty-style command
+identity) from pwsh, for terminal multiplexers and terminals that consume
 shell-integration signals (psmux#299, WezTerm, kitty, ghostty, etc.).
 
 .DESCRIPTION
 Two hooks:
-  * `prompt` is wrapped to emit OSC 7 (cwd), OSC 133;D (previous command done),
+  * `prompt` is wrapped to emit OSC 133;D (previous command done),
     OSC 133;A (prompt start), and OSC 133;B (prompt end / input start).
   * The Enter key handler is replaced to emit OSC 133;C;cmdline_url=<encoded>
     immediately after AcceptLine, capturing the literal command.
+
+OSC 7 (cwd) is NOT emitted here — oh-my-posh handles that via its
+`pwd: osc7` setting in matt.omp.json. If you change `pwd` to `osc99` or
+remove it, psmux loses cwd visibility; the right fix is to keep `pwd: osc7`
+in OMP, not to add OSC 7 emission back here.
 
 Coexists with oh-my-posh. The Enter handler implementation matches OMP's
 contract (parse-error check + Set-TransientPrompt + AcceptLine) so transient
@@ -27,6 +32,10 @@ For details: https://github.com/psmux/psmux/issues/299
 #>
 
 if ($global:__PsmuxOSC133Installed) { return }
+
+# RETIRE WHEN: JanDeDobbeleer/oh-my-posh#7536 ships. Once OMP emits
+# OSC 133;C;cmdline_url= natively from its `shell_integration: true` mode,
+# delete this script and the line that sources it from the profile.
 
 # --- Prompt wrapper ---------------------------------------------------------
 # Capture whatever prompt function is currently bound (oh-my-posh, plain pwsh,
@@ -51,14 +60,9 @@ function global:prompt {
         $global:__PsmuxOSC133LastInExec = $false
     }
 
-    # OSC 7 - cwd as file:// URL.
-    # Path separators normalized to '/' so the URL is well-formed on any
-    # consumer (per dtterm/xterm convention).
-    $cwd = (Get-Location).Path -replace '\\', '/'
-    # Build URL safely - EscapeDataString escapes too much (it escapes /
-    # and :), EscapeUriString allows them. Use EscapeUriString.
-    $encodedCwd = [Uri]::EscapeUriString($cwd)
-    [Console]::Write("${ESC}]7;file://${env:COMPUTERNAME}/${encodedCwd}${BEL}")
+    # OSC 7 (cwd) is intentionally NOT emitted here — oh-my-posh emits it via
+    # its `pwd: osc7` setting in matt.omp.json (which is already invoked as
+    # part of the original prompt body below).
 
     # OSC 133;A - prompt start.
     [Console]::Write("${ESC}]133;A${BEL}")
