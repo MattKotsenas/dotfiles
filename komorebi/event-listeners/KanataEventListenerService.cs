@@ -82,25 +82,40 @@ public sealed class KanataEventListenerService : BackgroundService
 
     private void ProcessLine(string line)
     {
+        IEvent? evt = null;
+
         // Format: {"LayerChange":{"new":"base"}}
-        // Simple parsing - avoid full deserialization for speed
-        if (!line.Contains("LayerChange")) return;
+        if (line.Contains("LayerChange"))
+        {
+            var newIdx = line.IndexOf("\"new\"", StringComparison.Ordinal);
+            if (newIdx < 0) return;
+            var colonIdx = line.IndexOf(':', newIdx + 5);
+            if (colonIdx < 0) return;
+            var quoteStart = line.IndexOf('"', colonIdx + 1);
+            var quoteEnd = line.IndexOf('"', quoteStart + 1);
+            if (quoteStart < 0 || quoteEnd < 0) return;
 
-        var newIdx = line.IndexOf("\"new\"", StringComparison.Ordinal);
-        if (newIdx < 0) return;
+            var layerName = line[(quoteStart + 1)..quoteEnd];
+            _logger.LogDebug("Kanata layer change: {Layer}", layerName);
+            evt = new KanataLayerChangeEvent(layerName);
+        }
+        // Format: {"MessagePush":{"message":"komorebic focus left"}}
+        else if (line.Contains("MessagePush"))
+        {
+            var msgIdx = line.IndexOf("\"message\"", StringComparison.Ordinal);
+            if (msgIdx < 0) return;
+            var colonIdx = line.IndexOf(':', msgIdx + 9);
+            if (colonIdx < 0) return;
+            var quoteStart = line.IndexOf('"', colonIdx + 1);
+            var quoteEnd = line.IndexOf('"', quoteStart + 1);
+            if (quoteStart < 0 || quoteEnd < 0) return;
 
-        var colonIdx = line.IndexOf(':', newIdx + 5);
-        if (colonIdx < 0) return;
+            var message = line[(quoteStart + 1)..quoteEnd];
+            _logger.LogDebug("Kanata message: {Message}", message);
+            evt = new KanataMessageEvent(message);
+        }
 
-        var quoteStart = line.IndexOf('"', colonIdx + 1);
-        var quoteEnd = line.IndexOf('"', quoteStart + 1);
-        if (quoteStart < 0 || quoteEnd < 0) return;
-
-        var layerName = line[(quoteStart + 1)..quoteEnd];
-
-        _logger.LogDebug("Kanata layer change: {Layer}", layerName);
-
-        var evt = new KanataLayerChangeEvent(layerName);
+        if (evt is null) return;
 
         foreach (var rule in _rules)
         {
@@ -110,7 +125,7 @@ public sealed class KanataEventListenerService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Rule '{RuleName}' threw processing KanataLayerChangeEvent", rule.Name);
+                _logger.LogError(ex, "Rule '{RuleName}' threw processing {EventType}", rule.Name, evt.GetType().Name);
             }
         }
     }

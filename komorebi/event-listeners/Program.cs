@@ -17,6 +17,7 @@ public static class Program
         // Register event rules
         builder.Services.AddSingleton<IEventRule, EmptyTeamsWindowRule>();
         builder.Services.AddSingleton<IEventRule, LayerIndicatorRule>();
+        builder.Services.AddSingleton<IEventRule, KomorebicCommandRule>();
 
         // Register event listener services
         builder.Services.AddHostedService<KomorebiEventListenerService>();
