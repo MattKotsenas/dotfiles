@@ -13,7 +13,7 @@ namespace EventListeners;
 ///
 /// This rule waits for a delay period, and if the title hasn't changed, closes the window.
 /// </summary>
-public sealed class EmptyTeamsWindowRule : IKomorebiEventRule
+public sealed class EmptyTeamsWindowRule : IEventRule
 {
     private static readonly TimeSpan CloseDelay = TimeSpan.FromSeconds(2);
     private const string TeamsExeName = "ms-teams.exe";
@@ -45,16 +45,18 @@ public sealed class EmptyTeamsWindowRule : IKomorebiEventRule
         _timeProvider = timeProvider;
     }
 
-    public void ProcessEvent(string eventType, JsonElement? content, JsonElement? state)
+    public void ProcessEvent(IEvent evt)
     {
-        if (state.HasValue && !_pendingCloses.IsEmpty)
+        if (evt is not KomorebiWindowEvent e) return;
+
+        if (e.State.HasValue && !_pendingCloses.IsEmpty)
         {
-            CheckStateForTitleChanges(state.Value);
+            CheckStateForTitleChanges(e.State.Value);
         }
 
-        if (eventType == "Show" && content.HasValue)
+        if (e.EventType == "Show" && e.Content.HasValue)
         {
-            HandleShowEvent(content.Value);
+            HandleShowEvent(e.Content.Value);
         }
     }
 

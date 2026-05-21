@@ -15,7 +15,7 @@ public sealed class KomorebiEventListenerService : BackgroundService
     private readonly string _pipeName;
     private readonly ILogger<KomorebiEventListenerService> _logger;
     private readonly IHostApplicationLifetime _appLifetime;
-    private readonly IEnumerable<IKomorebiEventRule> _rules;
+    private readonly IEnumerable<IEventRule> _rules;
     private bool _subscribed;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -26,7 +26,7 @@ public sealed class KomorebiEventListenerService : BackgroundService
     public KomorebiEventListenerService(
         ILogger<KomorebiEventListenerService> logger,
         IHostApplicationLifetime appLifetime,
-        IEnumerable<IKomorebiEventRule> rules)
+        IEnumerable<IEventRule> rules)
     {
         _logger = logger;
         _appLifetime = appLifetime;
@@ -147,15 +147,14 @@ public sealed class KomorebiEventListenerService : BackgroundService
 
         _logger.LogDebug("Received event: {EventType}", eventType);
 
-        // Fan out to all rules
-        var content = evt.Event.Content;
-        var state = evt.State;
+        // Wrap as a unified event and fan out to all rules
+        var wrappedEvent = new KomorebiWindowEvent(eventType, evt.Event.Content, evt.State);
 
         foreach (var rule in _rules)
         {
             try
             {
-                rule.ProcessEvent(eventType, content, state);
+                rule.ProcessEvent(wrappedEvent);
             }
             catch (Exception ex)
             {

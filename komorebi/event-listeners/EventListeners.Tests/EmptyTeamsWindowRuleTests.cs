@@ -22,7 +22,7 @@ public class EmptyTeamsWindowRuleTests
     {
         var rule = CreateRule(out var action, out var time);
 
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), state: null);
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), null));
 
         Assert.Empty(action.ClosedHwnds);
 
@@ -37,7 +37,7 @@ public class EmptyTeamsWindowRuleTests
     {
         var rule = CreateRule(out var action, out var time);
 
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("not-teams.exe", "Microsoft Teams", 100), state: null);
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("not-teams.exe", "Microsoft Teams", 100), null));
 
         time.Advance(CloseDelay + TimeSpan.FromSeconds(1));
         Assert.False(await action.WaitForCloseAsync(TimeSpan.FromMilliseconds(200)), "should not close non-Teams window");
@@ -48,7 +48,7 @@ public class EmptyTeamsWindowRuleTests
     {
         var rule = CreateRule(out var action, out var time);
 
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Meeting with Alice | Microsoft Teams", 100), state: null);
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Meeting with Alice | Microsoft Teams", 100), null));
 
         time.Advance(CloseDelay + TimeSpan.FromSeconds(1));
         Assert.False(await action.WaitForCloseAsync(TimeSpan.FromMilliseconds(200)));
@@ -59,12 +59,12 @@ public class EmptyTeamsWindowRuleTests
     {
         var rule = CreateRule(out var action, out var time);
 
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), state: null);
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), null));
 
         var stateWithRealTitle = TestJson.State(tiled: [
             new(100, "Meeting with Bob | Microsoft Teams", "ms-teams.exe")
         ]);
-        rule.ProcessEvent("TitleUpdate", content: null, state: stateWithRealTitle);
+        rule.ProcessEvent(new KomorebiWindowEvent("TitleUpdate", null, stateWithRealTitle));
 
         time.Advance(CloseDelay + TimeSpan.FromSeconds(1));
 
@@ -77,13 +77,13 @@ public class EmptyTeamsWindowRuleTests
     {
         var rule = CreateRule(out var action, out var time);
 
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), state: null);
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), null));
 
         var emptyState = TestJson.State(tiled: [
             new(100, "Microsoft Teams", "ms-teams.exe")
         ]);
-        rule.ProcessEvent("FocusChange", content: null, state: emptyState);
-        rule.ProcessEvent("FocusChange", content: null, state: emptyState);
+        rule.ProcessEvent(new KomorebiWindowEvent("FocusChange", null, emptyState));
+        rule.ProcessEvent(new KomorebiWindowEvent("FocusChange", null, emptyState));
 
         time.Advance(CloseDelay + TimeSpan.FromMilliseconds(100));
         Assert.True(await action.WaitForCloseAsync(SignalTimeout));
@@ -96,8 +96,8 @@ public class EmptyTeamsWindowRuleTests
     {
         var rule = CreateRule(out var action, out var time);
 
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), state: null);
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), state: null);
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), null));
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), null));
 
         time.Advance(CloseDelay + TimeSpan.FromMilliseconds(100));
         Assert.True(await action.WaitForCloseAsync(SignalTimeout));
@@ -112,8 +112,8 @@ public class EmptyTeamsWindowRuleTests
     {
         var rule = CreateRule(out var action, out var time);
 
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), state: null);
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 200), state: null);
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), null));
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 200), null));
 
         time.Advance(CloseDelay + TimeSpan.FromMilliseconds(100));
         Assert.True(await action.WaitForCloseAsync(SignalTimeout));
@@ -127,14 +127,14 @@ public class EmptyTeamsWindowRuleTests
     {
         var rule = CreateRule(out var action, out var time);
 
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), state: null);
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 200), state: null);
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), null));
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 200), null));
 
         var state = TestJson.State(tiled: [
             new(100, "Meeting | Microsoft Teams", "ms-teams.exe"),
             new(200, "Microsoft Teams", "ms-teams.exe"),
         ]);
-        rule.ProcessEvent("TitleUpdate", content: null, state: state);
+        rule.ProcessEvent(new KomorebiWindowEvent("TitleUpdate", null, state));
 
         time.Advance(CloseDelay + TimeSpan.FromMilliseconds(100));
         Assert.True(await action.WaitForCloseAsync(SignalTimeout));
@@ -148,16 +148,17 @@ public class EmptyTeamsWindowRuleTests
     {
         var rule = CreateRule(out var action, out var time);
 
-        rule.ProcessEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), state: null);
+        rule.ProcessEvent(new KomorebiWindowEvent("Show", TestJson.ShowEventContent("ms-teams.exe", "Microsoft Teams", 100), null));
 
         var stateFloating = TestJson.State(
             tiled: [],
             floating: [new(100, "Meeting | Microsoft Teams", "ms-teams.exe")],
             layer: "Floating");
-        rule.ProcessEvent("FocusChange", content: null, state: stateFloating);
+        rule.ProcessEvent(new KomorebiWindowEvent("FocusChange", null, stateFloating));
 
         time.Advance(CloseDelay + TimeSpan.FromSeconds(1));
         Assert.False(await action.WaitForCloseAsync(TimeSpan.FromMilliseconds(200)),
             "title change in floating layer should also cancel pending close");
     }
 }
+

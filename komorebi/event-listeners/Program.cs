@@ -15,12 +15,12 @@ public static class Program
         builder.Services.AddSingleton<IWindowAction, WindowAction>();
 
         // Register event rules
-        builder.Services.AddSingleton<IKomorebiEventRule, EmptyTeamsWindowRule>();
-        // Add additional rules here:
-        // builder.Services.AddSingleton<IKomorebiEventRule, AnotherRule>();
+        builder.Services.AddSingleton<IEventRule, EmptyTeamsWindowRule>();
+        builder.Services.AddSingleton<IEventRule, LayerIndicatorRule>();
 
-        // Register the event listener service
+        // Register event listener services
         builder.Services.AddHostedService<KomorebiEventListenerService>();
+        builder.Services.AddHostedService<KanataEventListenerService>();
 
         // Configure logging to console
         builder.Logging.AddConsole();

@@ -1,11 +1,9 @@
-using System.Text.Json;
-
 namespace EventListeners;
 
 /// <summary>
-/// Interface for rules that process Komorebi events.
+/// Interface for rules that process events from any source (Komorebi, Kanata, etc.).
 /// </summary>
-public interface IKomorebiEventRule
+public interface IEventRule
 {
     /// <summary>
     /// Display name for logging purposes.
@@ -13,14 +11,8 @@ public interface IKomorebiEventRule
     string Name { get; }
 
     /// <summary>
-    /// Process an event received from Komorebi.
+    /// Process an event. Implementations should pattern-match on the event type
+    /// and return early for events they don't handle.
     /// </summary>
-    /// <param name="eventType">The event type (e.g., "Show", "TitleUpdate", "FocusChange")</param>
-    /// <param name="content">The event content as a JsonElement, structure varies by event type</param>
-    /// <param name="state">The full Komorebi state as a JsonElement</param>
-    /// <remarks>
-    /// Implementations should handle their own exceptions where possible.
-    /// Unhandled exceptions will be caught by the service and logged, but will not stop other rules from processing.
-    /// </remarks>
-    void ProcessEvent(string eventType, JsonElement? content, JsonElement? state);
+    void ProcessEvent(IEvent evt);
 }
