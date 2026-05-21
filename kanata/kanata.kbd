@@ -84,8 +84,8 @@
     tab
     (lalt))
 
-  ;; Cheat sheet (/ key) - opens in WT quake window with glow
-  / (cmd cmd.exe /c "%USERPROFILE%\\.config\\keyboard\\scripts\\cheatsheet.cmd")
+  ;; Cheat sheet (/ key) - opens in WT quake window with glow pager
+  / (cmd wt.exe -w _quake cmd.exe /c "%USERPROFILE%\\.config\\keyboard\\scripts\\cheatsheet.cmd")
 
   ;; Bare HJKL: intentionally unmapped = passthrough.
   ;; Phase 2 (komokana) will add per-app overrides here.
