@@ -15,9 +15,4 @@ public interface IWindowAction
     /// Sends WM_CLOSE to the specified window.
     /// </summary>
     void Close(long hwnd);
-
-    /// <summary>
-    /// Sets the border color for a given window kind.
-    /// </summary>
-    void SetBorderColour(string windowKind, byte r, byte g, byte b);
 }

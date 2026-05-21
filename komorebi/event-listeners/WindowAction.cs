@@ -59,36 +59,4 @@ public sealed class WindowAction : IWindowAction
             _logger.LogWarning("PostMessage WM_CLOSE failed for hwnd {Hwnd} with error {ErrorCode}", hwnd, error);
         }
     }
-
-    public void SetBorderColour(string windowKind, byte r, byte g, byte b)
-    {
-        try
-        {
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "komorebic",
-                    Arguments = $"border-colour {r} {g} {b} -w {windowKind}",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
-
-            process.Start();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                var stderr = process.StandardError.ReadToEnd();
-                _logger.LogWarning("komorebic border-colour exited {ExitCode}: {StdErr}", process.ExitCode, stderr);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to invoke komorebic border-colour");
-        }
-    }
 }

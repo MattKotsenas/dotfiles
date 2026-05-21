@@ -11,11 +11,8 @@ public sealed class FakeWindowAction : IWindowAction
 {
     private readonly ConcurrentQueue<long> _closedHwnds = new();
     private readonly SemaphoreSlim _closeSignal = new(0);
-    private readonly ConcurrentQueue<(string Kind, byte R, byte G, byte B)> _borderColours = new();
 
     public IReadOnlyCollection<long> ClosedHwnds => _closedHwnds.ToArray();
-
-    public IReadOnlyCollection<(string Kind, byte R, byte G, byte B)> BorderColours => _borderColours.ToArray();
 
     public int ToggleFloatCalls { get; private set; }
 
@@ -26,16 +23,6 @@ public sealed class FakeWindowAction : IWindowAction
     }
 
     public void ToggleFloat() => ToggleFloatCalls++;
-
-    public void SetBorderColour(string windowKind, byte r, byte g, byte b)
-    {
-        _borderColours.Enqueue((windowKind, r, g, b));
-    }
-
-    public void ClearBorderColours()
-    {
-        while (_borderColours.TryDequeue(out _)) { }
-    }
 
     /// <summary>
     /// Waits up to <paramref name="timeout"/> for the next Close call to be recorded.

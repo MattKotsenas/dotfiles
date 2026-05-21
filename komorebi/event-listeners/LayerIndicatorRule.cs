@@ -9,14 +9,19 @@ public sealed class LayerIndicatorRule : IEventRule
 {
     private readonly ILogger<LayerIndicatorRule> _logger;
     private readonly IWindowAction _windowAction;
+    private readonly IWmOverlay _overlay;
     private bool _inWmMode;
 
     public string Name => "LayerIndicatorRule";
 
-    public LayerIndicatorRule(ILogger<LayerIndicatorRule> logger, IWindowAction windowAction)
+    public LayerIndicatorRule(
+        ILogger<LayerIndicatorRule> logger,
+        IWindowAction windowAction,
+        IWmOverlay overlay)
     {
         _logger = logger;
         _windowAction = windowAction;
+        _overlay = overlay;
     }
 
     public void ProcessEvent(IEvent evt)
@@ -25,23 +30,19 @@ public sealed class LayerIndicatorRule : IEventRule
 
         var isWm = e.NewLayer.StartsWith("wm", StringComparison.OrdinalIgnoreCase);
 
-        // Only change borders on wm↔base transitions, not on sub-layer changes
+        // Only change on wm↔base transitions, not on sub-layer changes
         if (isWm == _inWmMode) return;
         _inWmMode = isWm;
 
         if (isWm)
         {
-            _logger.LogDebug("WM layer active, setting saturated borders");
-            _windowAction.SetBorderColour("single",    50, 210, 248);
-            _windowAction.SetBorderColour("stack",    180, 120, 250);
-            _windowAction.SetBorderColour("unfocused", 80,  85, 110);
+            _logger.LogDebug("WM layer active");
+            _overlay.Show();
         }
         else
         {
-            _logger.LogDebug("Base layer active, reverting borders");
-            _windowAction.SetBorderColour("single",   116, 199, 236);
-            _windowAction.SetBorderColour("stack",    203, 166, 247);
-            _windowAction.SetBorderColour("unfocused", 69,  71,  90);
+            _logger.LogDebug("Base layer active");
+            _overlay.Hide();
         }
     }
 }
