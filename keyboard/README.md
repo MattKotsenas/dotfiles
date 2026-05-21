@@ -1,16 +1,16 @@
 # Unified Keyboard Navigation
 
 A CapsLock-layer system for keyboard-driven window management on Windows,
-built on [kanata], [komorebi], [whkd], and (planned) [komokana].
+built on [kanata], [komorebi], and [whkd].
 
 ## Design principles
 
 1. **One direction cluster** - HJKL everywhere
-2. **Opposite-hand rule** - left hand anchors/modifies, right hand directs
-3. **Hold/toggle symmetry** - every operation works in both modes
-4. **Home-row sub-modifiers** - S/D/F/E select the operation scope
-5. **Unmapped apps = passthrough** - bare HJKL does nothing in unknown apps
-6. **Mode indicator** - border brightness shift signals WM mode
+2. **Prefix mode** - single tap = one-shot prefix, double tap = toggle for multi-step
+3. **Home-row sub-modifiers** - S/D/F/E/A select the operation scope
+4. **Sticky toggle sub-layers** - in toggle mode, sub-mods stay active until switched
+5. **Unmapped keys = deadkeyed** - no accidental typing in WM mode
+6. **Mode indicator** - overlay window shows ⌨ WM badge when active
 
 ## Architecture
 
@@ -19,69 +19,73 @@ graph LR
     subgraph "Key input"
         K[Keyboard] --> Kanata
     end
-    subgraph "Layer context (planned)"
-        Komorebi -- "named pipe: focus events" --> Komokana
-        Komokana -- "TCP: layer switch" --> Kanata
+    subgraph "Event processing"
+        Kanata -- "TCP: push-msg" --> EventListeners
+        Kanata -- "TCP: LayerChange" --> EventListeners
+        Komorebi -- "named pipe" --> EventListeners
     end
-    subgraph "WM commands"
-        Kanata -- "cmd: komorebic ..." --> Komorebi
-        Kanata -- "cmd: border-colour" --> Komorebi
+    subgraph "Actions"
+        EventListeners -- "komorebic CLI" --> Komorebi
+        EventListeners -- "Win32 overlay" --> Indicator["⌨ WM badge"]
     end
 ```
 
-### Message flow: hold CapsLock, focus right
+### Message flow: one-shot prefix, focus right
 
 ```mermaid
 sequenceDiagram
     participant User
     participant Kanata
+    participant EventListeners
     participant Komorebi
 
-    User->>Kanata: CapsLock press (hold)
-    Kanata->>Kanata: activate WM layer
-    User->>Kanata: F (hold, in WM layer)
-    Kanata->>Kanata: activate wm-focus sub-layer
-    User->>Kanata: L (tap, in wm-focus)
-    Kanata->>Komorebi: komorebic focus right
-    User->>Kanata: F release
-    Kanata->>Kanata: deactivate wm-focus
-    User->>Kanata: CapsLock release
-    Kanata->>Kanata: deactivate WM layer
+    User->>Kanata: CapsLock tap
+    Kanata->>Kanata: one-shot WM layer
+    User->>Kanata: F tap (in WM layer)
+    Kanata->>Kanata: one-shot wm-focus sub-layer
+    User->>Kanata: L tap (in wm-focus)
+    Kanata->>EventListeners: push-msg "komorebic focus right"
+    EventListeners->>Komorebi: komorebic focus right
+    Kanata->>Kanata: one-shot expires, back to base
 ```
 
-### Message flow: toggle mode, unstack and restack
+### Message flow: toggle mode, move windows
 
 ```mermaid
 sequenceDiagram
     participant User
     participant Kanata
-    participant Komorebi
+    participant EventListeners
 
+    User->>Kanata: CapsLock double-tap
+    Kanata->>Kanata: layer-switch wm-toggle
+    Kanata->>EventListeners: LayerChange "wm-toggle"
+    EventListeners->>EventListeners: show ⌨ WM overlay
+    User->>Kanata: D tap
+    Kanata->>Kanata: layer-switch wm-move-toggle (sticky)
+    User->>Kanata: H tap
+    Kanata->>EventListeners: push-msg "komorebic move left"
+    User->>Kanata: L tap
+    Kanata->>EventListeners: push-msg "komorebic move right"
     User->>Kanata: CapsLock tap
-    Kanata->>Kanata: toggle WM layer ON
-    Kanata->>Komorebi: border-colour (bright)
-    User->>Kanata: \ (unstack)
-    Kanata->>Komorebi: komorebic unstack
-    User->>Kanata: S (hold) + H (tap)
-    Kanata->>Komorebi: komorebic stack left
-    User->>Kanata: CapsLock tap
-    Kanata->>Kanata: toggle WM layer OFF
-    Kanata->>Komorebi: border-colour (normal)
+    Kanata->>Kanata: layer-switch base
+    Kanata->>EventListeners: LayerChange "base"
+    EventListeners->>EventListeners: hide overlay
 ```
 
 ## Keymap
 
 See [KEYMAP.md](KEYMAP.md) for the complete reference card.
 
-### Sub-modifier layout (left hand, CapsLock held or toggled)
+### Sub-modifier layout (left hand)
 
 ```
-         E(xpand)
-  S(tack)  D(isplace)  F(ocus)
+            E(xpand)
+  A(ssemble) S(tack) D(isplace) F(ocus)
 ```
 
-Each sub-modifier is held with a different finger while CapsLock is held
-with the pinky. In toggle mode, all fingers are free.
+In one-shot mode, tap a sub-modifier then tap a direction.
+In toggle mode, tap a sub-modifier to enter that mode (sticky).
 
 ## Startup (wpmd)
 
@@ -92,15 +96,14 @@ desktop (oneshot, autostart)
 ├── komorebi-bar-1 (requires komorebi)
 ├── komorebi-bar-2 (requires komorebi)
 ├── kanata --port 9999
-├── komokana (requires komorebi, kanata)  ← planned
 └── event-listeners (requires komorebi)
 ```
 
 ## Phase 2: per-app inner navigation (planned)
 
-A state controller will coordinate kanata layer state with komokana's
-app-focus detection. When CapsLock is active and a mapped app is focused,
-bare HJKL will send app-specific navigation:
+The event-listeners service will coordinate kanata layer state with
+komorebi focus events (replacing komokana). When CapsLock is active and a
+mapped app is focused, bare HJKL will send app-specific navigation:
 
 | App | h | j | k | l |
 |-----|---|---|---|---|
@@ -111,4 +114,3 @@ bare HJKL will send app-specific navigation:
 [kanata]: https://github.com/jtroo/kanata
 [komorebi]: https://github.com/LGUG2Z/komorebi
 [whkd]: https://github.com/LGUG2Z/whkd
-[komokana]: https://github.com/LGUG2Z/komokana

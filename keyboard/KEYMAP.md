@@ -1,6 +1,6 @@
 # WM Layer Keymap
 
-CapsLock = **tap** to toggle, **hold** for sustained WM mode.
+CapsLock = **single tap** for one-shot prefix, **double tap** for toggle mode.
 
 ## Directional (right hand HJKL)
 
@@ -11,6 +11,7 @@ CapsLock = **tap** to toggle, **hold** for sustained WM mode.
 | **D** (displace) | move left | move down | move up | move right |
 | **S** (stack) | stack left | stack down | stack up | stack right |
 | **E** (expand) | shrink width | shrink height | grow height | grow width |
+| **A** (assemble) | unstack | cycle stack prev | cycle stack next | unstack |
 
 ## Workspaces
 
@@ -40,14 +41,8 @@ CapsLock = **tap** to toggle, **hold** for sustained WM mode.
 | `y` | flip layout vertical |
 | `p` | toggle pause |
 | `g` | cycle focus next |
-| `?` | open this cheat sheet |
+| `/` | open this cheat sheet |
 
 ## Mode indicator
 
-Borders brighten when WM mode is active (toggle only):
-
-| Border | Normal | WM mode |
-|---|---|---|
-| Single | Sapphire `#74c7ec` | Saturated blue `#32d2f8` |
-| Stack | Mauve `#cba6f7` | Saturated purple `#b478fa` |
-| Unfocused | Surface1 `#45475a` | Surface2 `#50556e` |
+⌨ WM overlay badge appears in the top-left corner when WM mode is active.

@@ -13,7 +13,6 @@ public sealed class WmOverlayIndicator : IWmOverlay, IDisposable
 {
     private readonly ILogger _logger;
     private nint _hwnd;
-    private bool _visible;
     private Thread? _messageLoop;
     private readonly ManualResetEventSlim _ready = new();
 
@@ -38,14 +37,12 @@ public sealed class WmOverlayIndicator : IWmOverlay, IDisposable
         if (_hwnd == 0) return;
         _ready.Wait();
         ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
-        _visible = true;
     }
 
     public void Hide()
     {
         if (_hwnd == 0) return;
         ShowWindow(_hwnd, SW_HIDE);
-        _visible = false;
     }
 
     public void Dispose()

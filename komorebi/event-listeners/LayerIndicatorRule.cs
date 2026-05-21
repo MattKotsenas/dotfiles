@@ -3,12 +3,11 @@ using Microsoft.Extensions.Logging;
 namespace EventListeners;
 
 /// <summary>
-/// Shifts komorebi border colors when kanata enters/exits the WM layer.
+/// Shows/hides the WM overlay when kanata enters/exits the WM layer.
 /// </summary>
 public sealed class LayerIndicatorRule : IEventRule
 {
     private readonly ILogger<LayerIndicatorRule> _logger;
-    private readonly IWindowAction _windowAction;
     private readonly IWmOverlay _overlay;
     private bool _inWmMode;
 
@@ -16,11 +15,9 @@ public sealed class LayerIndicatorRule : IEventRule
 
     public LayerIndicatorRule(
         ILogger<LayerIndicatorRule> logger,
-        IWindowAction windowAction,
         IWmOverlay overlay)
     {
         _logger = logger;
-        _windowAction = windowAction;
         _overlay = overlay;
     }
 

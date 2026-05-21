@@ -4,11 +4,10 @@ namespace EventListeners.Tests;
 
 public class LayerIndicatorRuleTests
 {
-    private static LayerIndicatorRule CreateRule(out FakeWindowAction action, out FakeWmOverlay overlay)
+    private static LayerIndicatorRule CreateRule(out FakeWmOverlay overlay)
     {
-        action = new FakeWindowAction();
         overlay = new FakeWmOverlay();
-        return new LayerIndicatorRule(NullLogger<LayerIndicatorRule>.Instance, action, overlay);
+        return new LayerIndicatorRule(NullLogger<LayerIndicatorRule>.Instance, overlay);
     }
 
     [Theory]
@@ -19,7 +18,7 @@ public class LayerIndicatorRuleTests
     [InlineData("wm-resize")]
     public void WmLayer_ShowsOverlay(string layerName)
     {
-        var rule = CreateRule(out _, out var overlay);
+        var rule = CreateRule(out var overlay);
 
         rule.ProcessEvent(new KanataLayerChangeEvent(layerName));
 
@@ -29,7 +28,7 @@ public class LayerIndicatorRuleTests
     [Fact]
     public void BaseLayer_AfterWm_HidesOverlay()
     {
-        var rule = CreateRule(out _, out var overlay);
+        var rule = CreateRule(out var overlay);
 
         rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
         Assert.True(overlay.IsVisible, "precondition: overlay should be visible");
@@ -42,7 +41,7 @@ public class LayerIndicatorRuleTests
     [Fact]
     public void BaseLayer_WhenAlreadyInBase_IsNoOp()
     {
-        var rule = CreateRule(out _, out var overlay);
+        var rule = CreateRule(out var overlay);
 
         rule.ProcessEvent(new KanataLayerChangeEvent("base"));
 
@@ -53,7 +52,7 @@ public class LayerIndicatorRuleTests
     [Fact]
     public void SubLayerChanges_WithinWm_DoNotToggleOverlay()
     {
-        var rule = CreateRule(out _, out var overlay);
+        var rule = CreateRule(out var overlay);
 
         rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
         var showCountAfterEntry = overlay.ShowCount;
@@ -69,7 +68,7 @@ public class LayerIndicatorRuleTests
     [Fact]
     public void KomorebiEvent_IsIgnored()
     {
-        var rule = CreateRule(out _, out var overlay);
+        var rule = CreateRule(out var overlay);
 
         rule.ProcessEvent(new KomorebiWindowEvent("Show", null, null));
 

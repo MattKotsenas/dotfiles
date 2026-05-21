@@ -9,12 +9,12 @@
 ;; CapsLock exits toggle mode.
 ;;
 ;; HJKL for all directions. Left-hand home-row keys select scope:
-;;   F(ocus)  D(isplace/move)  S(tack)  E(xpand/resize)
+;;   F(ocus)  D(isplace/move)  S(tack)  E(xpand/resize)  A(ssemble/stack-ops)
 ;;
 ;; Example one-shot: CapsLock, F, L = focus right (three taps, back to base)
 ;; Example toggle:   CapsLock×2, D, H, L, H = move left, right, left (sticky)
 ;;
-;; Border indicator is handled by event-listeners (C# TCP client).
+;; Border indicator is handled by event-listeners (C# overlay window).
 ;; See keyboard/README.md for full design rationale.
 
 (defcfg
