@@ -1,16 +1,20 @@
 ;; Unified keyboard navigation system
 ;;
-;; CapsLock enters WM mode (tap = toggle on/off, hold = while held).
-;; HJKL for all directions. Left-hand home-row sub-modifiers select scope:
+;; CapsLock is the WM prefix key (like tmux's Ctrl+Space):
+;;   Single tap: one-shot prefix (next keys are a WM command, then back to base)
+;;   Double tap: toggle WM mode (stay in for multi-step operations)
+;;
+;; In toggle mode, sub-modifiers are sticky: press D to enter move mode,
+;; move as many windows as you want, press S to switch to stack mode, etc.
+;; CapsLock exits toggle mode.
+;;
+;; HJKL for all directions. Left-hand home-row keys select scope:
 ;;   F(ocus)  D(isplace/move)  S(tack)  E(xpand/resize)
 ;;
-;; Bare HJKL in WM mode = passthrough (no action). Per-app inner navigation
-;; will be added via komokana in a future phase.
+;; Example one-shot: CapsLock, F, L = focus right (three taps, back to base)
+;; Example toggle:   CapsLock×2, D, H, L, H = move left, right, left (sticky)
 ;;
-;; Border indicator is handled by layer-indicator.ps1, which connects to
-;; kanata's TCP server and watches for LayerChange events.
-;;
-;; Requires the cmd_allowed kanata binary (kanata_winIOv2_cmd_allowed.exe).
+;; Border indicator is handled by event-listeners (C# TCP client).
 ;; See keyboard/README.md for full design rationale.
 
 (defcfg
@@ -23,41 +27,15 @@
 )
 
 (defvar
-  tap-time 200
-  hold-time 300
+  os-timeout 2000
+  td-timeout 250
 )
 
 ;; ---------------------------------------------------------------------------
-;; Base layer
+;; Templates to reduce duplication between one-shot and toggle sub-layers
 ;; ---------------------------------------------------------------------------
-(deflayermap (base)
-  caps (tap-hold $tap-time $hold-time
-    ;; tap: switch to WM layer (indicator via TCP listener)
-    (layer-switch wm)
-    ;; hold: WM layer while held (indicator via TCP listener)
-    (layer-while-held wm)
-  )
-)
-
-;; ---------------------------------------------------------------------------
-;; WM layer - komorebi operations
-;; ---------------------------------------------------------------------------
-(deflayermap (wm)
-  ;; Toggle off: switch back to base
-  caps (layer-switch base)
-
-  ;; Sub-modifiers (left hand home row) ---
-  s (layer-while-held wm-stack)
-  d (layer-while-held wm-move)
-  f (layer-while-held wm-focus)
-  e (layer-while-held wm-resize)
-
-  ;; Stack management ---
-  [ (cmd komorebic cycle-stack previous)
-  ] (cmd komorebic cycle-stack next)
-  \ (cmd komorebic unstack)
-
-  ;; Workspaces ---
+(deftemplate wm-shared-actions (exit-action)
+  ;; Workspaces
   1 (cmd komorebic focus-workspaces 0)
   2 (cmd komorebic focus-workspaces 1)
   3 (cmd komorebic focus-workspaces 2)
@@ -67,7 +45,12 @@
   7 (cmd komorebic focus-workspaces 6)
   8 (cmd komorebic focus-workspaces 7)
 
-  ;; Standalone actions ---
+  ;; Stack management
+  [ (cmd komorebic cycle-stack previous)
+  ] (cmd komorebic cycle-stack next)
+  \ (cmd komorebic unstack)
+
+  ;; Standalone actions
   t (cmd komorebic toggle-float)
   m (cmd komorebic toggle-monocle)
   r (cmd komorebic retile)
@@ -77,34 +60,157 @@
   p (cmd komorebic toggle-pause)
   g (cmd komorebic cycle-focus next)
 
-  ;; Last workspace (multi-monitor sync)
-  ;; fork: if lalt held, pass through tab (for Alt+Tab); else sync workspaces
+  ;; Last workspace
   tab (fork
     (cmd komorebic focus-last-workspace)
     tab
     (lalt))
 
-  ;; Cheat sheet (/ key) - opens in WT quake window with glow pager
+  ;; Cheat sheet
   / (cmd wt.exe -w _quake cmd.exe /c "%USERPROFILE%\\.config\\keyboard\\scripts\\cheatsheet.cmd")
 
-  ;; Bare HJKL: intentionally unmapped = passthrough.
-  ;; Phase 2 (komokana) will add per-app overrides here.
+  ;; Deadkey everything else
+  ___ XX
+)
+
+;; Template for toggle sub-layers (sticky, with sub-mod switching + shared actions)
+;; Does NOT include 1-8 since move sub-layer overrides them for move-to-workspace
+(deftemplate toggle-sublayer-nav (focus-layer move-layer stack-layer resize-layer assemble-layer)
+  caps (layer-switch base)
+  f (layer-switch $focus-layer)
+  d (layer-switch $move-layer)
+  s (layer-switch $stack-layer)
+  e (layer-switch $resize-layer)
+  a (layer-switch $assemble-layer)
+
+  ;; Stack management
+  [ (cmd komorebic cycle-stack previous)
+  ] (cmd komorebic cycle-stack next)
+  \ (cmd komorebic unstack)
+
+  ;; Standalone actions
+  t (cmd komorebic toggle-float)
+  m (cmd komorebic toggle-monocle)
+  r (cmd komorebic retile)
+  q (cmd komorebic promote)
+  x (cmd komorebic flip-layout horizontal)
+  y (cmd komorebic flip-layout vertical)
+  p (cmd komorebic toggle-pause)
+  g (cmd komorebic cycle-focus next)
+  tab (fork (cmd komorebic focus-last-workspace) tab (lalt))
+  / (cmd wt.exe -w _quake cmd.exe /c "%USERPROFILE%\\.config\\keyboard\\scripts\\cheatsheet.cmd")
+
+  ___ XX
+)
+
+;; Workspace bindings for sub-layers that use focus-workspaces (not move-to)
+(deftemplate ws-focus ()
+  1 (cmd komorebic focus-workspaces 0)
+  2 (cmd komorebic focus-workspaces 1)
+  3 (cmd komorebic focus-workspaces 2)
+  4 (cmd komorebic focus-workspaces 3)
+  5 (cmd komorebic focus-workspaces 4)
+  6 (cmd komorebic focus-workspaces 5)
+  7 (cmd komorebic focus-workspaces 6)
+  8 (cmd komorebic focus-workspaces 7)
 )
 
 ;; ---------------------------------------------------------------------------
-;; Sub-layers (activated by holding S / D / F / E in WM layer)
+;; Base layer
 ;; ---------------------------------------------------------------------------
+(deflayermap (base)
+  caps (tap-dance $td-timeout (
+    ;; single tap: one-shot prefix
+    (one-shot $os-timeout (layer-while-held wm))
+    ;; double tap: toggle WM mode
+    (layer-switch wm-toggle)
+  ))
+)
 
-;; F + HJKL = komorebi focus
+;; ---------------------------------------------------------------------------
+;; WM layer (one-shot mode) - entered via single CapsLock tap
+;; Sub-modifiers use one-shot; the outer one-shot wrapper auto-exits after action
+;; ---------------------------------------------------------------------------
+(deflayermap (wm)
+  f (one-shot $os-timeout (layer-while-held wm-focus))
+  d (one-shot $os-timeout (layer-while-held wm-move))
+  s (one-shot $os-timeout (layer-while-held wm-stack))
+  e (one-shot $os-timeout (layer-while-held wm-resize))
+  a (one-shot $os-timeout (layer-while-held wm-assemble))
+  (template-expand wm-shared-actions _)
+)
+
+;; ---------------------------------------------------------------------------
+;; WM toggle layer - entered via double CapsLock tap
+;; Sub-modifiers switch to sticky toggle sub-layers
+;; ---------------------------------------------------------------------------
+(deflayermap (wm-toggle)
+  caps (layer-switch base)
+  f (layer-switch wm-focus-toggle)
+  d (layer-switch wm-move-toggle)
+  s (layer-switch wm-stack-toggle)
+  e (layer-switch wm-resize-toggle)
+  a (layer-switch wm-assemble-toggle)
+  (template-expand wm-shared-actions _)
+)
+
+;; ---------------------------------------------------------------------------
+;; One-shot sub-layers (one-shot wrapper handles exit to base)
+;; ---------------------------------------------------------------------------
 (deflayermap (wm-focus)
+  h (cmd komorebic focus left)
+  j (cmd komorebic focus down)
+  k (cmd komorebic focus up)
+  l (cmd komorebic focus right)
+  ___ XX
+)
+
+(deflayermap (wm-move)
+  h (cmd komorebic move left)
+  j (cmd komorebic move down)
+  k (cmd komorebic move up)
+  l (cmd komorebic move right)
+  1 (cmd komorebic move-to-workspace 0)
+  2 (cmd komorebic move-to-workspace 1)
+  3 (cmd komorebic move-to-workspace 2)
+  4 (cmd komorebic move-to-workspace 3)
+  5 (cmd komorebic move-to-workspace 4)
+  6 (cmd komorebic move-to-workspace 5)
+  7 (cmd komorebic move-to-workspace 6)
+  8 (cmd komorebic move-to-workspace 7)
+  ___ XX
+)
+
+(deflayermap (wm-stack)
+  h (cmd komorebic stack left)
+  j (cmd komorebic stack down)
+  k (cmd komorebic stack up)
+  l (cmd komorebic stack right)
+  ___ XX
+)
+
+(deflayermap (wm-resize)
+  h (cmd komorebic resize-axis horizontal decrease)
+  j (cmd komorebic resize-axis vertical decrease)
+  k (cmd komorebic resize-axis vertical increase)
+  l (cmd komorebic resize-axis horizontal increase)
+  ___ XX
+)
+
+;; ---------------------------------------------------------------------------
+;; Toggle sub-layers (sticky, with sub-mod switching between them)
+;; ---------------------------------------------------------------------------
+(deflayermap (wm-focus-toggle)
+  (template-expand toggle-sublayer-nav wm-focus-toggle wm-move-toggle wm-stack-toggle wm-resize-toggle wm-assemble-toggle)
+  (template-expand ws-focus)
   h (cmd komorebic focus left)
   j (cmd komorebic focus down)
   k (cmd komorebic focus up)
   l (cmd komorebic focus right)
 )
 
-;; D + HJKL = komorebi move, D + 1-8 = move to workspace
-(deflayermap (wm-move)
+(deflayermap (wm-move-toggle)
+  (template-expand toggle-sublayer-nav wm-focus-toggle wm-move-toggle wm-stack-toggle wm-resize-toggle wm-assemble-toggle)
   h (cmd komorebic move left)
   j (cmd komorebic move down)
   k (cmd komorebic move up)
@@ -119,18 +225,39 @@
   8 (cmd komorebic move-to-workspace 7)
 )
 
-;; S + HJKL = komorebi stack
-(deflayermap (wm-stack)
+(deflayermap (wm-stack-toggle)
+  (template-expand toggle-sublayer-nav wm-focus-toggle wm-move-toggle wm-stack-toggle wm-resize-toggle wm-assemble-toggle)
+  (template-expand ws-focus)
   h (cmd komorebic stack left)
   j (cmd komorebic stack down)
   k (cmd komorebic stack up)
   l (cmd komorebic stack right)
 )
 
-;; E + HJKL = komorebi resize
-(deflayermap (wm-resize)
+(deflayermap (wm-resize-toggle)
+  (template-expand toggle-sublayer-nav wm-focus-toggle wm-move-toggle wm-stack-toggle wm-resize-toggle wm-assemble-toggle)
+  (template-expand ws-focus)
   h (cmd komorebic resize-axis horizontal decrease)
   j (cmd komorebic resize-axis vertical decrease)
   k (cmd komorebic resize-axis vertical increase)
   l (cmd komorebic resize-axis horizontal increase)
+)
+
+;; A(ssemble) - stack cycling and unstack
+;; h/l = unstack + refocus, j/k = cycle stack prev/next
+(deflayermap (wm-assemble)
+  h (macro (cmd komorebic unstack) 100 (cmd komorebic cycle-focus next))
+  j (cmd komorebic cycle-stack previous)
+  k (cmd komorebic cycle-stack next)
+  l (macro (cmd komorebic unstack) 100 (cmd komorebic cycle-focus next))
+  ___ XX
+)
+
+(deflayermap (wm-assemble-toggle)
+  (template-expand toggle-sublayer-nav wm-focus-toggle wm-move-toggle wm-stack-toggle wm-resize-toggle wm-assemble-toggle)
+  (template-expand ws-focus)
+  h (macro (cmd komorebic unstack) 100 (cmd komorebic cycle-focus next))
+  j (cmd komorebic cycle-stack previous)
+  k (cmd komorebic cycle-stack next)
+  l (macro (cmd komorebic unstack) 100 (cmd komorebic cycle-focus next))
 )
