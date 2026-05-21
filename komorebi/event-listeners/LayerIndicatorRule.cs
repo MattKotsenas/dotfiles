@@ -9,6 +9,7 @@ public sealed class LayerIndicatorRule : IEventRule
 {
     private readonly ILogger<LayerIndicatorRule> _logger;
     private readonly IWindowAction _windowAction;
+    private bool _inWmMode;
 
     public string Name => "LayerIndicatorRule";
 
@@ -22,7 +23,13 @@ public sealed class LayerIndicatorRule : IEventRule
     {
         if (evt is not KanataLayerChangeEvent e) return;
 
-        if (e.NewLayer.StartsWith("wm", StringComparison.OrdinalIgnoreCase))
+        var isWm = e.NewLayer.StartsWith("wm", StringComparison.OrdinalIgnoreCase);
+
+        // Only change borders on wm↔base transitions, not on sub-layer changes
+        if (isWm == _inWmMode) return;
+        _inWmMode = isWm;
+
+        if (isWm)
         {
             _logger.LogDebug("WM layer active, setting saturated borders");
             _windowAction.SetBorderColour("single",    50, 210, 248);

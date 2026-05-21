@@ -32,6 +32,11 @@ public sealed class FakeWindowAction : IWindowAction
         _borderColours.Enqueue((windowKind, r, g, b));
     }
 
+    public void ClearBorderColours()
+    {
+        while (_borderColours.TryDequeue(out _)) { }
+    }
+
     /// <summary>
     /// Waits up to <paramref name="timeout"/> for the next Close call to be recorded.
     /// Returns true if a Close was observed; false on timeout.

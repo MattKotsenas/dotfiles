@@ -30,10 +30,15 @@ public class LayerIndicatorRuleTests
     }
 
     [Fact]
-    public void BaseLayer_RevertsToNormalBorderColors()
+    public void BaseLayer_AfterWm_RevertsToNormalBorderColors()
     {
         var rule = CreateRule(out var action);
 
+        // Enter WM first
+        rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
+        action.ClearBorderColours();
+
+        // Then exit to base
         rule.ProcessEvent(new KanataLayerChangeEvent("base"));
 
         var colors = action.BorderColours.ToList();
@@ -41,6 +46,33 @@ public class LayerIndicatorRuleTests
         Assert.Contains(colors, c => c.Kind == "single" && c.R == 116 && c.G == 199 && c.B == 236);
         Assert.Contains(colors, c => c.Kind == "stack" && c.R == 203 && c.G == 166 && c.B == 247);
         Assert.Contains(colors, c => c.Kind == "unfocused" && c.R == 69 && c.G == 71 && c.B == 90);
+    }
+
+    [Fact]
+    public void BaseLayer_WhenAlreadyInBase_IsNoOp()
+    {
+        var rule = CreateRule(out var action);
+
+        rule.ProcessEvent(new KanataLayerChangeEvent("base"));
+
+        Assert.Empty(action.BorderColours);
+    }
+
+    [Fact]
+    public void SubLayerChanges_WithinWm_DoNotFireBorderUpdates()
+    {
+        var rule = CreateRule(out var action);
+
+        rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
+        action.ClearBorderColours();
+
+        // Sub-layer transitions should be no-ops
+        rule.ProcessEvent(new KanataLayerChangeEvent("wm-focus"));
+        rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
+        rule.ProcessEvent(new KanataLayerChangeEvent("wm-stack"));
+        rule.ProcessEvent(new KanataLayerChangeEvent("wm-resize"));
+
+        Assert.Empty(action.BorderColours);
     }
 
     [Fact]
