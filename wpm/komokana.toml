@@ -1,0 +1,24 @@
+# Placeholder for komokana (phase 2).
+# komokana bridges komorebi focus events to kanata layer switching,
+# enabling per-app inner navigation (HJKL does different things per app).
+# See keyboard/README.md for design details.
+#
+# [Unit]
+# Name = "komokana"
+# Description = "app-aware keyboard layer switcher"
+# Requires = [
+#     "komorebi",
+#     "kanata",
+# ]
+#
+# [Service]
+# Kind = "Simple"
+# Restart = "OnFailure"
+# RestartSec = 2
+#
+# [Service.ExecStart]
+# Executable = "komokana.exe"
+# Arguments = [
+#     "--config",
+#     "$USERPROFILE/.config/komokana/komokana.yaml",
+# ]

@@ -1,0 +1,19 @@
+[Unit]
+Name = "layer-indicator"
+Description = "kanata layer change border indicator"
+Requires = [
+    "kanata",
+]
+
+[Service]
+Kind = "Simple"
+Restart = "OnFailure"
+RestartSec = 2
+
+[Service.ExecStart]
+Executable = "pwsh.exe"
+Arguments = [
+    "-NoProfile",
+    "-File",
+    "$USERPROFILE/.config/keyboard/scripts/layer-indicator.ps1",
+]

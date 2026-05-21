@@ -5,6 +5,7 @@ Requires = [
     "komorebi",
     "komorebi-bar",
     "kanata",
+    "layer-indicator",
     "event-listeners",
 ]
 

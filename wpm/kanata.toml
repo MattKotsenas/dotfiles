@@ -8,10 +8,12 @@ Restart = "OnFailure"
 RestartSec = 2
 
 [Service.ExecStart]
-Executable = "$USERPROFILE/.config/kanata/kanata_winIOv2.exe"
+Executable = "$USERPROFILE/.config/kanata/kanata_winIOv2_cmd_allowed.exe"
 Arguments = [
     "-c",
     "$USERPROFILE/.config/kanata/kanata.kbd",
+    "--port",
+    "9999",
 ]
 
 [Service.Healthcheck.Process]
