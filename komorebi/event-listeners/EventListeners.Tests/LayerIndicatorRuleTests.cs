@@ -25,6 +25,20 @@ public class LayerIndicatorRuleTests
         Assert.True(overlay.IsVisible);
     }
 
+    [Theory]
+    [InlineData("base-default")]
+    [InlineData("base-terminal")]
+    [InlineData("base-edge")]
+    public void BaseContextLayer_DoesNotShowOverlay(string layerName)
+    {
+        var rule = CreateRule(out var overlay);
+
+        rule.ProcessEvent(new KanataLayerChangeEvent(layerName));
+
+        Assert.False(overlay.IsVisible);
+        Assert.Equal(0, overlay.ShowCount);
+    }
+
     [Fact]
     public void BaseLayer_AfterWm_HidesOverlay()
     {
@@ -33,7 +47,7 @@ public class LayerIndicatorRuleTests
         rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
         Assert.True(overlay.IsVisible, "precondition: overlay should be visible");
 
-        rule.ProcessEvent(new KanataLayerChangeEvent("base"));
+        rule.ProcessEvent(new KanataLayerChangeEvent("base-default"));
 
         Assert.False(overlay.IsVisible);
     }
@@ -43,7 +57,7 @@ public class LayerIndicatorRuleTests
     {
         var rule = CreateRule(out var overlay);
 
-        rule.ProcessEvent(new KanataLayerChangeEvent("base"));
+        rule.ProcessEvent(new KanataLayerChangeEvent("base-default"));
 
         Assert.Equal(0, overlay.ShowCount);
         Assert.Equal(0, overlay.HideCount);

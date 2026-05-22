@@ -19,12 +19,11 @@ Write-Host "Building keymap-gen..." -ForegroundColor Cyan
 & dotnet build $compiler --nologo --verbosity quiet | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "keymap-gen build failed" }
 
-$kbdDir = "$repoRoot\kanata"
-Write-Host "Emitting kanata.kbd to $kbdDir..." -ForegroundColor Cyan
-& dotnet run --project $compiler --no-build --verbosity quiet -- emit-all $kbdDir
+Write-Host "Emitting artifacts..." -ForegroundColor Cyan
+& dotnet run --project $compiler --no-build --verbosity quiet -- emit-all $repoRoot
 if ($LASTEXITCODE -ne 0) { throw "keymap-gen emit failed" }
 
-$kbdPath = "$kbdDir\kanata.kbd"
+$kbdPath = "$repoRoot\kanata\kanata.kbd"
 
 Write-Host "Validating with kanata..." -ForegroundColor Cyan
 $kanataBin = "$repoRoot\kanata\kanata_winIOv2.exe"

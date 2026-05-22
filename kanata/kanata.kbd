@@ -14,8 +14,8 @@
   td-timeout 250
 )
 
-;; base: typing layer. CAP tap-dances into WM mode.
-(deflayermap (base)
+;; base-default: typing layer (default focus context). CAP tap-dances into WM mode.
+(deflayermap (base-default)
   caps (tap-dance $td-timeout (
     (one-shot $os-timeout (layer-while-held wm))
     (layer-switch wm-toggle)
@@ -39,9 +39,10 @@
   ___ XX
 )
 
-;; wm-toggle: sticky WM mode (CAP double-tap)
+;; wm-toggle: sticky WM mode (CAP double-tap). CAPS exits to base-default;
+;; bridge will re-route to the right base-X on the next focus event.
 (deflayermap (wm-toggle)
-  caps (layer-switch base)
+  caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -129,7 +130,7 @@
 
 ;; wm-workspace-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
 (deflayermap (wm-workspace-toggle)
-  caps (layer-switch base)
+  caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -155,7 +156,7 @@
 
 ;; wm-focus-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
 (deflayermap (wm-focus-toggle)
-  caps (layer-switch base)
+  caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -181,7 +182,7 @@
 
 ;; wm-move-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
 (deflayermap (wm-move-toggle)
-  caps (layer-switch base)
+  caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -211,7 +212,7 @@
 
 ;; wm-stack-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
 (deflayermap (wm-stack-toggle)
-  caps (layer-switch base)
+  caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -233,7 +234,7 @@
 
 ;; wm-resize-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
 (deflayermap (wm-resize-toggle)
-  caps (layer-switch base)
+  caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -255,7 +256,7 @@
 
 ;; wm-assemble-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
 (deflayermap (wm-assemble-toggle)
-  caps (layer-switch base)
+  caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)

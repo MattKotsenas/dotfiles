@@ -21,7 +21,7 @@ internal static class Program
             case "emit-all":
                 if (args.Length < 2)
                 {
-                    Console.Error.WriteLine("emit-all requires an output directory argument");
+                    Console.Error.WriteLine("emit-all requires a repo root argument");
                     return 1;
                 }
                 EmitAll(keymap, args[1]);
@@ -33,18 +33,23 @@ internal static class Program
         }
     }
 
-    private static void EmitAll(Keymap k, string outDir)
+    private static void EmitAll(Keymap k, string repoRoot)
     {
-        Directory.CreateDirectory(outDir);
-        var kbdPath = Path.Combine(outDir, "kanata.kbd");
+        var kbdPath = Path.Combine(repoRoot, "kanata", "kanata.kbd");
         File.WriteAllText(kbdPath, KanataEmitter.Emit(k));
         Console.Out.WriteLine($"wrote {kbdPath}");
+
+        var catalogDir = Path.Combine(repoRoot, "komorebi", "event-listeners", "Generated");
+        Directory.CreateDirectory(catalogDir);
+        var catalogPath = Path.Combine(catalogDir, "LayerCatalog.g.cs");
+        File.WriteAllText(catalogPath, LayerCatalogEmitter.Emit(k));
+        Console.Out.WriteLine($"wrote {catalogPath}");
     }
 
     private static void PrintUsage()
     {
         Console.Error.WriteLine("Usage:");
-        Console.Error.WriteLine("  keymap-gen kanata                # emit kanata.kbd to stdout");
-        Console.Error.WriteLine("  keymap-gen emit-all <out-dir>    # write all artifacts to <out-dir>");
+        Console.Error.WriteLine("  keymap-gen kanata                  # emit kanata.kbd to stdout");
+        Console.Error.WriteLine("  keymap-gen emit-all <repo-root>    # write all artifacts to their destinations");
     }
 }

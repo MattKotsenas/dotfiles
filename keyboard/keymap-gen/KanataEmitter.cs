@@ -82,8 +82,8 @@ internal static class KanataEmitter
 
     private static void EmitBaseLayer(StringBuilder sb, Keymap k)
     {
-        sb.AppendLine(";; base: typing layer. CAP tap-dances into WM mode.");
-        sb.AppendLine("(deflayermap (base)");
+        sb.AppendLine(";; base-default: typing layer (default focus context). CAP tap-dances into WM mode.");
+        sb.AppendLine("(deflayermap (base-default)");
         sb.AppendLine("  caps (tap-dance $td-timeout (");
         sb.AppendLine("    (one-shot $os-timeout (layer-while-held wm))");
         sb.AppendLine("    (layer-switch wm-toggle)");
@@ -111,9 +111,10 @@ internal static class KanataEmitter
         sb.AppendLine();
 
         // wm-toggle: sticky WM mode. Sub-mode entries layer-switch.
-        sb.AppendLine(";; wm-toggle: sticky WM mode (CAP double-tap)");
+        sb.AppendLine(";; wm-toggle: sticky WM mode (CAP double-tap). CAPS exits to base-default;");
+        sb.AppendLine(";; bridge will re-route to the right base-X on the next focus event.");
         sb.AppendLine("(deflayermap (wm-toggle)");
-        sb.AppendLine("  caps (layer-switch base)");
+        sb.AppendLine("  caps (layer-switch base-default)");
         foreach (var sm in k.SubModes)
         {
             sb.AppendLine(CultureInfo.InvariantCulture,
@@ -150,7 +151,7 @@ internal static class KanataEmitter
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $";; wm-{sm.Name}-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)");
             sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm-{sm.Name}-toggle)");
-            sb.AppendLine("  caps (layer-switch base)");
+            sb.AppendLine("  caps (layer-switch base-default)");
             // peer sub-mode entries
             foreach (var peer in k.SubModes)
             {

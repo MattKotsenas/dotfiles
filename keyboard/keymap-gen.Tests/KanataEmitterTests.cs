@@ -14,11 +14,12 @@ public class KanataEmitterTests
         // EventListeners.Tests harness (Category=KanataHarness).
         Assert.Contains("(defcfg", output);
         Assert.Contains("process-unmapped-keys yes", output);
-        Assert.Contains("(deflayermap (base)", output);
+        Assert.Contains("(deflayermap (base-default)", output);
         Assert.Contains("(deflayermap (wm)", output);
         Assert.Contains("(deflayermap (wm-toggle)", output);
         Assert.Contains("(deflayermap (wm-focus)", output);
         Assert.Contains("(deflayermap (wm-focus-toggle)", output);
+        Assert.Contains("(deflayermap (wm-workspace)", output);
     }
 
     [Fact]

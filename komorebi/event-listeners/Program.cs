@@ -18,6 +18,7 @@ public static class Program
         builder.Services.AddSingleton<ICommandRunner, CliWrapCommandRunner>();
         builder.Services.AddSingleton<IWindowAction, WindowAction>();
         builder.Services.AddSingleton<IKeyboardSender, Win32KeyboardSender>();
+        builder.Services.AddSingleton<IKanataClient, TcpKanataClient>();
         builder.Services.AddSingleton<WmOverlayIndicator>();
         builder.Services.AddSingleton<IWmOverlay>(sp => sp.GetRequiredService<WmOverlayIndicator>());
 
@@ -29,6 +30,7 @@ public static class Program
         builder.Services.AddSingleton<IEventRule, EmptyTeamsWindowRule>();
         builder.Services.AddSingleton<IEventRule, LayerIndicatorRule>();
         builder.Services.AddSingleton<IEventRule, IntentDispatchRule>();
+        builder.Services.AddSingleton<IEventRule, AppLayerRouter>();
 
         // Register event listener services
         builder.Services.AddHostedService<KomorebiEventListenerService>();

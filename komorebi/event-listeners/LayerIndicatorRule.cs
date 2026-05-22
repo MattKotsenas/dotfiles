@@ -26,7 +26,11 @@ public sealed class LayerIndicatorRule : IEventRule
     {
         if (evt is not KanataLayerChangeEvent e) return;
 
-        var isWm = e.NewLayer.StartsWith("wm", StringComparison.OrdinalIgnoreCase);
+        // Only true WM-mode layers trigger the overlay. base-* layers (the
+        // focus-context layers the AppLayerRouter swaps between) are typing
+        // layers and should NOT trigger the overlay.
+        var isWm = e.NewLayer.StartsWith("wm-", StringComparison.OrdinalIgnoreCase)
+                   || e.NewLayer.Equals("wm", StringComparison.OrdinalIgnoreCase);
 
         // Only change on wm↔base transitions, not on sub-layer changes
         if (isWm == _inWmMode) return;
