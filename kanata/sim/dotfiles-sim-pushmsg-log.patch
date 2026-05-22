@@ -1,0 +1,52 @@
+From 375598dde106a089f65b47daeff9476f8a871f86 Mon Sep 17 00:00:00 2001
+From: Matt Kotsenas <51421+MattKotsenas@users.noreply.github.com>
+Date: Thu, 21 May 2026 22:51:17 -0700
+Subject: [PATCH] dotfiles patch: log push-msg payload, drop debug 42 print
+
+simulated_input was warning 'push-msg was used, but TCP server is not
+running' and dropping the message text. Move the payload to an INFO log
+that always fires, so simulated_input can observe push-msg actions for
+config testing.
+
+Also remove a stray println in kbd_out_log that was polluting
+stdout on every tick.
+---
+ simulated_input/src/sim.rs | 5 +----
+ src/kanata/mod.rs          | 5 +++++
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/simulated_input/src/sim.rs b/simulated_input/src/sim.rs
+index 66b5b36..c94b592 100644
+--- a/simulated_input/src/sim.rs
++++ b/simulated_input/src/sim.rs
+@@ -212,10 +212,7 @@ fn kbd_out_log(
+     _key_code: Option<OsCode>,
+     _tick: Option<u128>,
+ ) {
+-    let a = LogFmtT::InTick;
+-    if a == LogFmtT::InTick {
+-        println!("{}", 42)
+-    };
++    // dotfiles patch: removed `println!("{}", 42)` debug noise
+     #[cfg(all(
+         not(feature = "simulated_input"),
+         not(feature = "passthru_ahk"),
+diff --git a/src/kanata/mod.rs b/src/kanata/mod.rs
+index b78452b..8d41ff8 100644
+--- a/src/kanata/mod.rs
++++ b/src/kanata/mod.rs
+@@ -1613,6 +1613,11 @@ impl Kanata {
+                         }
+                         CustomAction::PushMessage(_message) => {
+                             log::debug!("Action push-msg");
++                            // dotfiles patch: log the message text at INFO regardless of TCP server state
++                            // so simulated_input can observe push-msg actions for testing.
++                            // Upstream uses simple_sexpr_to_json_array but that's behind tcp_server feature.
++                            // Use Debug formatting which works for any _message type.
++                            log::info!("push-msg: {:?}", _message);
+                             #[cfg(feature = "tcp_server")]
+                             if let Some(tx) = _tx {
+                                 let message = simple_sexpr_to_json_array(_message);
+-- 
+2.54.0.windows.1
+
