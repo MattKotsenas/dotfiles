@@ -5,10 +5,21 @@ namespace EventListeners.Tests;
 
 public class IntentDispatchRuleTests
 {
-    private static IntentDispatchRule CreateRule(out RecordingCommandRunner runner)
+    private static IntentDispatchRule CreateRule(
+        out RecordingCommandRunner runner,
+        out RecordingKeyboardSender keyboard,
+        out AppFocusTracker focus)
     {
         runner = new RecordingCommandRunner();
-        return new IntentDispatchRule(NullLogger<IntentDispatchRule>.Instance, runner);
+        keyboard = new RecordingKeyboardSender();
+        focus = new AppFocusTracker(NullLogger<AppFocusTracker>.Instance);
+        return new IntentDispatchRule(
+            NullLogger<IntentDispatchRule>.Instance, runner, keyboard, focus);
+    }
+
+    private static IntentDispatchRule CreateRule(out RecordingCommandRunner runner)
+    {
+        return CreateRule(out runner, out _, out _);
     }
 
     [Theory]
@@ -136,5 +147,95 @@ public class IntentDispatchRuleTests
         rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
 
         Assert.Empty(runner.Commands);
+    }
+
+    // ============================================================
+    // Nav intents - context-sensitive dispatch
+    // ============================================================
+
+    [Theory]
+    [InlineData("nav.left", 0x48)]  // VK_H
+    [InlineData("nav.down", 0x4A)]  // VK_J
+    [InlineData("nav.up", 0x4B)]    // VK_K
+    [InlineData("nav.right", 0x4C)] // VK_L
+    public void NavIntent_InTerminal_SendsPsmuxPrefixAndDirection(string intent, byte expectedDirectionVk)
+    {
+        var rule = CreateRule(out var runner, out var keyboard, out var focus);
+        SetFocusedApp(focus, "WindowsTerminal.exe");
+
+        rule.ProcessEvent(new KanataMessageEvent(intent));
+
+        var sequence = Assert.Single(keyboard.Sequences);
+        Assert.Equal(2, sequence.Count);
+        // First chord: Ctrl+Space (psmux prefix)
+        Assert.Equal(0x20, sequence[0].VirtualKey);
+        Assert.Equal(KeyModifiers.Ctrl, sequence[0].Modifiers);
+        // Second chord: bare direction key
+        Assert.Equal(expectedDirectionVk, sequence[1].VirtualKey);
+        Assert.Equal(KeyModifiers.None, sequence[1].Modifiers);
+        // Should NOT have fired a komorebic command
+        Assert.Empty(runner.Commands);
+    }
+
+    [Theory]
+    [InlineData("nav.left", "focus left")]
+    [InlineData("nav.down", "focus down")]
+    [InlineData("nav.up", "focus up")]
+    [InlineData("nav.right", "focus right")]
+    public void NavIntent_OutsideTerminal_FallsBackToKomorebiFocus(string intent, string expectedArgs)
+    {
+        var rule = CreateRule(out var runner, out var keyboard, out var focus);
+        SetFocusedApp(focus, "chrome.exe");
+
+        rule.ProcessEvent(new KanataMessageEvent(intent));
+
+        var cmd = Assert.Single(runner.Commands);
+        Assert.Equal("komorebic", cmd.TargetFilePath);
+        Assert.Equal(expectedArgs, cmd.Arguments);
+        // Should NOT have sent keystrokes
+        Assert.Empty(keyboard.Sequences);
+    }
+
+    [Theory]
+    [InlineData("nav.left", "focus left")]
+    [InlineData("nav.right", "focus right")]
+    public void NavIntent_NoFocusedApp_FallsBackToKomorebiFocus(string intent, string expectedArgs)
+    {
+        var rule = CreateRule(out var runner, out var keyboard, out _);
+        // focus tracker has no events yet, FocusedExe == null
+
+        rule.ProcessEvent(new KanataMessageEvent(intent));
+
+        var cmd = Assert.Single(runner.Commands);
+        Assert.Equal("komorebic", cmd.TargetFilePath);
+        Assert.Equal(expectedArgs, cmd.Arguments);
+        Assert.Empty(keyboard.Sequences);
+    }
+
+    [Fact]
+    public void NavIntent_FocusChangesToTerminal_NextDispatchUsesPsmux()
+    {
+        var rule = CreateRule(out var runner, out var keyboard, out var focus);
+
+        // First dispatch with no focus → fallback
+        rule.ProcessEvent(new KanataMessageEvent("nav.right"));
+        Assert.Single(runner.Commands);
+        Assert.Empty(keyboard.Sequences);
+
+        // Focus changes to terminal
+        SetFocusedApp(focus, "WindowsTerminal.exe");
+
+        // Second dispatch → psmux
+        rule.ProcessEvent(new KanataMessageEvent("nav.right"));
+        Assert.Single(runner.Commands); // still just the first command
+        Assert.Single(keyboard.Sequences);
+    }
+
+    private static void SetFocusedApp(AppFocusTracker focus, string exe)
+    {
+        // Feed a synthetic komorebi state so the tracker picks up the focused exe
+        var state = EventListeners.Tests.TestJson.State(
+            tiled: [new(Hwnd: 100, Title: "x", Exe: exe)]);
+        focus.ProcessEvent(new KomorebiWindowEvent("FocusChange", null, state));
     }
 }

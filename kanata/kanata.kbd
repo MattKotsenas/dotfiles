@@ -136,6 +136,11 @@
   s (one-shot $os-timeout (layer-while-held wm-stack))
   e (one-shot $os-timeout (layer-while-held wm-resize))
   a (one-shot $os-timeout (layer-while-held wm-assemble))
+  ;; Inner navigation (bare HJKL): context-sensitive, dispatched by event-listeners
+  h (push-msg "nav.left")
+  j (push-msg "nav.down")
+  k (push-msg "nav.up")
+  l (push-msg "nav.right")
   (template-expand wm-shared-actions _)
 )
 
@@ -150,6 +155,11 @@
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
   a (layer-switch wm-assemble-toggle)
+  ;; Inner navigation (bare HJKL): context-sensitive, dispatched by event-listeners
+  h (push-msg "nav.left")
+  j (push-msg "nav.down")
+  k (push-msg "nav.up")
+  l (push-msg "nav.right")
   (template-expand wm-shared-actions _)
 )
 
