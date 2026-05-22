@@ -11,12 +11,15 @@ public static class LayerCatalog
 {
     // Focus-context base layers (typing layer; what 'caps' tap-dances FROM)
     public const string BaseDefault = "base-default";
+    public const string BaseTerminal = "base-terminal";
 
     // WM-mode layers (CAP single-tap state per context). UI overlay shown.
     public const string Wm = "wm";
+    public const string WmTerminal = "wm-terminal";
 
     // WM-toggle layers (CAP double-tap state per context). UI overlay shown.
     public const string WmToggle = "wm-toggle";
+    public const string WmTerminalToggle = "wm-terminal-toggle";
 
     // Sub-mode layers (one-shot + toggle variants). UI overlay shown.
     public const string WmWorkspace = "wm-workspace";

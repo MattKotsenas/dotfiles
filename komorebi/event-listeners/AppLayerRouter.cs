@@ -40,10 +40,14 @@ public sealed class AppLayerRouter : IEventRule
 
     /// <summary>
     /// Routing rules. Each rule inspects the focus context and returns a layer
-    /// name to switch to, or null to defer to the next rule. Order matters.
+    /// name to switch to, or null to defer to the next rule. Order matters --
+    /// list more specific rules before more general ones.
     /// </summary>
     internal static readonly IReadOnlyList<Func<FocusContext, string?>> DefaultRules =
-        Array.Empty<Func<FocusContext, string?>>();
+    [
+        // Windows Terminal: route to terminal overlay for psmux pane navigation.
+        ctx => ctx.Exe == "WindowsTerminal.exe" ? LayerCatalog.BaseTerminal : null,
+    ];
 
     public void ProcessEvent(IEvent evt)
     {

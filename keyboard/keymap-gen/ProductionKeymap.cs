@@ -64,5 +64,16 @@ internal static class ProductionKeymap
                 .Intent("wm.stack.unstack")
                 .Delay(100)
                 .Intent("wm.focus.cycle-next")))
+        // Phase 4: terminal overlay (psmux pane navigation).
+        // When WindowsTerminal.exe is focused (routed by AppLayerRouter), CAP
+        // enters wm-terminal. The bindings below override wm-base's deadkey
+        // for h/j/k/l with kanata macros that emit the psmux prefix (C-spc)
+        // followed by the direction key. psmux-pain-control binds h/j/k/l
+        // to select-pane-direction.
+        .Overlay("terminal", b => b
+            .Macro("h", "C-spc", "h")
+            .Macro("j", "C-spc", "j")
+            .Macro("k", "C-spc", "k")
+            .Macro("l", "C-spc", "l"))
         .Build();
 }

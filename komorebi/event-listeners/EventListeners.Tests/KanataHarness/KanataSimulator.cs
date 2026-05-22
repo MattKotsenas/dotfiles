@@ -69,6 +69,7 @@ public static class KanataSimulator
         var intents = new List<string>();
         var layers = new List<string>();
         var keyOutputs = new List<string>();
+        var keyEvents = new List<KeyEvent>();
 
         foreach (var line in stderr.Split('\n'))
         {
@@ -90,11 +91,14 @@ public static class KanataSimulator
             var keyMatch = KeyOutPattern.Match(line.Trim());
             if (keyMatch.Success)
             {
-                var dir = keyMatch.Groups["dir"].Value == "↓" ? "down" : "up";
-                keyOutputs.Add($"{dir}:{keyMatch.Groups["key"].Value}");
+                var arrow = keyMatch.Groups["dir"].Value;
+                var key = keyMatch.Groups["key"].Value;
+                var dir = arrow == "↓" ? "down" : "up";
+                keyOutputs.Add($"{dir}:{key}");
+                keyEvents.Add(new KeyEvent(arrow, key));
             }
         }
 
-        return new SimOutput(intents, layers, keyOutputs, stdout, stderr);
+        return new SimOutput(intents, layers, keyOutputs, keyEvents, stdout, stderr);
     }
 }

@@ -29,8 +29,15 @@ internal static class KanataEmitter
         EmitDefsrc(sb, k);
         EmitDefvar(sb, k);
 
-        EmitBaseLayer(sb, k);
-        EmitWmLayers(sb, k);
+        EmitBaseDefaultLayer(sb);
+        EmitWmLayers(sb, k, overlayName: null, overlayBindings: []);
+
+        foreach (var ov in k.Overlays)
+        {
+            EmitBaseOverlayLayer(sb, ov.Name);
+            EmitWmLayers(sb, k, overlayName: ov.Name, overlayBindings: ov.Bindings);
+        }
+
         EmitSubModeOneShot(sb, k);
         EmitSubModeToggle(sb, k);
 
@@ -55,20 +62,26 @@ internal static class KanataEmitter
     private static void EmitDefsrc(StringBuilder sb, Keymap k)
     {
         // defsrc lists keys kanata intercepts. We need caps (the WM-mode trigger)
-        // plus every key bound in the wm-base layer so the WM layer can capture
-        // them. Sub-mode layers use ___ XX to deadkey unmapped keys, but that
-        // only applies to keys actually in defsrc.
+        // plus every key bound in wm-base, every sub-mode, and every overlay so
+        // those layers can actually capture them. Sub-mode layers use ___ XX to
+        // deadkey unmapped keys, but that only applies to keys actually in defsrc.
         var keys = new List<string> { "caps" };
-        foreach (var b in k.WmBase.Bindings)
-        {
-            if (!keys.Contains(b.Key, StringComparer.Ordinal))
-                keys.Add(b.Key);
-        }
+        foreach (var b in k.WmBase.Bindings) Add(b.Key);
+        foreach (var sm in k.SubModes)
+            foreach (var b in sm.Bindings) Add(b.Key);
+        foreach (var ov in k.Overlays)
+            foreach (var b in ov.Bindings) Add(b.Key);
+
         sb.AppendLine("(defsrc");
         sb.Append("  ");
         sb.AppendLine(string.Join(' ', keys));
         sb.AppendLine(")");
         sb.AppendLine();
+
+        void Add(string key)
+        {
+            if (!keys.Contains(key, StringComparer.Ordinal)) keys.Add(key);
+        }
     }
 
     private static void EmitDefvar(StringBuilder sb, Keymap k)
@@ -80,7 +93,7 @@ internal static class KanataEmitter
         sb.AppendLine();
     }
 
-    private static void EmitBaseLayer(StringBuilder sb, Keymap k)
+    private static void EmitBaseDefaultLayer(StringBuilder sb)
     {
         sb.AppendLine(";; base-default: typing layer (default focus context). CAP tap-dances into WM mode.");
         sb.AppendLine("(deflayermap (base-default)");
@@ -92,17 +105,46 @@ internal static class KanataEmitter
         sb.AppendLine();
     }
 
-    private static void EmitWmLayers(StringBuilder sb, Keymap k)
+    private static void EmitBaseOverlayLayer(StringBuilder sb, string overlayName)
     {
-        // wm: one-shot WM mode. Sub-mode entries are one-shot wrappers.
-        sb.AppendLine(";; wm: one-shot WM mode (CAP single-tap)");
-        sb.AppendLine("(deflayermap (wm)");
+        sb.AppendLine(CultureInfo.InvariantCulture, $";; base-{overlayName}: typing layer ({overlayName} focus context). CAP enters wm-{overlayName}.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (base-{overlayName})");
+        sb.AppendLine("  caps (tap-dance $td-timeout (");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"    (one-shot $os-timeout (layer-while-held wm-{overlayName}))");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"    (layer-switch wm-{overlayName}-toggle)");
+        sb.AppendLine("  ))");
+        sb.AppendLine(")");
+        sb.AppendLine();
+    }
+
+    /// <summary>
+    /// Emits both the one-shot and the toggle WM layer for the given context.
+    /// If <paramref name="overlayName"/> is null, emits the default layers
+    /// (named <c>wm</c> and <c>wm-toggle</c>) with no overlay bindings.
+    /// Otherwise emits <c>wm-{overlayName}</c> and <c>wm-{overlayName}-toggle</c>
+    /// with <paramref name="overlayBindings"/> merged on top of wm-base.
+    /// </summary>
+    private static void EmitWmLayers(StringBuilder sb, Keymap k, string? overlayName, IReadOnlyList<Binding> overlayBindings)
+    {
+        var suffix = overlayName is null ? string.Empty : $"-{overlayName}";
+        var contextLabel = overlayName is null ? "default context" : $"{overlayName} context";
+        var overlayKeys = overlayBindings.Select(b => b.Key).ToHashSet();
+
+        // One-shot variant
+        sb.AppendLine(CultureInfo.InvariantCulture, $";; wm{suffix}: one-shot WM mode ({contextLabel}; CAP single-tap)");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm{suffix})");
         foreach (var sm in k.SubModes)
         {
+            if (overlayKeys.Contains(sm.EntryKey)) continue; // overlay overrides sub-mode entry
             sb.AppendLine(CultureInfo.InvariantCulture,
                 $"  {sm.EntryKey} (one-shot $os-timeout (layer-while-held wm-{sm.Name}))");
         }
         foreach (var b in k.WmBase.Bindings)
+        {
+            if (overlayKeys.Contains(b.Key)) continue; // overlay overrides wm-base
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
+        }
+        foreach (var b in overlayBindings)
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
         }
@@ -110,17 +152,24 @@ internal static class KanataEmitter
         sb.AppendLine(")");
         sb.AppendLine();
 
-        // wm-toggle: sticky WM mode. Sub-mode entries layer-switch.
-        sb.AppendLine(";; wm-toggle: sticky WM mode (CAP double-tap). CAPS exits to base-default;");
-        sb.AppendLine(";; bridge will re-route to the right base-X on the next focus event.");
-        sb.AppendLine("(deflayermap (wm-toggle)");
-        sb.AppendLine("  caps (layer-switch base-default)");
+        // Toggle variant
+        var exitTarget = overlayName is null ? "base-default" : $"base-{overlayName}";
+        sb.AppendLine(CultureInfo.InvariantCulture, $";; wm{suffix}-toggle: sticky WM mode ({contextLabel}; CAP double-tap)");
+        sb.AppendLine(CultureInfo.InvariantCulture, $";; CAPS exits to {exitTarget}.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm{suffix}-toggle)");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch {exitTarget})");
         foreach (var sm in k.SubModes)
         {
+            if (overlayKeys.Contains(sm.EntryKey)) continue;
             sb.AppendLine(CultureInfo.InvariantCulture,
                 $"  {sm.EntryKey} (layer-switch wm-{sm.Name}-toggle)");
         }
         foreach (var b in k.WmBase.Bindings)
+        {
+            if (overlayKeys.Contains(b.Key)) continue;
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
+        }
+        foreach (var b in overlayBindings)
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
         }

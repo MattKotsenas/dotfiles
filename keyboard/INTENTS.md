@@ -1,17 +1,19 @@
 # Intent Vocabulary
 
 Kanata emits intent strings via `push-msg`. The C# dispatcher in
-event-listeners maps each intent to an action.
+event-listeners (`IntentDispatchRule`) maps each intent to a CliWrap command
+(typically `komorebic <verb>`).
 
-This separation means kanata config is implementation-agnostic and the
-intent dispatch is fully unit-testable in C#.
+Intents are used only for actions that need to invoke a running program
+(komorebic, wt). App-specific keystroke emission (psmux pane nav, browser
+shortcuts, etc.) lives in overlay layers and is emitted as kanata macros --
+NOT as intents.
 
 ## Naming convention
 
 `<scope>.<verb>.<param>`
 
 - `wm.*` - window management (komorebi) actions
-- `nav.*` - context-sensitive navigation (app-aware, future)
 - `system.*` - misc system actions
 
 ## Current vocabulary
@@ -75,10 +77,10 @@ intent dispatch is fully unit-testable in C#.
 |---|---|
 | `system.cheatsheet` | open keymap reference (wt + glow) |
 
-### Navigation (planned, app-aware)
-| Intent | Action when... |
-|---|---|
-| `nav.left` | terminal: psmux pane left; chrome: history back; else: passthrough |
-| `nav.down` | terminal: psmux pane down; chrome: next tab; else: passthrough |
-| `nav.up` | terminal: psmux pane up; chrome: prev tab; else: passthrough |
-| `nav.right` | terminal: psmux pane right; chrome: history forward; else: passthrough |
+## When NOT to add an intent
+
+If the new behavior is "emit a key sequence to the focused app" (e.g. a
+browser shortcut, an editor command), add an overlay binding in
+`keymap-gen/ProductionKeymap.cs` using `.Macro(...)` instead of inventing
+a new intent. Macros are emitted directly by kanata to the focused
+window; they don't need a round trip through the bridge.

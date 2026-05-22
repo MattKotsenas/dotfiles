@@ -17,14 +17,9 @@ public static class Program
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<ICommandRunner, CliWrapCommandRunner>();
         builder.Services.AddSingleton<IWindowAction, WindowAction>();
-        builder.Services.AddSingleton<IKeyboardSender, Win32KeyboardSender>();
         builder.Services.AddSingleton<IKanataClient, TcpKanataClient>();
         builder.Services.AddSingleton<WmOverlayIndicator>();
         builder.Services.AddSingleton<IWmOverlay>(sp => sp.GetRequiredService<WmOverlayIndicator>());
-
-        // AppFocusTracker is both a rule (consumes events) and a service (queried by other rules)
-        builder.Services.AddSingleton<AppFocusTracker>();
-        builder.Services.AddSingleton<IEventRule>(sp => sp.GetRequiredService<AppFocusTracker>());
 
         // Register event rules
         builder.Services.AddSingleton<IEventRule, EmptyTeamsWindowRule>();

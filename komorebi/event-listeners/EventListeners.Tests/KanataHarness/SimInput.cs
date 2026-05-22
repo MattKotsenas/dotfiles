@@ -46,6 +46,17 @@ public sealed class SimInput
     }
 
     /// <summary>
+    /// Switch the active kanata layer (mirrors what TCP ChangeLayer does in
+    /// production). Use this to simulate a particular focus context for
+    /// overlay tests.
+    /// </summary>
+    public SimInput Layer(string layerName)
+    {
+        _sb.Append($"ls:{layerName} ");
+        return this;
+    }
+
+    /// <summary>
     /// Append a final settle period so any pending tap-dance / tap-hold
     /// timers resolve before the simulation ends.
     /// </summary>

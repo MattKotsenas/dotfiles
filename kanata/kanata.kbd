@@ -6,7 +6,7 @@
 )
 
 (defsrc
-  caps r p tab / q g
+  caps r p tab / q g 1 2 3 4 5 6 7 8 h j k l t m x y
 )
 
 (defvar
@@ -22,7 +22,7 @@
   ))
 )
 
-;; wm: one-shot WM mode (CAP single-tap)
+;; wm: one-shot WM mode (default context; CAP single-tap)
 (deflayermap (wm)
   w (one-shot $os-timeout (layer-while-held wm-workspace))
   f (one-shot $os-timeout (layer-while-held wm-focus))
@@ -39,8 +39,8 @@
   ___ XX
 )
 
-;; wm-toggle: sticky WM mode (CAP double-tap). CAPS exits to base-default;
-;; bridge will re-route to the right base-X on the next focus event.
+;; wm-toggle: sticky WM mode (default context; CAP double-tap)
+;; CAPS exits to base-default.
 (deflayermap (wm-toggle)
   caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
@@ -55,6 +55,58 @@
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
   g (push-msg "wm.focus.cycle-next")
+  ___ XX
+)
+
+;; base-terminal: typing layer (terminal focus context). CAP enters wm-terminal.
+(deflayermap (base-terminal)
+  caps (tap-dance $td-timeout (
+    (one-shot $os-timeout (layer-while-held wm-terminal))
+    (layer-switch wm-terminal-toggle)
+  ))
+)
+
+;; wm-terminal: one-shot WM mode (terminal context; CAP single-tap)
+(deflayermap (wm-terminal)
+  w (one-shot $os-timeout (layer-while-held wm-workspace))
+  f (one-shot $os-timeout (layer-while-held wm-focus))
+  d (one-shot $os-timeout (layer-while-held wm-move))
+  s (one-shot $os-timeout (layer-while-held wm-stack))
+  e (one-shot $os-timeout (layer-while-held wm-resize))
+  a (one-shot $os-timeout (layer-while-held wm-assemble))
+  r (push-msg "wm.layout.retile")
+  p (push-msg "wm.layout.toggle-pause")
+  tab (push-msg "wm.focus.last-workspace")
+  / (push-msg "system.cheatsheet")
+  q (push-msg "wm.move.promote")
+  g (push-msg "wm.focus.cycle-next")
+  h (macro C-spc h)
+  j (macro C-spc j)
+  k (macro C-spc k)
+  l (macro C-spc l)
+  ___ XX
+)
+
+;; wm-terminal-toggle: sticky WM mode (terminal context; CAP double-tap)
+;; CAPS exits to base-terminal.
+(deflayermap (wm-terminal-toggle)
+  caps (layer-switch base-terminal)
+  w (layer-switch wm-workspace-toggle)
+  f (layer-switch wm-focus-toggle)
+  d (layer-switch wm-move-toggle)
+  s (layer-switch wm-stack-toggle)
+  e (layer-switch wm-resize-toggle)
+  a (layer-switch wm-assemble-toggle)
+  r (push-msg "wm.layout.retile")
+  p (push-msg "wm.layout.toggle-pause")
+  tab (push-msg "wm.focus.last-workspace")
+  / (push-msg "system.cheatsheet")
+  q (push-msg "wm.move.promote")
+  g (push-msg "wm.focus.cycle-next")
+  h (macro C-spc h)
+  j (macro C-spc j)
+  k (macro C-spc k)
+  l (macro C-spc l)
   ___ XX
 )
 

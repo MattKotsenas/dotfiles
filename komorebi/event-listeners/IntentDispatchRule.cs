@@ -9,44 +9,32 @@ namespace EventListeners;
 /// actions. Intent vocabulary is documented in keyboard/INTENTS.md.
 ///
 /// `wm.*` intents map 1:1 to komorebic commands.
-/// `nav.*` intents are context-sensitive: terminal apps receive psmux pane
-///   navigation via keyboard input; other apps fall back to komorebi focus.
 /// `system.*` intents are misc actions (cheatsheet).
+///
+/// Application-specific behavior (e.g. psmux pane nav in Windows Terminal) is
+/// no longer dispatched here -- those are kanata macros emitted directly by
+/// the appropriate overlay layer.
 /// </summary>
 public sealed class IntentDispatchRule : IEventRule
 {
     private readonly ILogger<IntentDispatchRule> _logger;
     private readonly ICommandRunner _runner;
-    private readonly IKeyboardSender _keyboard;
-    private readonly AppFocusTracker _focus;
     private readonly Dictionary<string, Func<Command>> _commandMap;
-    private readonly Dictionary<string, NavBinding> _navMap;
 
     public string Name => "IntentDispatchRule";
 
     public IntentDispatchRule(
         ILogger<IntentDispatchRule> logger,
-        ICommandRunner runner,
-        IKeyboardSender keyboard,
-        AppFocusTracker focus)
+        ICommandRunner runner)
     {
         _logger = logger;
         _runner = runner;
-        _keyboard = keyboard;
-        _focus = focus;
         _commandMap = BuildCommandMap();
-        _navMap = BuildNavMap();
     }
 
     public void ProcessEvent(IEvent evt)
     {
         if (evt is not KanataMessageEvent { Message: var intent }) return;
-
-        if (_navMap.TryGetValue(intent, out var nav))
-        {
-            DispatchNav(intent, nav);
-            return;
-        }
 
         if (_commandMap.TryGetValue(intent, out var commandFactory))
         {
@@ -56,26 +44,6 @@ public sealed class IntentDispatchRule : IEventRule
         }
 
         _logger.LogWarning("Unknown intent: {Intent}", intent);
-    }
-
-    private void DispatchNav(string intent, NavBinding nav)
-    {
-        var exe = _focus.FocusedExe;
-
-        // Terminal: send psmux prefix + direction
-        if (string.Equals(exe, "WindowsTerminal.exe", StringComparison.OrdinalIgnoreCase))
-        {
-            _logger.LogDebug("Nav intent {Intent} for terminal: sending psmux pane {Direction}",
-                intent, nav.PsmuxDirection);
-            _keyboard.SendSequence(nav.PsmuxSequence);
-            return;
-        }
-
-        // Default: komorebi focus
-        _logger.LogDebug("Nav intent {Intent} for {Exe}: komorebi focus {Direction}",
-            intent, exe ?? "(unknown)", nav.PsmuxDirection);
-        var cmd = Komorebic($"focus {nav.PsmuxDirection}");
-        _ = RunAsync(cmd, intent);
     }
 
     private async Task RunAsync(Command command, string intent)
@@ -150,27 +118,6 @@ public sealed class IntentDispatchRule : IEventRule
         return map;
     }
 
-    private static Dictionary<string, NavBinding> BuildNavMap()
-    {
-        // psmux prefix is Ctrl+Space, followed by h/j/k/l
-        // Each nav intent: [Ctrl+Space, direction-key]
-        const byte VK_SPACE = 0x20;
-        const byte VK_H = 0x48;
-        const byte VK_J = 0x4A;
-        const byte VK_K = 0x4B;
-        const byte VK_L = 0x4C;
-
-        KeyChord PsmuxPrefix() => new(VK_SPACE, KeyModifiers.Ctrl);
-
-        return new Dictionary<string, NavBinding>(StringComparer.Ordinal)
-        {
-            ["nav.left"] = new("left", new[] { PsmuxPrefix(), new KeyChord(VK_H) }),
-            ["nav.down"] = new("down", new[] { PsmuxPrefix(), new KeyChord(VK_J) }),
-            ["nav.up"] = new("up", new[] { PsmuxPrefix(), new KeyChord(VK_K) }),
-            ["nav.right"] = new("right", new[] { PsmuxPrefix(), new KeyChord(VK_L) }),
-        };
-    }
-
     private static Command Komorebic(string args) =>
         Cli.Wrap("komorebic").WithArguments(args).WithValidation(CommandResultValidation.None);
 
@@ -183,6 +130,4 @@ public sealed class IntentDispatchRule : IEventRule
             .WithArguments($"-w _quake glow -p \"{keymap}\"")
             .WithValidation(CommandResultValidation.None);
     }
-
-    private sealed record NavBinding(string PsmuxDirection, IReadOnlyList<KeyChord> PsmuxSequence);
 }

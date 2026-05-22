@@ -51,11 +51,27 @@ public class AppLayerRouterTests
     }
 
     [Fact]
-    public void RoutingRules_AreInternalAndPureFunctions()
+    public void DefaultRules_RouteWindowsTerminalToTerminalOverlay()
     {
-        // Ensures the public API only exposes the chain via constructor injection.
-        // The default rule list is empty in Phase 3.
-        Assert.Empty(AppLayerRouter.DefaultRules);
+        var ctx = new FocusContext("WindowsTerminal.exe", "PowerShell", 1);
+
+        var match = AppLayerRouter.DefaultRules
+            .Select(r => r(ctx))
+            .FirstOrDefault(r => r is not null);
+
+        Assert.Equal(LayerCatalog.BaseTerminal, match);
+    }
+
+    [Fact]
+    public void DefaultRules_DoNotMatchOtherApps()
+    {
+        var ctx = new FocusContext("Code.exe", "VSCode", 1);
+
+        var match = AppLayerRouter.DefaultRules
+            .Select(r => r(ctx))
+            .FirstOrDefault(r => r is not null);
+
+        Assert.Null(match);
     }
 }
 
