@@ -5,6 +5,9 @@ namespace EventListeners;
 /// </summary>
 public interface IWmOverlay
 {
-    void Show();
+    /// <summary>Show the overlay displaying <paramref name="label"/>.</summary>
+    void Show(string label);
+
+    /// <summary>Hide the overlay.</summary>
     void Hide();
 }

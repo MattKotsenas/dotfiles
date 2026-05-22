@@ -11,18 +11,48 @@ public class LayerIndicatorRuleTests
     }
 
     [Theory]
+    [InlineData("wm", "WM")]
+    [InlineData("wm-toggle", "WM \u2022")]
+    [InlineData("wm-focus", "Focus")]
+    [InlineData("wm-focus-toggle", "Focus \u2022")]
+    [InlineData("wm-stack", "Stack")]
+    [InlineData("wm-stack-toggle", "Stack \u2022")]
+    [InlineData("wm-resize", "Resize")]
+    [InlineData("wm-resize-toggle", "Resize \u2022")]
+    [InlineData("wm-move", "Move")]
+    [InlineData("wm-move-toggle", "Move \u2022")]
+    [InlineData("wm-assemble", "Assemble")]
+    [InlineData("wm-workspace", "Workspace")]
+    [InlineData("wm-terminal", "Term")]
+    [InlineData("wm-terminal-toggle", "Term \u2022")]
+    public void LabelForLayer_KnownLayers_ReturnsLabel(string layer, string expected)
+    {
+        Assert.Equal(expected, LayerIndicatorRule.LabelForLayer(layer));
+    }
+
+    [Theory]
+    [InlineData("base-default")]
+    [InlineData("base-terminal")]
+    [InlineData("base-edge")]
+    public void LabelForLayer_BaseLayers_ReturnsNull(string layer)
+    {
+        Assert.Null(LayerIndicatorRule.LabelForLayer(layer));
+    }
+
+    [Theory]
     [InlineData("wm")]
     [InlineData("wm-focus")]
     [InlineData("wm-move")]
     [InlineData("wm-stack")]
     [InlineData("wm-resize")]
-    public void WmLayer_ShowsOverlay(string layerName)
+    public void WmLayer_ShowsOverlayWithLabel(string layerName)
     {
         var rule = CreateRule(out var overlay);
 
         rule.ProcessEvent(new KanataLayerChangeEvent(layerName));
 
         Assert.True(overlay.IsVisible);
+        Assert.NotNull(overlay.CurrentLabel);
     }
 
     [Theory]
@@ -64,18 +94,21 @@ public class LayerIndicatorRuleTests
     }
 
     [Fact]
-    public void SubLayerChanges_WithinWm_DoNotToggleOverlay()
+    public void SubLayerChanges_WithinWm_UpdateLabelEachTime()
     {
         var rule = CreateRule(out var overlay);
 
         rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
-        var showCountAfterEntry = overlay.ShowCount;
+        Assert.Equal("WM", overlay.CurrentLabel);
 
         rule.ProcessEvent(new KanataLayerChangeEvent("wm-focus"));
-        rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
-        rule.ProcessEvent(new KanataLayerChangeEvent("wm-stack"));
+        Assert.Equal("Focus", overlay.CurrentLabel);
 
-        Assert.Equal(showCountAfterEntry, overlay.ShowCount);
+        rule.ProcessEvent(new KanataLayerChangeEvent("wm-stack"));
+        Assert.Equal("Stack", overlay.CurrentLabel);
+
+        // Still visible -- never hidden during sub-layer transitions
+        Assert.True(overlay.IsVisible);
         Assert.Equal(0, overlay.HideCount);
     }
 
@@ -95,7 +128,8 @@ internal sealed class FakeWmOverlay : IWmOverlay
     public int ShowCount { get; private set; }
     public int HideCount { get; private set; }
     public bool IsVisible { get; private set; }
+    public string? CurrentLabel { get; private set; }
 
-    public void Show() { ShowCount++; IsVisible = true; }
+    public void Show(string label) { ShowCount++; IsVisible = true; CurrentLabel = label; }
     public void Hide() { HideCount++; IsVisible = false; }
 }

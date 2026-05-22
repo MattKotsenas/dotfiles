@@ -16,21 +16,21 @@ namespace EventListeners;
 public sealed class AppLayerRouter : IEventRule
 {
     private readonly ILogger<AppLayerRouter> _logger;
-    private readonly IKanataClient _kanata;
+    private readonly Lazy<IKanataClient> _kanata;
     private readonly IReadOnlyList<Func<FocusContext, string?>> _rules;
     private string? _lastLayer;
     private string? _lastExe;
 
     public string Name => "AppLayerRouter";
 
-    public AppLayerRouter(ILogger<AppLayerRouter> logger, IKanataClient kanata)
+    public AppLayerRouter(ILogger<AppLayerRouter> logger, Lazy<IKanataClient> kanata)
         : this(logger, kanata, DefaultRules)
     { }
 
     /// <summary>Test constructor: inject custom routing rules.</summary>
     internal AppLayerRouter(
         ILogger<AppLayerRouter> logger,
-        IKanataClient kanata,
+        Lazy<IKanataClient> kanata,
         IReadOnlyList<Func<FocusContext, string?>> rules)
     {
         _logger = logger;
@@ -80,8 +80,8 @@ public sealed class AppLayerRouter : IEventRule
         _lastLayer = targetLayer;
 
         _logger.LogInformation("Focus changed to {Exe} -> ChangeLayer({Layer})", exe, targetLayer);
-        // Fire-and-forget; TcpKanataClient logs warnings on failure.
-        _ = _kanata.SendChangeLayerAsync(targetLayer);
+        // Fire-and-forget; client logs warnings on failure.
+        _ = _kanata.Value.SendChangeLayerAsync(targetLayer);
     }
 
     /// <summary>Pure function: run the rule chain to resolve a layer for a focus context.</summary>

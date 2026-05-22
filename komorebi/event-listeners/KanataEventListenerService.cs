@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Net.Sockets;
+using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -9,12 +11,20 @@ namespace EventListeners;
 /// <summary>
 /// Background service that connects to kanata's TCP server and dispatches layer
 /// change events to rules. Reconnects automatically if the connection drops.
+///
+/// Also exposes <see cref="IKanataClient"/> so other components can send
+/// requests (e.g., ChangeLayer) over the same long-lived connection. Kanata's
+/// TCP protocol is bidirectional: one client connection serves both event
+/// broadcast and request submission.
 /// </summary>
-public sealed class KanataEventListenerService : BackgroundService
+public sealed class KanataEventListenerService : BackgroundService, IKanataClient
 {
     private readonly ILogger<KanataEventListenerService> _logger;
     private readonly IEnumerable<IEventRule> _rules;
     private readonly int _port;
+
+    private readonly SemaphoreSlim _writeLock = new(1, 1);
+    private NetworkStream? _stream;
 
     private static readonly TimeSpan InitialReconnectDelay = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan MaxReconnectDelay = TimeSpan.FromSeconds(30);
@@ -27,6 +37,36 @@ public sealed class KanataEventListenerService : BackgroundService
         _logger = logger;
         _rules = rules;
         _port = configuration.GetValue("Kanata:Port", 9999);
+    }
+
+    public async Task SendChangeLayerAsync(string layerName, CancellationToken cancellationToken = default)
+    {
+        var stream = _stream;
+        if (stream is null)
+        {
+            _logger.LogWarning("Cannot send ChangeLayer({Layer}): kanata not connected yet", layerName);
+            return;
+        }
+
+        var json = string.Format(CultureInfo.InvariantCulture, "{{\"ChangeLayer\":{{\"new\":\"{0}\"}}}}\n", layerName);
+        var bytes = Encoding.UTF8.GetBytes(json);
+
+        await _writeLock.WaitAsync(cancellationToken);
+        try
+        {
+            await stream.WriteAsync(bytes, cancellationToken);
+            await stream.FlushAsync(cancellationToken);
+            _logger.LogDebug("Sent ChangeLayer({Layer})", layerName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send ChangeLayer({Layer})", layerName);
+            // Stream will be re-established by the listener loop on reconnect
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -69,15 +109,22 @@ public sealed class KanataEventListenerService : BackgroundService
         _logger.LogInformation("Connected to kanata TCP server on port {Port}", _port);
 
         await using var stream = client.GetStream();
-        using var reader = new StreamReader(stream);
-
-        while (!stoppingToken.IsCancellationRequested)
+        _stream = stream;
+        try
         {
-            var line = await reader.ReadLineAsync(stoppingToken);
-            if (line is null) break;
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            using var reader = new StreamReader(stream);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var line = await reader.ReadLineAsync(stoppingToken);
+                if (line is null) break;
+                if (string.IsNullOrWhiteSpace(line)) continue;
 
-            ProcessLine(line);
+                ProcessLine(line);
+            }
+        }
+        finally
+        {
+            _stream = null;
         }
     }
 

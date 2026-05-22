@@ -20,9 +20,13 @@ public sealed partial class WmOverlayIndicator : IWmOverlay, IDisposable
 
     private const string ClassName = "WmOverlayClass";
     private const string WindowTitle = "WM";
-    private const int Width = 60;
-    private const int Height = 28;
+    private const int MinWidth = 32;
+    private const int Height = 22;
     private const int Margin = 8;
+    private const int HorizontalPadding = 12;
+    private const int FontHeight = 14;
+
+    private volatile string _label = "WM";
 
     // Catppuccin Mocha Peach for visibility
     private static readonly Color BackgroundColor = Color.FromArgb(250, 179, 135);
@@ -34,11 +38,29 @@ public sealed partial class WmOverlayIndicator : IWmOverlay, IDisposable
         StartMessageLoop();
     }
 
-    public void Show()
+    public void Show(string label)
     {
         if (_hwnd == 0) return;
         _ready.Wait();
+        s_currentLabel = label;
+        _label = label;
+        var width = MeasureWidth(label);
+        SetWindowPos(_hwnd, 0, Margin, 48 + Margin, width, Height, SWP_NOZORDER | SWP_NOACTIVATE);
+        InvalidateRect(_hwnd, 0, true);
         ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
+    }
+
+    private static int MeasureWidth(string label)
+    {
+        // Approximate width: at 14px bold Segoe UI, characters average ~8px.
+        // Bullet (\u2022) is narrower, treat as 6. Pad horizontally.
+        var px = 0;
+        foreach (var ch in label)
+        {
+            px += ch == '\u2022' ? 6 : (ch == ' ' ? 5 : 8);
+        }
+        var w = px + HorizontalPadding;
+        return Math.Max(MinWidth, w);
     }
 
     public void Hide()
@@ -88,6 +110,9 @@ public sealed partial class WmOverlayIndicator : IWmOverlay, IDisposable
         _messageLoop.Start();
     }
 
+    // Static so the static WndProc can read it. Only one overlay instance exists.
+    private static volatile string s_currentLabel = "WM";
+
     private void RegisterWindowClass()
     {
         var wc = new WNDCLASSEX
@@ -115,7 +140,7 @@ public sealed partial class WmOverlayIndicator : IWmOverlay, IDisposable
             ClassName,
             WindowTitle,
             WS_POPUP,
-            x, y, Width, Height,
+            x, y, MinWidth, Height,
             0, 0, GetModuleHandle(null), 0);
 
         // Set opacity (slightly transparent)
@@ -139,10 +164,10 @@ public sealed partial class WmOverlayIndicator : IWmOverlay, IDisposable
             SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, ColorToCOLORREF(TextColor));
 
-            var font = CreateFont(18, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 0, 0, "Segoe UI");
+            var font = CreateFont(FontHeight, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 0, 0, "Segoe UI");
             var oldFont = SelectObject(hdc, font);
 
-            DrawText(hdc, "⌨ WM", -1, ref rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+            DrawText(hdc, s_currentLabel, -1, ref rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
             SelectObject(hdc, oldFont);
             DeleteObject(font);

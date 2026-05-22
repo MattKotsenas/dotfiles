@@ -8,8 +8,10 @@ public class AppLayerRouterTests
 {
     private static AppLayerRouter CreateRouter(out RecordingKanataClient kanata, IReadOnlyList<Func<FocusContext, string?>>? rules = null)
     {
-        kanata = new RecordingKanataClient();
-        return new AppLayerRouter(NullLogger<AppLayerRouter>.Instance, kanata, rules ?? []);
+        var k = new RecordingKanataClient();
+        kanata = k;
+        var lazy = new Lazy<IKanataClient>(() => k);
+        return new AppLayerRouter(NullLogger<AppLayerRouter>.Instance, lazy, rules ?? []);
     }
 
     [Fact]
