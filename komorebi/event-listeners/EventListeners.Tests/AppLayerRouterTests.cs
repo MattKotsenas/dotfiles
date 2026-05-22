@@ -56,25 +56,34 @@ public class AppLayerRouterTests
     public void DefaultRules_RouteWindowsTerminalToTerminalOverlay()
     {
         var ctx = new FocusContext("WindowsTerminal.exe", "PowerShell", 1);
+        Assert.Equal(LayerCatalog.BaseTerminal, FirstRuleMatch(ctx));
+    }
 
-        var match = AppLayerRouter.DefaultRules
-            .Select(r => r(ctx))
-            .FirstOrDefault(r => r is not null);
+    [Fact]
+    public void DefaultRules_RouteEdgeToEdgeOverlay()
+    {
+        var ctx = new FocusContext("msedge.exe", "GitHub", 1);
+        Assert.Equal(LayerCatalog.BaseEdge, FirstRuleMatch(ctx));
+    }
 
-        Assert.Equal(LayerCatalog.BaseTerminal, match);
+    [Fact]
+    public void DefaultRules_RouteTeamsToTeamsOverlay()
+    {
+        Assert.Equal(LayerCatalog.BaseTeams,
+            FirstRuleMatch(new FocusContext("ms-teams.exe", "Chat | Microsoft Teams", 1)));
+        Assert.Equal(LayerCatalog.BaseTeams,
+            FirstRuleMatch(new FocusContext("ms-teams.exe", "asdf | Microsoft Teams", 1)));
     }
 
     [Fact]
     public void DefaultRules_DoNotMatchOtherApps()
     {
         var ctx = new FocusContext("Code.exe", "VSCode", 1);
-
-        var match = AppLayerRouter.DefaultRules
-            .Select(r => r(ctx))
-            .FirstOrDefault(r => r is not null);
-
-        Assert.Null(match);
+        Assert.Null(FirstRuleMatch(ctx));
     }
+
+    private static string? FirstRuleMatch(FocusContext ctx) =>
+        AppLayerRouter.DefaultRules.Select(r => r(ctx)).FirstOrDefault(r => r is not null);
 }
 
 internal sealed class RecordingKanataClient : IKanataClient

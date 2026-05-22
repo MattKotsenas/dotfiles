@@ -15,7 +15,6 @@ Always available inside WM mode regardless of overlay or sub-mode.
 | Key | Action |
 |---|---|
 | `CAP /` | intent `system.cheatsheet` |
-| `CAP g` | intent `wm.focus.cycle-next` |
 | `CAP p` | intent `wm.layout.toggle-pause` |
 | `CAP q` | intent `wm.move.promote` |
 | `CAP r` | intent `wm.layout.retile` |
@@ -55,6 +54,7 @@ Entered via `CAP f`.
 
 | Key | Action |
 |---|---|
+| `CAP f g` | intent `wm.focus.cycle-next` |
 | `CAP f h` | intent `wm.focus.left` |
 | `CAP f j` | intent `wm.focus.down` |
 | `CAP f k` | intent `wm.focus.up` |
@@ -128,6 +128,36 @@ Active when the bridge's `AppLayerRouter` routes the focused app to this layer.
 | `CAP j` | macro `C-spc` → `j` |
 | `CAP k` | macro `C-spc` → `k` |
 | `CAP l` | macro `C-spc` → `l` |
+
+### wm-edge
+
+| Key | Action |
+|---|---|
+| `CAP t` | macro `C-t` |
+| `CAP v` | macro `C-l` → `esc` → `esc` |
+
+### wm-teams
+
+| Key | Action |
+|---|---|
+| `CAP 1` | macro `C-1` |
+| `CAP 2` | macro `C-2` |
+| `CAP 3` | macro `C-3` |
+| `CAP 4` | macro `C-4` |
+| `CAP 5` | macro `C-5` |
+| `CAP 6` | macro `C-6` |
+| `CAP 7` | macro `C-7` |
+| `CAP 8` | macro `C-8` |
+| `CAP c` | macro `C-S-o` |
+| `CAP g` | macro `C-e` |
+| `CAP h` | macro `A-left` |
+| `CAP j` | macro `A-pgdn` |
+| `CAP k` | macro `A-pgup` |
+| `CAP l` | macro `A-right` |
+| `CAP m` | macro `C-S-m` |
+| `CAP n` | macro `C-S-j` |
+| `CAP u` | macro `C-S-k` |
+| `CAP y` | macro `C-S-a` |
 
 
 ---

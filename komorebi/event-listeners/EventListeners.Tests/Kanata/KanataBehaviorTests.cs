@@ -127,7 +127,6 @@ public class KanataBehaviorTests
     [InlineData("r", "wm.layout.retile")]
     [InlineData("q", "wm.move.promote")]
     [InlineData("p", "wm.layout.toggle-pause")]
-    [InlineData("g", "wm.focus.cycle-next")]
     public async Task OneShot_GlobalAction_DispatchesExpectedIntent(string key, string expectedIntent)
     {
         var output = await KanataSimulator.RunAsync(

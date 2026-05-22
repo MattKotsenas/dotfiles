@@ -47,6 +47,12 @@ public sealed class AppLayerRouter : IEventRule
     [
         // Windows Terminal: route to terminal overlay for psmux pane navigation.
         ctx => ctx.Exe == "WindowsTerminal.exe" ? LayerCatalog.BaseTerminal : null,
+        // Microsoft Edge: tab management + vimium reset live in the overlay.
+        ctx => ctx.Exe == "msedge.exe" ? LayerCatalog.BaseEdge : null,
+        // Microsoft Teams (new). One overlay covers both main and in-meeting:
+        // meeting-only shortcuts are no-ops outside meetings, which is fine.
+        // Detection-by-title isn't reliable since users name meetings freely.
+        ctx => ctx.Exe == "ms-teams.exe" ? LayerCatalog.BaseTeams : null,
     ];
 
     public void ProcessEvent(IEvent evt)

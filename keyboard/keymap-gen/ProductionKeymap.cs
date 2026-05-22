@@ -12,15 +12,14 @@ internal static class ProductionKeymap
     public static Keymap Build() => new KeymapBuilder()
         .Caps(tapDanceMs: 250, oneShotMs: 2000)
         .Reserve(
-            global: ["r", "p", "tab", "/", "q", "g"],
+            global: ["r", "p", "tab", "/", "q"],
             subModeEntries: ["a", "s", "d", "f", "e", "w"])
         .WmBase(b => b
             .Intent("r", "wm.layout.retile")
             .Intent("p", "wm.layout.toggle-pause")
             .Intent("tab", "wm.focus.last-workspace")
             .Intent("/", "system.cheatsheet")
-            .Intent("q", "wm.move.promote")
-            .Intent("g", "wm.focus.cycle-next"))
+            .Intent("q", "wm.move.promote"))
         .SubMode("workspace", "w", b => b
             .Workspaces("wm.workspace.focus.{0}", 0, 7))
         .SubMode("focus", "f", b => b
@@ -28,7 +27,9 @@ internal static class ProductionKeymap
             .Intent("j", "wm.focus.down")
             .Intent("k", "wm.focus.up")
             .Intent("l", "wm.focus.right")
-            // moved from wm-base in Phase 2: float/monocle/flip live under focus
+            // moved here from wm-base: cycle-focus is a focus op
+            .Intent("g", "wm.focus.cycle-next")
+            // moved here in Phase 2: float/monocle/flip live under focus
             .Intent("t", "wm.layout.toggle-float")
             .Intent("m", "wm.layout.toggle-monocle")
             .Intent("x", "wm.layout.flip-horizontal")
@@ -50,10 +51,6 @@ internal static class ProductionKeymap
             .Intent("k", "wm.resize.vertical-increase")
             .Intent("l", "wm.resize.horizontal-increase"))
         .SubMode("assemble", "a", b => b
-            // h/l: unstack-then-cycle (move out of stack, focus next).
-            // j/k: cycle within stack (formerly bare [/]).
-            // The old standalone \ "unstack" is gone; use h or l which do
-            // unstack + cycle, the more useful composite.
             .Macro("h", m => m
                 .Intent("wm.stack.unstack")
                 .Delay(100)
@@ -64,16 +61,34 @@ internal static class ProductionKeymap
                 .Intent("wm.stack.unstack")
                 .Delay(100)
                 .Intent("wm.focus.cycle-next")))
-        // Phase 4: terminal overlay (psmux pane navigation).
-        // When WindowsTerminal.exe is focused (routed by AppLayerRouter), CAP
-        // enters wm-terminal. The bindings below override wm-base's deadkey
-        // for h/j/k/l with kanata macros that emit the psmux prefix (C-spc)
-        // followed by the direction key. psmux-pain-control binds h/j/k/l
-        // to select-pane-direction.
+        // -------------------------------------------------------------------
+        // App overlays. Routing rules live in event-listeners/AppLayerRouter.cs
+        // -------------------------------------------------------------------
         .Overlay("terminal", b => b
+            // psmux pane navigation: Ctrl+Space prefix + direction
             .Macro("h", "C-spc", "h")
             .Macro("j", "C-spc", "j")
             .Macro("k", "C-spc", "k")
             .Macro("l", "C-spc", "l"))
+        .Overlay("edge", b => b
+            .Macro("t", "C-t")              // new tab
+            .Macro("v", "C-l", "esc", "esc")) // vimium reset (focus URL bar, then drop focus)
+        .Overlay("teams", b => b
+            // In-meeting actions (no-ops outside a meeting; that's intentional)
+            .Macro("m", "C-S-m")             // toggle mute
+            .Macro("c", "C-S-o")             // toggle camera
+            .Macro("u", "C-S-k")             // raise/lower hand
+            // Navigation
+            .Macro("g", "C-e")               // search
+            .Macro("h", "A-left")            // back
+            .Macro("l", "A-right")           // forward
+            .Macro("j", "A-pgdn")            // section down
+            .Macro("k", "A-pgup")            // section up
+            // Tab jump (Ctrl+1..Ctrl+8 to switch sidebar items)
+            .Macro("1", "C-1").Macro("2", "C-2").Macro("3", "C-3").Macro("4", "C-4")
+            .Macro("5", "C-5").Macro("6", "C-6").Macro("7", "C-7").Macro("8", "C-8")
+            // Notification actions
+            .Macro("y", "C-S-a")             // accept incoming call
+            .Macro("n", "C-S-j"))            // join meeting from notification
         .Build();
 }

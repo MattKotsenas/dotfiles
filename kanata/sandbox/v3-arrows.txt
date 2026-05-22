@@ -1,0 +1,4 @@
+d:up t:50 u:up t:50
+d:down t:50 u:down t:50
+d:left t:50 u:left t:50
+d:right t:50 u:right t:50

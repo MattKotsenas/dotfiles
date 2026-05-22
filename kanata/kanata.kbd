@@ -6,7 +6,7 @@
 )
 
 (defsrc
-  caps r p tab / q g 1 2 3 4 5 6 7 8 h j k l t m x y
+  caps r p tab / q 1 2 3 4 5 6 7 8 h j k l g t m x y v c u n
 )
 
 (defvar
@@ -35,7 +35,6 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   ___ XX
 )
 
@@ -54,7 +53,6 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   ___ XX
 )
 
@@ -79,7 +77,6 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   h (macro C-spc h)
   j (macro C-spc j)
   k (macro C-spc k)
@@ -102,11 +99,134 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   h (macro C-spc h)
   j (macro C-spc j)
   k (macro C-spc k)
   l (macro C-spc l)
+  ___ XX
+)
+
+;; base-edge: typing layer (edge focus context). CAP enters wm-edge.
+(deflayermap (base-edge)
+  caps (tap-dance $td-timeout (
+    (one-shot $os-timeout (layer-while-held wm-edge))
+    (layer-switch wm-edge-toggle)
+  ))
+)
+
+;; wm-edge: one-shot WM mode (edge context; CAP single-tap)
+(deflayermap (wm-edge)
+  w (one-shot $os-timeout (layer-while-held wm-workspace))
+  f (one-shot $os-timeout (layer-while-held wm-focus))
+  d (one-shot $os-timeout (layer-while-held wm-move))
+  s (one-shot $os-timeout (layer-while-held wm-stack))
+  e (one-shot $os-timeout (layer-while-held wm-resize))
+  a (one-shot $os-timeout (layer-while-held wm-assemble))
+  r (push-msg "wm.layout.retile")
+  p (push-msg "wm.layout.toggle-pause")
+  tab (push-msg "wm.focus.last-workspace")
+  / (push-msg "system.cheatsheet")
+  q (push-msg "wm.move.promote")
+  t (macro C-t)
+  v (macro C-l esc esc)
+  ___ XX
+)
+
+;; wm-edge-toggle: sticky WM mode (edge context; CAP double-tap)
+;; CAPS exits to base-edge.
+(deflayermap (wm-edge-toggle)
+  caps (layer-switch base-edge)
+  w (layer-switch wm-workspace-toggle)
+  f (layer-switch wm-focus-toggle)
+  d (layer-switch wm-move-toggle)
+  s (layer-switch wm-stack-toggle)
+  e (layer-switch wm-resize-toggle)
+  a (layer-switch wm-assemble-toggle)
+  r (push-msg "wm.layout.retile")
+  p (push-msg "wm.layout.toggle-pause")
+  tab (push-msg "wm.focus.last-workspace")
+  / (push-msg "system.cheatsheet")
+  q (push-msg "wm.move.promote")
+  t (macro C-t)
+  v (macro C-l esc esc)
+  ___ XX
+)
+
+;; base-teams: typing layer (teams focus context). CAP enters wm-teams.
+(deflayermap (base-teams)
+  caps (tap-dance $td-timeout (
+    (one-shot $os-timeout (layer-while-held wm-teams))
+    (layer-switch wm-teams-toggle)
+  ))
+)
+
+;; wm-teams: one-shot WM mode (teams context; CAP single-tap)
+(deflayermap (wm-teams)
+  w (one-shot $os-timeout (layer-while-held wm-workspace))
+  f (one-shot $os-timeout (layer-while-held wm-focus))
+  d (one-shot $os-timeout (layer-while-held wm-move))
+  s (one-shot $os-timeout (layer-while-held wm-stack))
+  e (one-shot $os-timeout (layer-while-held wm-resize))
+  a (one-shot $os-timeout (layer-while-held wm-assemble))
+  r (push-msg "wm.layout.retile")
+  p (push-msg "wm.layout.toggle-pause")
+  tab (push-msg "wm.focus.last-workspace")
+  / (push-msg "system.cheatsheet")
+  q (push-msg "wm.move.promote")
+  m (macro C-S-m)
+  c (macro C-S-o)
+  u (macro C-S-k)
+  g (macro C-e)
+  h (macro A-left)
+  l (macro A-right)
+  j (macro A-pgdn)
+  k (macro A-pgup)
+  1 (macro C-1)
+  2 (macro C-2)
+  3 (macro C-3)
+  4 (macro C-4)
+  5 (macro C-5)
+  6 (macro C-6)
+  7 (macro C-7)
+  8 (macro C-8)
+  y (macro C-S-a)
+  n (macro C-S-j)
+  ___ XX
+)
+
+;; wm-teams-toggle: sticky WM mode (teams context; CAP double-tap)
+;; CAPS exits to base-teams.
+(deflayermap (wm-teams-toggle)
+  caps (layer-switch base-teams)
+  w (layer-switch wm-workspace-toggle)
+  f (layer-switch wm-focus-toggle)
+  d (layer-switch wm-move-toggle)
+  s (layer-switch wm-stack-toggle)
+  e (layer-switch wm-resize-toggle)
+  a (layer-switch wm-assemble-toggle)
+  r (push-msg "wm.layout.retile")
+  p (push-msg "wm.layout.toggle-pause")
+  tab (push-msg "wm.focus.last-workspace")
+  / (push-msg "system.cheatsheet")
+  q (push-msg "wm.move.promote")
+  m (macro C-S-m)
+  c (macro C-S-o)
+  u (macro C-S-k)
+  g (macro C-e)
+  h (macro A-left)
+  l (macro A-right)
+  j (macro A-pgdn)
+  k (macro A-pgup)
+  1 (macro C-1)
+  2 (macro C-2)
+  3 (macro C-3)
+  4 (macro C-4)
+  5 (macro C-5)
+  6 (macro C-6)
+  7 (macro C-7)
+  8 (macro C-8)
+  y (macro C-S-a)
+  n (macro C-S-j)
   ___ XX
 )
 
@@ -129,6 +249,7 @@
   j (push-msg "wm.focus.down")
   k (push-msg "wm.focus.up")
   l (push-msg "wm.focus.right")
+  g (push-msg "wm.focus.cycle-next")
   t (push-msg "wm.layout.toggle-float")
   m (push-msg "wm.layout.toggle-monocle")
   x (push-msg "wm.layout.flip-horizontal")
@@ -202,7 +323,6 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   ___ XX
 )
 
@@ -219,6 +339,7 @@
   j (push-msg "wm.focus.down")
   k (push-msg "wm.focus.up")
   l (push-msg "wm.focus.right")
+  g (push-msg "wm.focus.cycle-next")
   t (push-msg "wm.layout.toggle-float")
   m (push-msg "wm.layout.toggle-monocle")
   x (push-msg "wm.layout.flip-horizontal")
@@ -228,7 +349,6 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   ___ XX
 )
 
@@ -258,7 +378,6 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   ___ XX
 )
 
@@ -280,7 +399,6 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   ___ XX
 )
 
@@ -302,7 +420,6 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   ___ XX
 )
 
@@ -324,7 +441,6 @@
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   q (push-msg "wm.move.promote")
-  g (push-msg "wm.focus.cycle-next")
   ___ XX
 )
 
