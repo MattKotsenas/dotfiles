@@ -22,7 +22,7 @@
 )
 
 (defsrc
-  caps
+  caps h j k l
 )
 
 (defvar
