@@ -83,40 +83,10 @@ public sealed class KanataEventListenerService : BackgroundService
 
     private void ProcessLine(string line)
     {
-        IEvent? evt = null;
-
-        // Format: {"LayerChange":{"new":"base"}}
-        if (line.Contains("LayerChange"))
-        {
-            var newIdx = line.IndexOf("\"new\"", StringComparison.Ordinal);
-            if (newIdx < 0) return;
-            var colonIdx = line.IndexOf(':', newIdx + 5);
-            if (colonIdx < 0) return;
-            var quoteStart = line.IndexOf('"', colonIdx + 1);
-            var quoteEnd = line.IndexOf('"', quoteStart + 1);
-            if (quoteStart < 0 || quoteEnd < 0) return;
-
-            var layerName = line[(quoteStart + 1)..quoteEnd];
-            _logger.LogDebug("Kanata layer change: {Layer}", layerName);
-            evt = new KanataLayerChangeEvent(layerName);
-        }
-        // Format: {"MessagePush":{"message":"komorebic focus left"}}
-        else if (line.Contains("MessagePush"))
-        {
-            var msgIdx = line.IndexOf("\"message\"", StringComparison.Ordinal);
-            if (msgIdx < 0) return;
-            var colonIdx = line.IndexOf(':', msgIdx + 9);
-            if (colonIdx < 0) return;
-            var quoteStart = line.IndexOf('"', colonIdx + 1);
-            var quoteEnd = line.IndexOf('"', quoteStart + 1);
-            if (quoteStart < 0 || quoteEnd < 0) return;
-
-            var message = line[(quoteStart + 1)..quoteEnd];
-            _logger.LogDebug("Kanata message: {Message}", message);
-            evt = new KanataMessageEvent(message);
-        }
-
+        var evt = ParseEvent(line);
         if (evt is null) return;
+
+        _logger.LogDebug("Kanata event: {EventType}", evt.GetType().Name);
 
         foreach (var rule in _rules)
         {
@@ -129,5 +99,42 @@ public sealed class KanataEventListenerService : BackgroundService
                 _logger.LogError(ex, "Rule '{RuleName}' threw processing {EventType}", rule.Name, evt.GetType().Name);
             }
         }
+    }
+
+    /// <summary>
+    /// Parses a kanata TCP JSON line into an <see cref="IEvent"/>.
+    /// Returns null for unrecognized or malformed lines.
+    /// </summary>
+    internal static IEvent? ParseEvent(string line)
+    {
+        // Format: {"LayerChange":{"new":"base"}}
+        if (line.Contains("LayerChange"))
+        {
+            var newIdx = line.IndexOf("\"new\"", StringComparison.Ordinal);
+            if (newIdx < 0) return null;
+            var colonIdx = line.IndexOf(':', newIdx + 5);
+            if (colonIdx < 0) return null;
+            var quoteStart = line.IndexOf('"', colonIdx + 1);
+            var quoteEnd = line.IndexOf('"', quoteStart + 1);
+            if (quoteStart < 0 || quoteEnd < 0) return null;
+
+            return new KanataLayerChangeEvent(line[(quoteStart + 1)..quoteEnd]);
+        }
+
+        // Format: {"MessagePush":{"message":"komorebic focus left"}}
+        if (line.Contains("MessagePush"))
+        {
+            var msgIdx = line.IndexOf("\"message\"", StringComparison.Ordinal);
+            if (msgIdx < 0) return null;
+            var colonIdx = line.IndexOf(':', msgIdx + 9);
+            if (colonIdx < 0) return null;
+            var quoteStart = line.IndexOf('"', colonIdx + 1);
+            var quoteEnd = line.IndexOf('"', quoteStart + 1);
+            if (quoteStart < 0 || quoteEnd < 0) return null;
+
+            return new KanataMessageEvent(line[(quoteStart + 1)..quoteEnd]);
+        }
+
+        return null;
     }
 }
