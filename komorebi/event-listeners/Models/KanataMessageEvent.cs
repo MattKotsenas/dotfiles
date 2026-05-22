@@ -1,4 +1,4 @@
-namespace EventListeners;
+namespace EventListeners.Models;
 
 /// <summary>
 /// Emitted when kanata broadcasts a push-msg action via TCP.

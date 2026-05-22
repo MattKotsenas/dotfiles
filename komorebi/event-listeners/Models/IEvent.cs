@@ -1,4 +1,4 @@
-namespace EventListeners;
+namespace EventListeners.Models;
 
 /// <summary>
 /// Marker interface for all events dispatched through the unified event stream.

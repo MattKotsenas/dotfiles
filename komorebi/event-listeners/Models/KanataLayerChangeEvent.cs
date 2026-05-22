@@ -1,4 +1,4 @@
-namespace EventListeners;
+namespace EventListeners.Models;
 
 /// <summary>
 /// Emitted when kanata switches to a different keyboard layer.

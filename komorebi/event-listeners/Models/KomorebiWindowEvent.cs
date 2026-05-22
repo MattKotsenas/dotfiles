@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace EventListeners;
+namespace EventListeners.Models;
 
 /// <summary>
 /// A Komorebi event received from the named pipe subscription.

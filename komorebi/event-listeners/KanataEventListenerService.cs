@@ -2,6 +2,7 @@ using System.Net.Sockets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using EventListeners.Models;
 
 namespace EventListeners;
 

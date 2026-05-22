@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using EventListeners.Models;
 
 namespace EventListeners;
 
