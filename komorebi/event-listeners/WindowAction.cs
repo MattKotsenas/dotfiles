@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using System.Runtime.InteropServices;
+using CliWrap;
 using EventListeners.Win32;
 using Microsoft.Extensions.Logging;
 
@@ -12,36 +12,26 @@ namespace EventListeners;
 public sealed class WindowAction : IWindowAction
 {
     private readonly ILogger<WindowAction> _logger;
+    private readonly ICommandRunner _runner;
 
-    public WindowAction(ILogger<WindowAction> logger)
+    public WindowAction(ILogger<WindowAction> logger, ICommandRunner runner)
     {
         _logger = logger;
+        _runner = runner;
     }
 
-    public void ToggleFloat()
+    public async void ToggleFloat()
     {
         try
         {
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "komorebic",
-                    Arguments = "toggle-float",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
+            var result = await _runner.RunAsync(
+                Cli.Wrap("komorebic")
+                    .WithArguments("toggle-float")
+                    .WithValidation(CommandResultValidation.None));
 
-            process.Start();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
+            if (result.ExitCode != 0)
             {
-                var stderr = process.StandardError.ReadToEnd();
-                _logger.LogWarning("komorebic toggle-float exited {ExitCode}: {StdErr}", process.ExitCode, stderr);
+                _logger.LogWarning("komorebic toggle-float exited {ExitCode}", result.ExitCode);
             }
         }
         catch (Exception ex)

@@ -12,6 +12,7 @@ public static class Program
 
         // Register infrastructure
         builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton<ICommandRunner, CliWrapCommandRunner>();
         builder.Services.AddSingleton<IWindowAction, WindowAction>();
         builder.Services.AddSingleton<WmOverlayIndicator>();
         builder.Services.AddSingleton<IWmOverlay>(sp => sp.GetRequiredService<WmOverlayIndicator>());

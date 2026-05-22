@@ -1,6 +1,6 @@
-using System.Diagnostics;
 using System.IO.Pipes;
 using System.Text.Json;
+using CliWrap;
 using EventListeners.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -16,6 +16,7 @@ public sealed class KomorebiEventListenerService : BackgroundService
     private readonly ILogger<KomorebiEventListenerService> _logger;
     private readonly IHostApplicationLifetime _appLifetime;
     private readonly IEnumerable<IEventRule> _rules;
+    private readonly ICommandRunner _runner;
     private bool _subscribed;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -26,11 +27,13 @@ public sealed class KomorebiEventListenerService : BackgroundService
     public KomorebiEventListenerService(
         ILogger<KomorebiEventListenerService> logger,
         IHostApplicationLifetime appLifetime,
-        IEnumerable<IEventRule> rules)
+        IEnumerable<IEventRule> rules,
+        ICommandRunner runner)
     {
         _logger = logger;
         _appLifetime = appLifetime;
         _rules = rules;
+        _runner = runner;
         _pipeName = $"komorebi-event-{Guid.NewGuid()}";
     }
 
@@ -170,29 +173,14 @@ public sealed class KomorebiEventListenerService : BackgroundService
 
         try
         {
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "komorebic",
-                    Arguments = $"subscribe-pipe {_pipeName}",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
+            var result = await _runner.RunAsync(
+                Cli.Wrap("komorebic")
+                    .WithArguments($"subscribe-pipe {_pipeName}")
+                    .WithValidation(CommandResultValidation.None));
 
-            process.Start();
-            var stdout = await process.StandardOutput.ReadToEndAsync();
-            var stderr = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
-
-            if (process.ExitCode != 0)
+            if (result.ExitCode != 0)
             {
-                _logger.LogError(
-                    "Failed to subscribe to Komorebi pipe. Exit code: {ExitCode}, StdErr: {StdErr}, StdOut: {StdOut}",
-                    process.ExitCode, stderr, stdout);
+                _logger.LogError("Failed to subscribe to Komorebi pipe. Exit code: {ExitCode}", result.ExitCode);
                 return false;
             }
 
@@ -212,28 +200,14 @@ public sealed class KomorebiEventListenerService : BackgroundService
 
         try
         {
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "komorebic",
-                    Arguments = $"unsubscribe-pipe {_pipeName}",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
+            var result = await _runner.RunAsync(
+                Cli.Wrap("komorebic")
+                    .WithArguments($"unsubscribe-pipe {_pipeName}")
+                    .WithValidation(CommandResultValidation.None));
 
-            process.Start();
-            var stderr = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
-
-            if (process.ExitCode != 0)
+            if (result.ExitCode != 0)
             {
-                _logger.LogWarning(
-                    "Failed to unsubscribe from Komorebi pipe. Exit code: {ExitCode}, StdErr: {StdErr}",
-                    process.ExitCode, stderr);
+                _logger.LogWarning("Failed to unsubscribe from Komorebi pipe. Exit code: {ExitCode}", result.ExitCode);
             }
             else
             {

@@ -1,6 +1,6 @@
-using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+using CliWrap;
 using EventListeners.Models;
+using Microsoft.Extensions.Logging;
 
 namespace EventListeners;
 
@@ -12,12 +12,14 @@ namespace EventListeners;
 public sealed class KomorebicCommandRule : IEventRule
 {
     private readonly ILogger<KomorebicCommandRule> _logger;
+    private readonly ICommandRunner _runner;
 
     public string Name => "KomorebicCommandRule";
 
-    public KomorebicCommandRule(ILogger<KomorebicCommandRule> logger)
+    public KomorebicCommandRule(ILogger<KomorebicCommandRule> logger, ICommandRunner runner)
     {
         _logger = logger;
+        _runner = runner;
     }
 
     public void ProcessEvent(IEvent evt)
@@ -27,71 +29,31 @@ public sealed class KomorebicCommandRule : IEventRule
         if (e.Message.StartsWith("komorebic ", StringComparison.Ordinal))
         {
             var args = e.Message["komorebic ".Length..];
-            RunKomorebic(args);
+            _ = RunAsync(Cli.Wrap("komorebic").WithArguments(args).WithValidation(CommandResultValidation.None), args);
         }
         else if (e.Message == "cheatsheet")
-        {
-            RunCheatsheet();
-        }
-    }
-
-    private void RunKomorebic(string arguments)
-    {
-        try
-        {
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "komorebic",
-                    Arguments = arguments,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                }
-            };
-
-            process.Start();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                var stderr = process.StandardError.ReadToEnd();
-                _logger.LogWarning("komorebic {Args} exited {ExitCode}: {StdErr}",
-                    arguments, process.ExitCode, stderr);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to invoke komorebic {Args}", arguments);
-        }
-    }
-
-    private void RunCheatsheet()
-    {
-        try
         {
             var keymap = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".config", "keyboard", "KEYMAP.md");
 
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "wt.exe",
-                    Arguments = $"-w _quake glow -p \"{keymap}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
+            _ = RunAsync(Cli.Wrap("wt.exe").WithArguments($"-w _quake glow -p \"{keymap}\"").WithValidation(CommandResultValidation.None), "cheatsheet");
+        }
+    }
 
-            process.Start();
+    private async Task RunAsync(Command command, string description)
+    {
+        try
+        {
+            var result = await _runner.RunAsync(command);
+            if (result.ExitCode != 0)
+            {
+                _logger.LogWarning("{Description} exited {ExitCode}", description, result.ExitCode);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to open cheatsheet");
+            _logger.LogWarning(ex, "Failed to run {Description}", description);
         }
     }
 }
