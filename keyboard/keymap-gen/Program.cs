@@ -44,6 +44,10 @@ internal static class Program
         var catalogPath = Path.Combine(catalogDir, "LayerCatalog.g.cs");
         File.WriteAllText(catalogPath, LayerCatalogEmitter.Emit(k));
         Console.Out.WriteLine($"wrote {catalogPath}");
+
+        var keymapPath = Path.Combine(repoRoot, "keyboard", "KEYMAP.md");
+        File.WriteAllText(keymapPath, KeymapMdEmitter.Emit(k));
+        Console.Out.WriteLine($"wrote {keymapPath}");
     }
 
     private static void PrintUsage()
