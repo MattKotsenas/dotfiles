@@ -82,7 +82,11 @@ public sealed class Win32KeyboardSender : IKeyboardSender
     private struct INPUT
     {
         public uint type;
+        private readonly uint _typePadding;
         public KEYBDINPUT ki;
+        // Win32 INPUT is a union; KEYBDINPUT is smaller than the union slot
+        // (MOUSEINPUT is largest). Pad the tail so sizeof(INPUT)==40 on x64.
+        private readonly nint _tailPadding;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -93,10 +97,11 @@ public sealed class Win32KeyboardSender : IKeyboardSender
         public uint dwFlags;
         public uint time;
         public nint dwExtraInfo;
-        private readonly nint _padding1;
-        private readonly nint _padding2;
     }
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+    /// <summary>Test hook: Win32 expects exactly 40 bytes per INPUT on x64.</summary>
+    internal static int InputStructSize => Marshal.SizeOf<INPUT>();
 }
