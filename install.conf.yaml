@@ -31,6 +31,7 @@
       path: keyboard
       glob: false
     ~/.psmux.conf: psmux/.psmux.conf
+    ~/.wslconfig: wsl/.wslconfig
     ~/.psmux/strategies:
       path: psmux/strategies
       glob: false

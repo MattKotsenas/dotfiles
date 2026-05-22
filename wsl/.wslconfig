@@ -1,0 +1,6 @@
+[wsl2]
+# Keep the WSL2 VM running indefinitely instead of shutting down after idle.
+# Required so the hermes gateway (systemd user service) keeps responding
+# when no interactive WSL shell is attached.
+# Docs: https://learn.microsoft.com/en-us/windows/wsl/wsl-config
+vmIdleTimeout=-1
