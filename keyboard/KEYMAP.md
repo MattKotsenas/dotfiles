@@ -15,10 +15,14 @@ Always available inside WM mode regardless of overlay or sub-mode.
 | Key | Action |
 |---|---|
 | `CAP /` | intent `system.cheatsheet` |
+| `CAP down` | raw kanata: `down` |
+| `CAP left` | raw kanata: `left` |
 | `CAP p` | intent `wm.layout.toggle-pause` |
 | `CAP q` | intent `wm.move.promote` |
 | `CAP r` | intent `wm.layout.retile` |
+| `CAP right` | raw kanata: `right` |
 | `CAP tab` | intent `wm.focus.last-workspace` |
+| `CAP up` | raw kanata: `up` |
 
 ### Sub-mode entries
 

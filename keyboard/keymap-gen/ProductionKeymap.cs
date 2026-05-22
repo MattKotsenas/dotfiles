@@ -19,7 +19,16 @@ internal static class ProductionKeymap
             .Intent("p", "wm.layout.toggle-pause")
             .Intent("tab", "wm.focus.last-workspace")
             .Intent("/", "system.cheatsheet")
-            .Intent("q", "wm.move.promote"))
+            .Intent("q", "wm.move.promote")
+            // Arrow passthrough: arrows always do "their thing" even in WM mode
+            // (Teams meeting nav, list nav, etc.). KanataLiteral emits the key
+            // as itself; the compiler propagates wm-base into every wm-* layer,
+            // so this works inside overlays + toggle modes too. One-shot sub-modes
+            // intentionally don't merge wm-base, so arrows deadkey there.
+            .KanataLiteral("up", "up")
+            .KanataLiteral("down", "down")
+            .KanataLiteral("left", "left")
+            .KanataLiteral("right", "right"))
         .SubMode("workspace", "w", b => b
             .Workspaces("wm.workspace.focus.{0}", 0, 7))
         .SubMode("focus", "f", b => b
