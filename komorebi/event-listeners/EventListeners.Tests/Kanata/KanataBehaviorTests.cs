@@ -85,7 +85,7 @@ public class KanataBehaviorTests
     }
 
     // ============================================================
-    // Workspaces (1-8 in WM layer)
+    // Workspaces (1-8 behind w sub-mode after Phase 2)
     // ============================================================
 
     [Theory]
@@ -97,11 +97,11 @@ public class KanataBehaviorTests
     [InlineData("6", "wm.workspace.focus.5")]
     [InlineData("7", "wm.workspace.focus.6")]
     [InlineData("8", "wm.workspace.focus.7")]
-    public async Task OneShot_WorkspaceNumber_DispatchesFocusWorkspace(string key, string expectedIntent)
+    public async Task OneShot_WorkspaceSubMod_DispatchesFocusWorkspace(string key, string expectedIntent)
     {
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
-            new SimInput().Tap("caps").Tap(key).Settle());
+            new SimInput().Tap("caps").Tap("w").Tap(key).Settle());
 
         Assert.Contains(expectedIntent, output.Intents);
     }
@@ -120,19 +120,15 @@ public class KanataBehaviorTests
     }
 
     // ============================================================
-    // Standalone actions (single key in WM layer)
+    // Standalone actions in wm-base (truly global keys)
     // ============================================================
 
     [Theory]
-    [InlineData("t", "wm.layout.toggle-float")]
-    [InlineData("m", "wm.layout.toggle-monocle")]
     [InlineData("r", "wm.layout.retile")]
     [InlineData("q", "wm.move.promote")]
-    [InlineData("x", "wm.layout.flip-horizontal")]
-    [InlineData("y", "wm.layout.flip-vertical")]
     [InlineData("p", "wm.layout.toggle-pause")]
     [InlineData("g", "wm.focus.cycle-next")]
-    public async Task OneShot_StandaloneAction_DispatchesExpectedIntent(string key, string expectedIntent)
+    public async Task OneShot_GlobalAction_DispatchesExpectedIntent(string key, string expectedIntent)
     {
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
@@ -141,17 +137,45 @@ public class KanataBehaviorTests
         Assert.Contains(expectedIntent, output.Intents);
     }
 
+    // ============================================================
+    // Phase 2: actions that moved from wm-base into wm-focus sub-mode
+    // ============================================================
+
     [Theory]
-    [InlineData("[", "wm.stack.cycle-prev")]
-    [InlineData("]", "wm.stack.cycle-next")]
-    [InlineData(@"\", "wm.stack.unstack")]
-    public async Task OneShot_StackKeys_DispatchesStackIntent(string key, string expectedIntent)
+    [InlineData("t", "wm.layout.toggle-float")]
+    [InlineData("m", "wm.layout.toggle-monocle")]
+    [InlineData("x", "wm.layout.flip-horizontal")]
+    [InlineData("y", "wm.layout.flip-vertical")]
+    public async Task OneShot_FocusSubMod_LayoutActions_Dispatch(string key, string expectedIntent)
     {
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput().Tap("caps").Tap("f").Tap(key).Settle());
+
+        Assert.Contains(expectedIntent, output.Intents);
+    }
+
+    // ============================================================
+    // Phase 2: bare keys in wm-base no longer fire intents
+    // ============================================================
+
+    [Theory]
+    [InlineData("h")]
+    [InlineData("j")]
+    [InlineData("k")]
+    [InlineData("l")]
+    [InlineData("1")]
+    [InlineData("t")]
+    [InlineData("m")]
+    public async Task OneShot_BareKey_NotInWmBase_FiresNoIntent(string key)
+    {
+        // After Phase 2, wm-base does not bind these directly; pressing them
+        // inside one-shot WM mode is a deadkey (no-op).
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput().Tap("caps").Tap(key).Settle());
 
-        Assert.Contains(expectedIntent, output.Intents);
+        Assert.Empty(output.Intents);
     }
 
     [Fact]

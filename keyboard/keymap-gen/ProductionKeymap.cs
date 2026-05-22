@@ -12,35 +12,27 @@ internal static class ProductionKeymap
     public static Keymap Build() => new KeymapBuilder()
         .Caps(tapDanceMs: 250, oneShotMs: 2000)
         .Reserve(
-            global: ["1", "2", "3", "4", "5", "6", "7", "8", "r", "p", "tab", "/", "q", "g",
-                    "t", "m", "x", "y", "[", "]", "\\", "h", "j", "k", "l"],
-            subModeEntries: ["a", "s", "d", "f", "e"])
+            global: ["r", "p", "tab", "/", "q", "g"],
+            subModeEntries: ["a", "s", "d", "f", "e", "w"])
         .WmBase(b => b
-            .Workspaces("wm.workspace.focus.{0}", 0, 7)
             .Intent("r", "wm.layout.retile")
             .Intent("p", "wm.layout.toggle-pause")
             .Intent("tab", "wm.focus.last-workspace")
             .Intent("/", "system.cheatsheet")
             .Intent("q", "wm.move.promote")
-            .Intent("g", "wm.focus.cycle-next")
-            // Phase 2 will MOVE these out of wm-base
-            .Intent("t", "wm.layout.toggle-float")
-            .Intent("m", "wm.layout.toggle-monocle")
-            .Intent("x", "wm.layout.flip-horizontal")
-            .Intent("y", "wm.layout.flip-vertical")
-            .Intent("[", "wm.stack.cycle-prev")
-            .Intent("]", "wm.stack.cycle-next")
-            .Intent("\\", "wm.stack.unstack")
-            // Phase 4 will REMOVE these (nav.* goes away with terminal overlay)
-            .Intent("h", "nav.left")
-            .Intent("j", "nav.down")
-            .Intent("k", "nav.up")
-            .Intent("l", "nav.right"))
+            .Intent("g", "wm.focus.cycle-next"))
+        .SubMode("workspace", "w", b => b
+            .Workspaces("wm.workspace.focus.{0}", 0, 7))
         .SubMode("focus", "f", b => b
             .Intent("h", "wm.focus.left")
             .Intent("j", "wm.focus.down")
             .Intent("k", "wm.focus.up")
-            .Intent("l", "wm.focus.right"))
+            .Intent("l", "wm.focus.right")
+            // moved from wm-base in Phase 2: float/monocle/flip live under focus
+            .Intent("t", "wm.layout.toggle-float")
+            .Intent("m", "wm.layout.toggle-monocle")
+            .Intent("x", "wm.layout.flip-horizontal")
+            .Intent("y", "wm.layout.flip-vertical"))
         .SubMode("move", "d", b => b
             .Intent("h", "wm.move.left")
             .Intent("j", "wm.move.down")
@@ -58,6 +50,10 @@ internal static class ProductionKeymap
             .Intent("k", "wm.resize.vertical-increase")
             .Intent("l", "wm.resize.horizontal-increase"))
         .SubMode("assemble", "a", b => b
+            // h/l: unstack-then-cycle (move out of stack, focus next).
+            // j/k: cycle within stack (formerly bare [/]).
+            // The old standalone \ "unstack" is gone; use h or l which do
+            // unstack + cycle, the more useful composite.
             .Macro("h", m => m
                 .Intent("wm.stack.unstack")
                 .Delay(100)

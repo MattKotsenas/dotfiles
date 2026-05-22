@@ -111,7 +111,7 @@ public class ValidatorTests
         // Should not throw
         var keymap = ProductionKeymap.Build();
         Assert.NotNull(keymap);
-        Assert.Equal(5, keymap.SubModes.Count);
+        Assert.Equal(6, keymap.SubModes.Count);  // workspace, focus, move, stack, resize, assemble
         Assert.Empty(keymap.Overlays);
     }
 }
