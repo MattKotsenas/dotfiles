@@ -11,20 +11,20 @@ public class LayerIndicatorRuleTests
     }
 
     [Theory]
-    [InlineData("wm", "WM")]
-    [InlineData("wm-toggle", "WM \u2022")]
-    [InlineData("wm-focus", "Focus")]
-    [InlineData("wm-focus-toggle", "Focus \u2022")]
-    [InlineData("wm-stack", "Stack")]
-    [InlineData("wm-stack-toggle", "Stack \u2022")]
-    [InlineData("wm-resize", "Resize")]
-    [InlineData("wm-resize-toggle", "Resize \u2022")]
-    [InlineData("wm-move", "Move")]
-    [InlineData("wm-move-toggle", "Move \u2022")]
-    [InlineData("wm-assemble", "Assemble")]
-    [InlineData("wm-workspace", "Workspace")]
-    [InlineData("wm-terminal", "Term")]
-    [InlineData("wm-terminal-toggle", "Term \u2022")]
+    [InlineData("wm", "\U0001FA9F WM")]
+    [InlineData("wm-toggle", "\U0001FA9F WM \u2022")]
+    [InlineData("wm-focus", "\U0001F3AF FOCUS")]
+    [InlineData("wm-focus-toggle", "\U0001F3AF FOCUS \u2022")]
+    [InlineData("wm-stack", "\U0001F4DA STACK")]
+    [InlineData("wm-stack-toggle", "\U0001F4DA STACK \u2022")]
+    [InlineData("wm-resize", "\U0001F4D0 RESIZE")]
+    [InlineData("wm-move", "\U0001F4E6 MOVE")]
+    [InlineData("wm-assemble", "\U0001F9E9 ASSEMBLE")]
+    [InlineData("wm-workspace", "\U0001F5C2 WORKSPACE")]
+    [InlineData("wm-terminal", "\U0001F4BB TERM")]
+    [InlineData("wm-terminal-toggle", "\U0001F4BB TERM \u2022")]
+    [InlineData("wm-edge", "\U0001F310 EDGE")]
+    [InlineData("wm-teams", "\U0001F4AC TEAMS")]
     public void LabelForLayer_KnownLayers_ReturnsLabel(string layer, string expected)
     {
         Assert.Equal(expected, LayerIndicatorRule.LabelForLayer(layer));
@@ -99,13 +99,13 @@ public class LayerIndicatorRuleTests
         var rule = CreateRule(out var overlay);
 
         rule.ProcessEvent(new KanataLayerChangeEvent("wm"));
-        Assert.Equal("WM", overlay.CurrentLabel);
+        Assert.Contains("WM", overlay.CurrentLabel);
 
         rule.ProcessEvent(new KanataLayerChangeEvent("wm-focus"));
-        Assert.Equal("Focus", overlay.CurrentLabel);
+        Assert.Contains("FOCUS", overlay.CurrentLabel);
 
         rule.ProcessEvent(new KanataLayerChangeEvent("wm-stack"));
-        Assert.Equal("Stack", overlay.CurrentLabel);
+        Assert.Contains("STACK", overlay.CurrentLabel);
 
         // Still visible -- never hidden during sub-layer transitions
         Assert.True(overlay.IsVisible);

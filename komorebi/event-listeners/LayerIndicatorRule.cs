@@ -52,7 +52,9 @@ public sealed class LayerIndicatorRule : IEventRule
     /// Maps a kanata layer name to the label shown in the overlay, or null if
     /// the layer is not a WM-mode layer (i.e. <c>base-*</c>).
     ///
-    /// One-shot vs toggle is distinguished with a trailing " *" (sticky indicator).
+    /// Labels are ALL CAPS for visual consistency across modes, prefixed with
+    /// a context emoji. One-shot vs toggle is distinguished with a trailing
+    /// " *" (sticky indicator).
     /// </summary>
     internal static string? LabelForLayer(string layerName)
     {
@@ -66,7 +68,7 @@ public sealed class LayerIndicatorRule : IEventRule
         // "wm" alone is the default one-shot WM mode
         if (layerName.Equals("wm", StringComparison.OrdinalIgnoreCase))
         {
-            return "WM";
+            return Decorate("WM", toggle: false);
         }
 
         // Strip "wm-" prefix
@@ -75,31 +77,52 @@ public sealed class LayerIndicatorRule : IEventRule
         // "wm-toggle" is sticky default WM mode (no sub-mode/overlay name)
         if (body.Equals("toggle", StringComparison.OrdinalIgnoreCase))
         {
-            return "WM \u2022";
+            return Decorate("WM", toggle: true);
         }
 
         // Detect sticky variant of a sub-mode or overlay
         var toggle = body.EndsWith("-toggle", StringComparison.OrdinalIgnoreCase);
         if (toggle) body = body[..^"-toggle".Length];
 
-        var label = body switch
+        // Pick a label per mode/overlay -- terminal is the only one short enough
+        // to abbreviate.
+        var (name, _) = body switch
         {
-            "terminal" => "Term",
-            "workspace" => "Workspace",
-            "focus" => "Focus",
-            "move" => "Move",
-            "stack" => "Stack",
-            "resize" => "Resize",
-            "assemble" => "Assemble",
-            _ => Capitalize(body),
+            "terminal"  => ("TERM",      ""),
+            "edge"      => ("EDGE",      ""),
+            "teams"     => ("TEAMS",     ""),
+            "focus"     => ("FOCUS",     ""),
+            "move"      => ("MOVE",      ""),
+            "stack"     => ("STACK",     ""),
+            "resize"    => ("RESIZE",    ""),
+            "assemble"  => ("ASSEMBLE",  ""),
+            "workspace" => ("WORKSPACE", ""),
+            _ => (body.ToUpperInvariant(), ""),
         };
 
-        return toggle ? label + " \u2022" : label;
+        return Decorate(name, toggle);
     }
 
-    private static string Capitalize(string s)
+    private static string Decorate(string name, bool toggle)
     {
-        if (string.IsNullOrEmpty(s)) return s;
-        return char.ToUpperInvariant(s[0]) + s[1..];
+        var emoji = EmojiForLabel(name);
+        var core = $"{emoji} {name}";
+        return toggle ? core + " \u2022" : core;
     }
+
+    /// <summary>Emoji prefix per label. Picked for compact rendering at small font sizes.</summary>
+    private static string EmojiForLabel(string name) => name switch
+    {
+        "WM"        => "\U0001FA9F",  // 🪟 window
+        "TERM"      => "\U0001F4BB",  // 💻 laptop
+        "EDGE"      => "\U0001F310",  // 🌐 globe with meridians
+        "TEAMS"     => "\U0001F4AC",  // 💬 speech bubble
+        "FOCUS"     => "\U0001F3AF",  // 🎯 target
+        "MOVE"      => "\U0001F4E6",  // 📦 package
+        "STACK"     => "\U0001F4DA",  // 📚 books
+        "RESIZE"    => "\U0001F4D0",  // 📐 triangular ruler
+        "ASSEMBLE"  => "\U0001F9E9",  // 🧩 puzzle piece
+        "WORKSPACE" => "\U0001F5C2",  // 🗂 card index
+        _ => "\u2328",                // ⌨ keyboard (fallback)
+    };
 }

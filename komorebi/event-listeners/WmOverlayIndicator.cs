@@ -50,17 +50,29 @@ public sealed partial class WmOverlayIndicator : IWmOverlay, IDisposable
         ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
     }
 
-    private static int MeasureWidth(string label)
+    private int MeasureWidth(string label)
     {
-        // Approximate width: at 14px bold Segoe UI, characters average ~8px.
-        // Bullet (\u2022) is narrower, treat as 6. Pad horizontally.
-        var px = 0;
-        foreach (var ch in label)
+        // Real text measurement: select the same font into a screen DC and
+        // ask GDI for the exact pixel width. This handles ASCII + emoji
+        // correctly without per-character heuristics.
+        var hdc = GetDC(_hwnd);
+        var font = CreateFont(FontHeight, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 0, 0, "Segoe UI");
+        var oldFont = SelectObject(hdc, font);
+        try
         {
-            px += ch == '\u2022' ? 6 : (ch == ' ' ? 5 : 8);
+            if (GetTextExtentPoint32W(hdc, label, label.Length, out var size))
+            {
+                return Math.Max(MinWidth, size.cx + HorizontalPadding);
+            }
+            // Fallback if the API fails for some reason
+            return Math.Max(MinWidth, label.Length * 10 + HorizontalPadding);
         }
-        var w = px + HorizontalPadding;
-        return Math.Max(MinWidth, w);
+        finally
+        {
+            SelectObject(hdc, oldFont);
+            DeleteObject(font);
+            ReleaseDC(_hwnd, hdc);
+        }
     }
 
     public void Hide()

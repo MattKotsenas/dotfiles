@@ -104,6 +104,12 @@ public sealed partial class WmOverlayIndicator
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int DrawText(nint hdc, string text, int count, ref RECT rect, uint format);
     [DllImport("user32.dll")] private static extern bool InvalidateRect(nint hwnd, nint rect, bool erase);
     [DllImport("user32.dll")] private static extern bool SetWindowPos(nint hwnd, nint hwndInsertAfter, int x, int y, int cx, int cy, uint flags);
+    [DllImport("user32.dll")] private static extern nint GetDC(nint hwnd);
+    [DllImport("user32.dll")] private static extern int ReleaseDC(nint hwnd, nint hdc);
+    [DllImport("gdi32.dll", CharSet = CharSet.Unicode)] private static extern bool GetTextExtentPoint32W(nint hdc, string text, int len, out SIZE size);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SIZE { public int cx; public int cy; }
 
     private const uint SWP_NOZORDER = 0x0004;
     private const uint SWP_NOACTIVATE = 0x0010;
