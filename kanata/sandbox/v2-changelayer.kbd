@@ -1,0 +1,29 @@
+;; V2: validate that layer switching swaps which key bindings are active
+;;
+;; The simulator's `ls:layer` directive uses the same underlying mechanism
+;; kanata's TCP ChangeLayer uses (set_default_layer in the layout). So if
+;; ls: works in the simulator, ChangeLayer will work over TCP in production.
+;;
+;; F13 differs between layers:
+;;   base:   F13 -> push-msg "from-base"
+;;   alt:    F13 -> push-msg "from-alt"
+;;
+;; Validation: simulate F13, ls:alt, F13. Expected output:
+;;   push-msg: from-base
+;;   push-msg: from-alt
+
+(defcfg
+  process-unmapped-keys yes
+)
+
+(defsrc
+  f13
+)
+
+(deflayermap (base)
+  f13 (push-msg "from-base")
+)
+
+(deflayermap (alt)
+  f13 (push-msg "from-alt")
+)

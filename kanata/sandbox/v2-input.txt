@@ -1,0 +1,5 @@
+d:F13 t:50 u:F13 t:50
+ls:alt
+d:F13 t:50 u:F13 t:50
+ls:base
+d:F13 t:50 u:F13 t:50

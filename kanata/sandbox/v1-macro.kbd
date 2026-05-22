@@ -1,0 +1,19 @@
+;; V1: validate that kanata macro action emits a multi-key sequence
+;; Expected output for F13 press:
+;;   Ctrl down, Space down, Space up, Ctrl up, H down, H up
+;;
+;; If kanata's `macro` action works as we expect for kernel-level emission,
+;; this same mechanism in production will emit `Ctrl+Space, H` to whatever
+;; window has focus (psmux prefix + h = pane left).
+
+(defcfg
+  process-unmapped-keys yes
+)
+
+(defsrc
+  f13
+)
+
+(deflayermap (base)
+  f13 (macro C-spc h)
+)
