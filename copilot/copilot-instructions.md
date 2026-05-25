@@ -42,7 +42,8 @@ When your changes create orphans:
 - Remove imports/variables/functions that YOUR changes made unused.
 - Don't remove pre-existing dead code unless asked.
 
-The test: Every changed line should trace directly to the user's request.
+The test: every changed line traces to the user's request or to something
+that breaks without it.
 
 ## 4. Goal-Driven Execution
 
@@ -208,6 +209,6 @@ next. Do not produce increasingly unreliable output rather than admitting you ne
 
 ## Self-Review Before Completion
 
-For multi-step tasks with >50 lines of changes, run `/adversarial-review:run` before presenting
+For multi-step tasks with >50 lines of changes, run `/rubber-duck` before presenting
 the work as complete. If the review surfaces Critical or High findings, address them before stopping.
 Treat the review output like a failing test - it's part of the "loop until verified" pattern.
