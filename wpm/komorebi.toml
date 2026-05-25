@@ -10,9 +10,9 @@ Restart = "OnFailure"
 RestartSec = 2
 
 [Service.ExecStart]
-Executable = "komorebic.exe"
+# Run komorebi.exe directly so wpm tracks the daemon and not the CLI process.
+Executable = "komorebi.exe"
 Arguments = [
-    "start",
     "--config",
     "$USERPROFILE/.config/komorebi/komorebi.json",
 ]
