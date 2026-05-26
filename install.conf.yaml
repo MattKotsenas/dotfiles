@@ -59,6 +59,7 @@
       copilot plugin install delve@agent-plugins;
       copilot plugin install git-good@agent-plugins;
       copilot plugin install prune@agent-plugins;
+      copilot plugin install toasty@agent-plugins;
       copilot plugin install yes-milord@agent-plugins;
       copilot plugin install richlander/dotnet-inspect;
       copilot plugin install ng/adversarial-review"
