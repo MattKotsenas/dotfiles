@@ -61,8 +61,7 @@
       copilot plugin install prune@agent-plugins;
       copilot plugin install toasty@agent-plugins;
       copilot plugin install yes-milord@agent-plugins;
-      copilot plugin install richlander/dotnet-inspect;
-      copilot plugin install ng/adversarial-review"
+      copilot plugin install richlander/dotnet-inspect"
     description: Installing Copilot plugins
     stdout: true
     stderr: true
