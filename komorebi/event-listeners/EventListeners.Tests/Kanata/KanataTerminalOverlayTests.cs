@@ -3,73 +3,136 @@ using EventListeners.Tests.KanataHarness;
 namespace EventListeners.Tests.Kanata;
 
 /// <summary>
-/// Phase 4: when the terminal overlay is active (kanata layer = base-terminal),
-/// HJKL inside WM mode emits the psmux prefix (Ctrl+Space) followed by the
-/// direction. wm-base bindings still work for everything the overlay doesn't claim.
+/// When the terminal overlay is active (kanata layer = base-terminal), CAP is
+/// asymmetric:
+/// <list type="bullet">
+///   <item><b>Single tap</b> emits the psmux prefix (Ctrl+Space). Subsequent
+///     keys go to psmux. base-terminal does not enter WM mode.</item>
+///   <item><b>Double tap</b> enters the sticky WM layer (wm-terminal-toggle)
+///     where HJKL emit prefix+direction macros and WM ops fire normally.</item>
+/// </list>
+/// This file documents both branches.
 /// </summary>
 [Trait("Category", "KanataHarness")]
 public class KanataTerminalOverlayTests
 {
+    // ---------------- Single-tap CAP = psmux prefix ----------------
+
+    [Fact]
+    public async Task TerminalOverlay_SingleCap_EmitsPsmuxPrefix()
+    {
+        // Tap caps then any key. Tap-dance fires the single-tap arm immediately
+        // when another key is pressed, so the prefix lands before the next key.
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-terminal")
+                .Tap("caps")
+                .Tap("h")
+                .Settle());
+
+        // The (macro C-spc) override produces LCtrl down, Space down, Space up, LCtrl up.
+        Assert.Contains(new KeyEvent("↓", "LCtrl"), output.KeyEvents);
+        Assert.Contains(new KeyEvent("↓", "Space"), output.KeyEvents);
+        Assert.Contains(new KeyEvent("↑", "Space"), output.KeyEvents);
+        Assert.Contains(new KeyEvent("↑", "LCtrl"), output.KeyEvents);
+        // 'h' is the literal key, not a macro -- psmux interprets it.
+        Assert.Contains(output.KeyEvents, e => e.Direction == "↓" && e.Key.Equals("H", StringComparison.OrdinalIgnoreCase));
+        // No WM intent fired (single tap does NOT enter WM mode in terminal).
+        Assert.Empty(output.Intents);
+    }
+
+    [Fact]
+    public async Task TerminalOverlay_SingleCap_StaysInBaseTerminal()
+    {
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-terminal")
+                .Tap("caps")
+                .Settle());
+
+        // After the tap-dance times out, we should still be in base-terminal.
+        Assert.Equal("base-terminal", output.FinalLayer);
+    }
+
+    // ---------------- Double-tap CAP = sticky WM (wm-terminal-toggle) ----------------
+
     [Theory]
     [InlineData("h")]
     [InlineData("j")]
     [InlineData("k")]
     [InlineData("l")]
-    public async Task TerminalOverlay_OneShot_BareDirection_EmitsPsmuxPrefixSequence(string direction)
+    public async Task TerminalOverlay_DoubleCap_HJKL_EmitsPsmuxPrefixSequence(string direction)
     {
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
-                .Layer("base-terminal")       // simulate WT focused
-                .Tap("caps")                   // enter wm-terminal
+                .Layer("base-terminal")
+                .Tap("caps").Tap("caps")        // enter wm-terminal-toggle (sticky)
                 .Tap(direction)
                 .Settle());
 
         // Macro emits LCtrl down, Space down, Space up, LCtrl up, <dir> down, <dir> up
-        // We assert the key events in order.
         var keys = output.KeyEvents;
         Assert.Contains(new KeyEvent("↓", "LCtrl"), keys);
         Assert.Contains(new KeyEvent("↓", "Space"), keys);
         Assert.Contains(new KeyEvent("↑", "Space"), keys);
         Assert.Contains(new KeyEvent("↑", "LCtrl"), keys);
-        // Direction key with case-insensitive match (sim outputs "H" not "h")
         Assert.Contains(keys, e => e.Direction == "↓" && e.Key.Equals(direction, StringComparison.OrdinalIgnoreCase));
         Assert.Contains(keys, e => e.Direction == "↑" && e.Key.Equals(direction, StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
-    public async Task TerminalOverlay_SubModeStillWorks_FH_FiresFocusLeft()
+    public async Task TerminalOverlay_DoubleCap_SubModeStillWorks_FH_FiresFocusLeft()
     {
-        // CAP F H in terminal context should still emit wm.focus.left
-        // (sub-modes are not overridden by overlay).
+        // From sticky terminal mode, the focus sub-mode is still reachable.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
                 .Layer("base-terminal")
-                .Tap("caps").Tap("f").Tap("h")
+                .Tap("caps").Tap("caps")
+                .Tap("f").Tap("h")
                 .Settle());
 
         Assert.Contains("wm.focus.left", output.Intents);
     }
 
     [Fact]
-    public async Task TerminalOverlay_GlobalsStillWork_CapR_FiresRetile()
+    public async Task TerminalOverlay_DoubleCap_GlobalRetile_StillFires()
     {
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
                 .Layer("base-terminal")
-                .Tap("caps").Tap("r")
+                .Tap("caps").Tap("caps")
+                .Tap("r")
                 .Settle());
 
         Assert.Contains("wm.layout.retile", output.Intents);
     }
 
     [Fact]
+    public async Task TerminalOverlay_DoubleCap_ThenCaps_ExitsToBaseTerminal()
+    {
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-terminal")
+                .Tap("caps").Tap("caps")        // enter sticky
+                .Tap("caps")                     // exit sticky
+                .Settle());
+
+        Assert.Equal("base-terminal", output.FinalLayer);
+    }
+
+    // ---------------- Default context behavior unchanged ----------------
+
+    [Fact]
     public async Task DefaultContext_BareH_DoesNotEmitPsmuxSequence()
     {
         // In base-default (no terminal overlay), CAP+H is a deadkey -- no intent,
-        // no key events.
+        // no key events. The override only affects base-terminal.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput().Tap("caps").Tap("h").Settle());

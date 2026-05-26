@@ -123,6 +123,50 @@ public sealed class LayerBuilder(string name)
         return this;
     }
 
+    /// <summary>
+    /// Bind every key in <paramref name="keys"/> to <c>(macro &lt;prefix&gt; &lt;key&gt;)</c>.
+    /// Intended for overlays where one external app prefix (e.g., <c>C-spc</c> for psmux)
+    /// should be sent before the user's key.
+    /// <para>
+    /// Digit keys (<c>0</c>-<c>9</c>) emit <c>(unicode "&lt;digit&gt;")</c> as the second
+    /// macro step instead of a bare key, because kanata's macro grammar interprets a
+    /// standalone integer as a delay-in-ms.
+    /// </para>
+    /// <para>
+    /// <paramref name="keys"/> defaults to printable letters/digits/symbols that are not
+    /// reserved by wm-base; pass an explicit list to extend or override.
+    /// </para>
+    /// </summary>
+    public LayerBuilder PrefixAll(string prefix, params string[] keys)
+    {
+        var actual = keys.Length > 0 ? keys : DefaultPrefixKeys;
+        foreach (var key in actual)
+        {
+            if (key.Length == 1 && char.IsDigit(key[0]))
+            {
+                var steps = new MacroStep[] { new MacroChord(prefix), new MacroUnicode(key) };
+                _bindings.Add(new Binding(key, new MacroAction(steps)));
+            }
+            else
+            {
+                Macro(key, prefix, key);
+            }
+        }
+        return this;
+    }
+
+    private static readonly string[] DefaultPrefixKeys =
+    [
+        // Letters that are not reserved by wm-base (excludes a, s, d, f, e, w, r, p, q).
+        "b", "c", "g", "h", "i", "j", "k", "l", "m", "n", "o", "t", "u", "v", "x", "y", "z",
+        // Digits — emitted as (unicode "N") since kanata's macro grammar reads bare
+        // integers as ms-delays.
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+        // Common psmux / pain-control symbol bindings that are not wm-base reserved.
+        // Excludes "/" (wm-base global cheatsheet) and "tab" (wm-base global).
+        ",", ".", "\\", "-", "[", "]", ";",
+    ];
+
     internal IReadOnlyList<Binding> ToList() => _bindings;
 }
 

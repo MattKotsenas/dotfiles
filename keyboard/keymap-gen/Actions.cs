@@ -32,3 +32,12 @@ public sealed record MacroIntent(string Name) : MacroStep;
 
 /// <summary>Escape hatch: raw kanata Lisp text inside a macro.</summary>
 public sealed record MacroLiteral(string Lisp) : MacroStep;
+
+/// <summary>
+/// Type a single Unicode character via kanata's <c>(unicode "X")</c> action.
+/// On Windows this uses SendInput with KEYEVENTF_UNICODE so the focused app
+/// receives the character as text input (bypasses scancode/modifier flow).
+/// Currently only used to embed digits inside a macro, where a bare integer
+/// would otherwise be parsed by kanata as a millisecond delay.
+/// </summary>
+public sealed record MacroUnicode(string Char) : MacroStep;

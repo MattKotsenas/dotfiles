@@ -118,7 +118,7 @@ internal static class KanataEmitter
     }
 
     /// <summary>
-    /// Emits both the one-shot and the toggle WM layer for the given context.
+    /// Emits the WM layers for a given context.
     /// If <paramref name="overlayName"/> is null, emits the default layers
     /// (named <c>wm</c> and <c>wm-toggle</c>) with no overlay bindings.
     /// Otherwise emits <c>wm-{overlayName}</c> and <c>wm-{overlayName}-toggle</c>

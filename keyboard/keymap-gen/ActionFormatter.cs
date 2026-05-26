@@ -37,6 +37,20 @@ internal static class ActionFormatter
         MacroDelay d => d.Ms.ToString(CultureInfo.InvariantCulture),
         MacroIntent i => $"(push-msg \"{i.Name}\")",
         MacroLiteral l => l.Lisp,
+        MacroUnicode u => FormatUnicode(u),
         _ => throw new ArgumentException($"Unknown macro step type: {step.GetType().Name}"),
     };
+
+    private static string FormatUnicode(MacroUnicode u)
+    {
+        // MacroUnicode is intended for typing single safe printables (currently
+        // only digits via PrefixAll). Reject anything that would produce
+        // malformed kanata Lisp until proper string-escaping is added.
+        if (u.Char.Length != 1 || u.Char[0] is '"' or '\\' or '\n' or '\r')
+        {
+            throw new ArgumentException(
+                $"MacroUnicode currently supports only a single safe character; got {u.Char.Length} char(s): \"{u.Char}\"");
+        }
+        return $"(unicode \"{u.Char}\")";
+    }
 }

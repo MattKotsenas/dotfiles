@@ -24,10 +24,11 @@ public static class KanataSimulator
         @"push-msg:\s*\[Atom\(""(?<msg>[^""]+)""\)\]",
         RegexOptions.Compiled);
 
-    // [INFO] Entered layer: ... (deflayermap (NAME) ...)
-    // The layer body follows on subsequent lines; we extract the layer name.
+    // Runtime layer transitions logged by kanata:
+    //   [INFO] layer-switch: base-terminal (index 3)
+    // Also matches the initial layer set via `ls:NAME` sim input.
     private static readonly Regex LayerPattern = new(
-        @"\(deflayermap\s+\((?<layer>[\w-]+)\)",
+        @"layer-switch:\s+(?<layer>[\w-]+)",
         RegexOptions.Compiled);
 
     // stdout key event lines:

@@ -128,10 +128,40 @@ Active when the bridge's `AppLayerRouter` routes the focused app to this layer.
 
 | Key | Action |
 |---|---|
+| `CAP ,` | macro `C-spc` → `,` |
+| `CAP -` | macro `C-spc` → `-` |
+| `CAP .` | macro `C-spc` → `.` |
+| `CAP 0` | macro `C-spc` → type `0` |
+| `CAP 1` | macro `C-spc` → type `1` |
+| `CAP 2` | macro `C-spc` → type `2` |
+| `CAP 3` | macro `C-spc` → type `3` |
+| `CAP 4` | macro `C-spc` → type `4` |
+| `CAP 5` | macro `C-spc` → type `5` |
+| `CAP 6` | macro `C-spc` → type `6` |
+| `CAP 7` | macro `C-spc` → type `7` |
+| `CAP 8` | macro `C-spc` → type `8` |
+| `CAP 9` | macro `C-spc` → type `9` |
+| `CAP ;` | macro `C-spc` → `;` |
+| `CAP [` | macro `C-spc` → `[` |
+| `CAP \` | macro `C-spc` → `\` |
+| `CAP ]` | macro `C-spc` → `]` |
+| `CAP b` | macro `C-spc` → `b` |
+| `CAP c` | macro `C-spc` → `c` |
+| `CAP g` | macro `C-spc` → `g` |
 | `CAP h` | macro `C-spc` → `h` |
+| `CAP i` | macro `C-spc` → `i` |
 | `CAP j` | macro `C-spc` → `j` |
 | `CAP k` | macro `C-spc` → `k` |
 | `CAP l` | macro `C-spc` → `l` |
+| `CAP m` | macro `C-spc` → `m` |
+| `CAP n` | macro `C-spc` → `n` |
+| `CAP o` | macro `C-spc` → `o` |
+| `CAP t` | macro `C-spc` → `t` |
+| `CAP u` | macro `C-spc` → `u` |
+| `CAP v` | macro `C-spc` → `v` |
+| `CAP x` | macro `C-spc` → `x` |
+| `CAP y` | macro `C-spc` → `y` |
+| `CAP z` | macro `C-spc` → `z` |
 
 ### wm-edge
 

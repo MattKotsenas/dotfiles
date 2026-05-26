@@ -74,11 +74,14 @@ internal static class ProductionKeymap
         // App overlays. Routing rules live in event-listeners/AppLayerRouter.cs
         // -------------------------------------------------------------------
         .Overlay("terminal", b => b
-            // psmux pane navigation: Ctrl+Space prefix + direction
-            .Macro("h", "C-spc", "h")
-            .Macro("j", "C-spc", "j")
-            .Macro("k", "C-spc", "k")
-            .Macro("l", "C-spc", "l"))
+            // psmux command access: every non-WM key here sends Ctrl+Space (the
+            // psmux prefix) then the key, so psmux config is the single source
+            // of truth for what each key does (pane nav h/j/k/l, new window c,
+            // command prompt ;, search /, kill x, etc.). wm-base reserved keys
+            // (a/s/d/f/e/w sub-modes; r/p/tab/q/// globals; arrows) still do
+            // their WM thing. Active via single-tap (one-shot wm-terminal) or
+            // double-tap (sticky wm-terminal-toggle) CAP in Windows Terminal.
+            .PrefixAll("C-spc"))
         .Overlay("edge", b => b
             .Macro("t", "C-t")              // new tab
             .Macro("v", "C-l", "esc", "esc")) // vimium reset (focus URL bar, then drop focus)

@@ -31,8 +31,52 @@ Tap CapsLock to enter "WM mode". The layer stack you're working in:
 - Sub-mode entries (asdfwe) and globals (r/p/tab/q/g/`/`) are reserved and
   cannot be overridden by overlays.
 
+### Overlays that act as prefix forwarders
+
+An overlay can rebind its non-WM keys to fire a macro that emits a prefix
+chord plus the original key. Example: the terminal overlay rebinds letters,
+digits, and common symbols to `(macro C-spc <key>)`. So inside the terminal:
+
+- `CAP h` enters `wm-terminal` (one-shot) and fires `Ctrl+Space h` — psmux
+  pane-left.
+- `CAP 1` fires `Ctrl+Space 1` — psmux select-window 1 (digits route through
+  a Unicode macro step to dodge kanata's macro-grammar quirk where a bare
+  integer means "delay in milliseconds").
+- `CAP \` fires `Ctrl+Space \` — psmux split-vertical (from pain-control).
+- `CAP CAP h` enters `wm-terminal-toggle` (sticky) and fires the same macro.
+- `CAP w` (and other sub-mode entries `asdfew`) still enters the workspace
+  sub-mode because wm-base's reserved keys aren't shadowed by overlays.
+
+Default prefixed key set:
+
+- Letters: `b c g h i j k l m n o t u v x y z`
+- Digits: `0 1 2 3 4 5 6 7 8 9` (emitted via `(unicode "N")`)
+- Symbols: `, . \ - [ ] ;`
+
+Authored via `LayerBuilder.PrefixAll(prefix, keys...)`. Reserved wm-base
+keys (sub-mode entries `a s d f e w`, globals `r p tab q /`, and arrows)
+are skipped by the validator and never reach the terminal app via CAP.
+
+#### psmux rebinds for CAP-reachable keys
+
+Because the reserved keys above never reach psmux through CAP, the default
+psmux bindings that lived on them are mapped onto letters that ARE in the
+PrefixAll set. See `psmux/.psmux.conf`:
+
+| Original | Rebound to | Action |
+| --- | --- | --- |
+| `p` | `b` | previous-window (back) |
+| `w` | `v` | choose-tree -Zw (view windows) |
+| `s` | `m` | choose-tree -Zs (session menu) |
+| `q` | `g` | display-panes (grid) |
+| `d` | `u` | detach-client (unattach) |
+
+`find-window` and other rarely used commands remain reachable via the
+psmux command prompt (`CAP :` then type the command).
+
 A small overlay window in the top-left corner shows the current mode label
 ("WM" / "Focus" / "Term" / etc.) while WM mode is active.
+
 
 ## System architecture
 
@@ -152,8 +196,8 @@ of focus and added complexity for an edge case.
 | `base-*` | Focus-context typing layers (just remap CAP) | Hidden |
 | `wm` | Default one-shot WM mode | Shown ("WM") |
 | `wm-toggle` | Default sticky WM mode | Shown ("WM •") |
-| `wm-<name>` | Per-overlay one-shot WM (e.g. `wm-terminal`) | Shown ("Term") |
-| `wm-<name>-toggle` | Per-overlay sticky WM | Shown ("Term •") |
+| `wm-<name>` | Per-overlay one-shot WM (e.g. `wm-edge`) | Shown ("Edge") |
+| `wm-<name>-toggle` | Per-overlay sticky WM | Shown ("Edge •") |
 | `wm-<submode>` | Sub-mode one-shot (e.g. `wm-focus`) | Shown ("Focus") |
 | `wm-<submode>-toggle` | Sub-mode sticky | Shown ("Focus •") |
 
