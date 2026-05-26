@@ -40,12 +40,13 @@ internal static class KeymapMdEmitter
         sb.AppendLine();
         sb.AppendLine("Always available inside WM mode regardless of overlay or sub-mode.");
         sb.AppendLine();
+        EmitNote(sb, k.WmBase.Note);
         sb.AppendLine("| Key | Action |");
         sb.AppendLine("|---|---|");
         foreach (var b in k.WmBase.Bindings.OrderBy(b => b.Key, StringComparer.Ordinal))
         {
             sb.AppendLine(CultureInfo.InvariantCulture,
-                $"| `CAP {b.Key}` | {Describe(b.Action)} |");
+                $"| `CAP {b.Key}` | {Describe(b)} |");
         }
         sb.AppendLine();
         sb.AppendLine("### Sub-mode entries");
@@ -70,12 +71,13 @@ internal static class KeymapMdEmitter
             sb.AppendLine();
             sb.AppendLine(CultureInfo.InvariantCulture, $"Entered via `CAP {sm.EntryKey}`.");
             sb.AppendLine();
+            EmitNote(sb, sm.Note);
             sb.AppendLine("| Key | Action |");
             sb.AppendLine("|---|---|");
             foreach (var b in sm.Bindings.OrderBy(b => b.Key, StringComparer.Ordinal))
             {
                 sb.AppendLine(CultureInfo.InvariantCulture,
-                    $"| `CAP {sm.EntryKey} {b.Key}` | {Describe(b.Action)} |");
+                    $"| `CAP {sm.EntryKey} {b.Key}` | {Describe(b)} |");
             }
             sb.AppendLine();
         }
@@ -93,18 +95,32 @@ internal static class KeymapMdEmitter
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"### wm-{ov.Name}");
             sb.AppendLine();
+            EmitNote(sb, ov.Note);
             sb.AppendLine("| Key | Action |");
             sb.AppendLine("|---|---|");
             foreach (var b in ov.Bindings.OrderBy(b => b.Key, StringComparer.Ordinal))
             {
                 sb.AppendLine(CultureInfo.InvariantCulture,
-                    $"| `CAP {b.Key}` | {Describe(b.Action)} |");
+                    $"| `CAP {b.Key}` | {Describe(b)} |");
             }
             sb.AppendLine();
         }
     }
 
-    private static string Describe(KAction a) => a switch
+    private static void EmitNote(StringBuilder sb, string? note)
+    {
+        if (string.IsNullOrWhiteSpace(note)) return;
+        sb.AppendLine(note);
+        sb.AppendLine();
+    }
+
+    private static string Describe(Binding b)
+    {
+        var core = DescribeAction(b.Action);
+        return b.Description is null ? core : $"{b.Description}: {core}";
+    }
+
+    private static string DescribeAction(KAction a) => a switch
     {
         IntentAction i => $"intent `{i.Name}`",
         MacroAction m => "macro " + DescribeMacro(m),

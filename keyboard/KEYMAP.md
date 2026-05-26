@@ -126,6 +126,8 @@ Active when the bridge's `AppLayerRouter` routes the focused app to this layer.
 
 ### wm-terminal
 
+Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused terminal. See `psmux/.psmux.conf` for what each key does in psmux (or hit `CAP ?` inside psmux to list binds).
+
 | Key | Action |
 |---|---|
 | `CAP ,` | macro `C-spc` → `,` |
@@ -165,33 +167,37 @@ Active when the bridge's `AppLayerRouter` routes the focused app to this layer.
 
 ### wm-edge
 
+Browser shortcuts forwarded through the WM layer. wm-base reserved keys still do their WM thing.
+
 | Key | Action |
 |---|---|
-| `CAP t` | macro `C-t` |
-| `CAP v` | macro `C-l` → `esc` → `esc` |
+| `CAP t` | new tab: macro `C-t` |
+| `CAP v` | vimium reset (focus URL bar, then drop focus): macro `C-l` → `esc` → `esc` |
 
 ### wm-teams
 
+Microsoft Teams shortcuts. In-meeting actions are no-ops outside a meeting.
+
 | Key | Action |
 |---|---|
-| `CAP 1` | macro `C-1` |
-| `CAP 2` | macro `C-2` |
-| `CAP 3` | macro `C-3` |
-| `CAP 4` | macro `C-4` |
-| `CAP 5` | macro `C-5` |
-| `CAP 6` | macro `C-6` |
-| `CAP 7` | macro `C-7` |
-| `CAP 8` | macro `C-8` |
-| `CAP c` | macro `C-S-o` |
-| `CAP g` | macro `C-e` |
-| `CAP h` | macro `A-left` |
-| `CAP j` | macro `A-pgdn` |
-| `CAP k` | macro `A-pgup` |
-| `CAP l` | macro `A-right` |
-| `CAP m` | macro `C-S-m` |
-| `CAP n` | macro `C-S-j` |
-| `CAP u` | macro `C-S-k` |
-| `CAP y` | macro `C-S-a` |
+| `CAP 1` | sidebar tab 1: macro `C-1` |
+| `CAP 2` | sidebar tab 2: macro `C-2` |
+| `CAP 3` | sidebar tab 3: macro `C-3` |
+| `CAP 4` | sidebar tab 4: macro `C-4` |
+| `CAP 5` | sidebar tab 5: macro `C-5` |
+| `CAP 6` | sidebar tab 6: macro `C-6` |
+| `CAP 7` | sidebar tab 7: macro `C-7` |
+| `CAP 8` | sidebar tab 8: macro `C-8` |
+| `CAP c` | toggle camera: macro `C-S-o` |
+| `CAP g` | search: macro `C-e` |
+| `CAP h` | back: macro `A-left` |
+| `CAP j` | section down: macro `A-pgdn` |
+| `CAP k` | section up: macro `A-pgup` |
+| `CAP l` | forward: macro `A-right` |
+| `CAP m` | toggle mute: macro `C-S-m` |
+| `CAP n` | join meeting from notification: macro `C-S-j` |
+| `CAP u` | raise/lower hand: macro `C-S-k` |
+| `CAP y` | accept incoming call: macro `C-S-a` |
 
 
 ---

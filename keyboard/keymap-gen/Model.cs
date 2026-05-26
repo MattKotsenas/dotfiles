@@ -27,20 +27,24 @@ public sealed record Keymap(
     IReadOnlyList<Overlay> Overlays);
 
 /// <summary>A named layer with explicit bindings. Unmapped keys are deadkeyed (___ XX) at the kanata level.</summary>
-public sealed record Layer(string Name, IReadOnlyList<Binding> Bindings);
+public sealed record Layer(string Name, IReadOnlyList<Binding> Bindings, string? Note = null);
 
 /// <summary>
 /// A sub-mode is a layer entered by pressing <see cref="EntryKey"/> while in WM
 /// mode. Sub-modes affect what HJKL etc. mean (focus vs move vs stack vs resize).
 /// </summary>
-public sealed record SubMode(string Name, string EntryKey, IReadOnlyList<Binding> Bindings);
+public sealed record SubMode(string Name, string EntryKey, IReadOnlyList<Binding> Bindings, string? Note = null);
 
 /// <summary>
 /// An overlay is a layer activated by the bridge based on the focused app
 /// (e.g., wm-terminal when WindowsTerminal.exe is focused). Overlays add bindings
 /// on uncommitted keys; they may not claim keys reserved by wm-base or sub-mode entries.
 /// </summary>
-public sealed record Overlay(string Name, IReadOnlyList<Binding> Bindings);
+public sealed record Overlay(string Name, IReadOnlyList<Binding> Bindings, string? Note = null);
 
-/// <summary>A single key → action binding.</summary>
-public sealed record Binding(string Key, KAction Action);
+/// <summary>
+/// A single key → action binding. <paramref name="Description"/> is an optional
+/// human-readable label surfaced by the cheatsheet emitter (e.g., "toggle mute"
+/// for a Teams macro); kanata emission ignores it.
+/// </summary>
+public sealed record Binding(string Key, KAction Action, string? Description = null);

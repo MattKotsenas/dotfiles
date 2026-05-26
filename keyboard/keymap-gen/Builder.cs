@@ -36,7 +36,7 @@ public sealed class KeymapBuilder
     {
         var b = new LayerBuilder($"wm-{name}");
         configure(b);
-        _subModes.Add(new SubMode(name, entryKey, b.ToList()));
+        _subModes.Add(new SubMode(name, entryKey, b.ToList(), b.LayerNote));
         return this;
     }
 
@@ -44,7 +44,7 @@ public sealed class KeymapBuilder
     {
         var b = new LayerBuilder($"wm-{name}");
         configure(b);
-        _overlays.Add(new Overlay(name, b.ToList()));
+        _overlays.Add(new Overlay(name, b.ToList(), b.LayerNote));
         return this;
     }
 
@@ -57,7 +57,7 @@ public sealed class KeymapBuilder
         var keymap = new Keymap(
             _caps,
             _reserved,
-            new Layer("wm-base", _wmBase.ToList()),
+            new Layer("wm-base", _wmBase.ToList(), _wmBase.LayerNote),
             _subModes,
             _overlays);
 
@@ -70,8 +70,37 @@ public sealed class KeymapBuilder
 public sealed class LayerBuilder(string name)
 {
     private readonly List<Binding> _bindings = [];
+    private string? _note;
 
     public string Name { get; } = name;
+
+    /// <summary>
+    /// Optional layer-level description rendered as a prose paragraph above the
+    /// binding table in the cheatsheet. Set via <see cref="Describe(string)"/>
+    /// before any binding is added.
+    /// </summary>
+    internal string? LayerNote => _note;
+
+    /// <summary>
+    /// Attach a human-readable description to the most recently configured thing:
+    /// the last binding if one has been added, otherwise the layer itself.
+    /// </summary>
+    /// <remarks>
+    /// Layer-level descriptions render as a prose paragraph above the table;
+    /// binding-level descriptions render inline next to the action.
+    /// </remarks>
+    public LayerBuilder Describe(string text)
+    {
+        if (_bindings.Count == 0)
+        {
+            _note = text;
+        }
+        else
+        {
+            _bindings[^1] = _bindings[^1] with { Description = text };
+        }
+        return this;
+    }
 
     public LayerBuilder Intent(string key, string intentName)
     {

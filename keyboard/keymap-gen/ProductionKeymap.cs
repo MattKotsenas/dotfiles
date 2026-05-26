@@ -81,26 +81,36 @@ internal static class ProductionKeymap
             // (a/s/d/f/e/w sub-modes; r/p/tab/q/// globals; arrows) still do
             // their WM thing. Active via single-tap (one-shot wm-terminal) or
             // double-tap (sticky wm-terminal-toggle) CAP in Windows Terminal.
+            .Describe("Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused terminal. " +
+                      "See `psmux/.psmux.conf` for what each key does in psmux (or hit `CAP ?` inside psmux to list binds).")
             .PrefixAll("C-spc"))
         .Overlay("edge", b => b
-            .Macro("t", "C-t")              // new tab
-            .Macro("v", "C-l", "esc", "esc")) // vimium reset (focus URL bar, then drop focus)
+            .Describe("Browser shortcuts forwarded through the WM layer. wm-base reserved keys still do their WM thing.")
+            .Macro("t", "C-t").Describe("new tab")
+            .Macro("v", "C-l", "esc", "esc").Describe("vimium reset (focus URL bar, then drop focus)"))
         .Overlay("teams", b => b
-            // In-meeting actions (no-ops outside a meeting; that's intentional)
-            .Macro("m", "C-S-m")             // toggle mute
-            .Macro("c", "C-S-o")             // toggle camera
-            .Macro("u", "C-S-k")             // raise/lower hand
+            .Describe("Microsoft Teams shortcuts. In-meeting actions are no-ops outside a meeting.")
+            // In-meeting actions
+            .Macro("m", "C-S-m").Describe("toggle mute")
+            .Macro("c", "C-S-o").Describe("toggle camera")
+            .Macro("u", "C-S-k").Describe("raise/lower hand")
             // Navigation
-            .Macro("g", "C-e")               // search
-            .Macro("h", "A-left")            // back
-            .Macro("l", "A-right")           // forward
-            .Macro("j", "A-pgdn")            // section down
-            .Macro("k", "A-pgup")            // section up
+            .Macro("g", "C-e").Describe("search")
+            .Macro("h", "A-left").Describe("back")
+            .Macro("l", "A-right").Describe("forward")
+            .Macro("j", "A-pgdn").Describe("section down")
+            .Macro("k", "A-pgup").Describe("section up")
             // Tab jump (Ctrl+1..Ctrl+8 to switch sidebar items)
-            .Macro("1", "C-1").Macro("2", "C-2").Macro("3", "C-3").Macro("4", "C-4")
-            .Macro("5", "C-5").Macro("6", "C-6").Macro("7", "C-7").Macro("8", "C-8")
+            .Macro("1", "C-1").Describe("sidebar tab 1")
+            .Macro("2", "C-2").Describe("sidebar tab 2")
+            .Macro("3", "C-3").Describe("sidebar tab 3")
+            .Macro("4", "C-4").Describe("sidebar tab 4")
+            .Macro("5", "C-5").Describe("sidebar tab 5")
+            .Macro("6", "C-6").Describe("sidebar tab 6")
+            .Macro("7", "C-7").Describe("sidebar tab 7")
+            .Macro("8", "C-8").Describe("sidebar tab 8")
             // Notification actions
-            .Macro("y", "C-S-a")             // accept incoming call
-            .Macro("n", "C-S-j"))            // join meeting from notification
+            .Macro("y", "C-S-a").Describe("accept incoming call")
+            .Macro("n", "C-S-j").Describe("join meeting from notification"))
         .Build();
 }
