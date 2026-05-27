@@ -2,7 +2,6 @@ using System.IO.Pipes;
 using System.Text.Json;
 using CliWrap;
 using EventListeners.Models;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace EventListeners;
@@ -11,18 +10,11 @@ namespace EventListeners;
 /// Background service that manages the Komorebi named pipe connection and dispatches events to rules.
 /// Reconnects automatically if the pipe drops (e.g., after komorebi restart or replace-configuration).
 /// </summary>
-public sealed class KomorebiEventListenerService : BackgroundService
+public sealed class KomorebiEventListenerService : ReconnectingBackgroundService
 {
     private readonly ILogger<KomorebiEventListenerService> _logger;
     private readonly IEnumerable<IEventRule> _rules;
     private readonly ICommandRunner _runner;
-
-    private static readonly TimeSpan DefaultInitialReconnectDelay = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan DefaultMaxReconnectDelay = TimeSpan.FromSeconds(30);
-
-    // Test-injectable. Production uses the defaults via the parameterless init.
-    internal TimeSpan InitialReconnectDelay { get; init; } = DefaultInitialReconnectDelay;
-    internal TimeSpan MaxReconnectDelay { get; init; } = DefaultMaxReconnectDelay;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -33,15 +25,17 @@ public sealed class KomorebiEventListenerService : BackgroundService
         ILogger<KomorebiEventListenerService> logger,
         IEnumerable<IEventRule> rules,
         ICommandRunner runner)
+        : base(logger)
     {
         _logger = logger;
         _rules = rules;
         _runner = runner;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override string ConnectionDescription => "Komorebi pipe";
+
+    protected override Task OnStartingAsync(CancellationToken stoppingToken)
     {
-        // Log registered rules at startup
         var ruleNames = _rules.Select(r => r.Name).ToList();
         if (ruleNames.Count == 0)
         {
@@ -52,39 +46,10 @@ public sealed class KomorebiEventListenerService : BackgroundService
             _logger.LogInformation("Registered {Count} event rule(s): {Rules}",
                 ruleNames.Count, string.Join(", ", ruleNames));
         }
-
-        var delay = InitialReconnectDelay;
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                await ConnectAndListenAsync(stoppingToken);
-                delay = InitialReconnectDelay;
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Komorebi pipe error, reconnecting in {Delay}s", delay.TotalSeconds);
-            }
-
-            try
-            {
-                await Task.Delay(delay, stoppingToken);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-
-            delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, MaxReconnectDelay.TotalSeconds));
-        }
+        return Task.CompletedTask;
     }
 
-    private async Task ConnectAndListenAsync(CancellationToken stoppingToken)
+    protected override async Task ConnectAndListenAsync(CancellationToken stoppingToken)
     {
         // Use a fresh pipe name per attempt so a stale subscription on komorebi's side
         // doesn't collide with the new pipe server.

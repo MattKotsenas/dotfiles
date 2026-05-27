@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Net.Sockets;
 using System.Text;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using EventListeners.Models;
 
@@ -17,7 +16,7 @@ namespace EventListeners;
 /// TCP protocol is bidirectional: one client connection serves both event
 /// broadcast and request submission.
 /// </summary>
-public sealed class KanataEventListenerService : BackgroundService, IKanataClient
+public sealed class KanataEventListenerService : ReconnectingBackgroundService, IKanataClient
 {
     private readonly ILogger<KanataEventListenerService> _logger;
     private readonly IEnumerable<IEventRule> _rules;
@@ -26,18 +25,18 @@ public sealed class KanataEventListenerService : BackgroundService, IKanataClien
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private NetworkStream? _stream;
 
-    private static readonly TimeSpan InitialReconnectDelay = TimeSpan.FromSeconds(2);
-    private static readonly TimeSpan MaxReconnectDelay = TimeSpan.FromSeconds(30);
-
     public KanataEventListenerService(
         ILogger<KanataEventListenerService> logger,
         IEnumerable<IEventRule> rules,
         IConfiguration configuration)
+        : base(logger)
     {
         _logger = logger;
         _rules = rules;
         _port = configuration.GetValue("Kanata:Port", 9999);
     }
+
+    protected override string ConnectionDescription => "Kanata TCP";
 
     public async Task SendChangeLayerAsync(string layerName, CancellationToken cancellationToken = default)
     {
@@ -69,40 +68,7 @@ public sealed class KanataEventListenerService : BackgroundService, IKanataClien
         }
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        var delay = InitialReconnectDelay;
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                await ConnectAndListenAsync(stoppingToken);
-                delay = InitialReconnectDelay;
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Kanata TCP connection lost, reconnecting in {Delay}s", delay.TotalSeconds);
-            }
-
-            try
-            {
-                await Task.Delay(delay, stoppingToken);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-
-            delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, MaxReconnectDelay.TotalSeconds));
-        }
-    }
-
-    private async Task ConnectAndListenAsync(CancellationToken stoppingToken)
+    protected override async Task ConnectAndListenAsync(CancellationToken stoppingToken)
     {
         using var client = new TcpClient();
         await client.ConnectAsync("127.0.0.1", _port, stoppingToken);
