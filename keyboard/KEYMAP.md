@@ -18,7 +18,6 @@ Always available inside WM mode regardless of overlay or sub-mode.
 | `CAP down` | raw kanata: `down` |
 | `CAP left` | raw kanata: `left` |
 | `CAP p` | intent `wm.layout.toggle-pause` |
-| `CAP q` | intent `wm.move.promote` |
 | `CAP r` | intent `wm.layout.retile` |
 | `CAP right` | raw kanata: `right` |
 | `CAP tab` | intent `wm.focus.last-workspace` |
@@ -86,6 +85,7 @@ Entered via `CAP d`.
 | `CAP d j` | intent `wm.move.down` |
 | `CAP d k` | intent `wm.move.up` |
 | `CAP d l` | intent `wm.move.right` |
+| `CAP d q` | intent `wm.move.promote` |
 
 ## wm-stack
 
@@ -158,6 +158,7 @@ Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused 
 | `CAP m` | macro `C-spc` → `m` |
 | `CAP n` | macro `C-spc` → `n` |
 | `CAP o` | macro `C-spc` → `o` |
+| `CAP q` | macro `C-spc` → `q` |
 | `CAP t` | macro `C-spc` → `t` |
 | `CAP u` | macro `C-spc` → `u` |
 | `CAP v` | macro `C-spc` → `v` |

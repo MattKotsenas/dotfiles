@@ -35,6 +35,7 @@ public class KanataBehaviorTests
     [InlineData("j", "wm.move.down")]
     [InlineData("k", "wm.move.up")]
     [InlineData("l", "wm.move.right")]
+    [InlineData("q", "wm.move.promote")]
     public async Task OneShot_MoveSubMod_DispatchesMoveIntent(string direction, string expectedIntent)
     {
         var output = await KanataSimulator.RunAsync(
@@ -125,7 +126,6 @@ public class KanataBehaviorTests
 
     [Theory]
     [InlineData("r", "wm.layout.retile")]
-    [InlineData("q", "wm.move.promote")]
     [InlineData("p", "wm.layout.toggle-pause")]
     public async Task OneShot_GlobalAction_DispatchesExpectedIntent(string key, string expectedIntent)
     {

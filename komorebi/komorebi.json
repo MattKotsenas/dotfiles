@@ -8,7 +8,6 @@
     "style": "EaseOutSine"
   },
   "window_handling_behaviour": "Async",
-  "window_container_behaviour": "Append",
   "default_workspace_padding": 5,
   "default_container_padding": 5,
   "transparency": false,
@@ -41,7 +40,8 @@
       "workspaces": [
         {
           "name": "main",
-          "layout": "UltrawideVerticalStack",
+          "layout": "BSP",
+          "layout_flip": "Horizontal",
           "workspace_rules": []
         },
         {
@@ -82,7 +82,7 @@
       "workspaces": [
         {
           "name": "main",
-          "layout": "UltrawideVerticalStack",
+          "layout": "BSP",
           "workspace_rules": []
         },
         {

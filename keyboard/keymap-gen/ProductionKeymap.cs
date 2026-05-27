@@ -12,14 +12,13 @@ internal static class ProductionKeymap
     public static Keymap Build() => new KeymapBuilder()
         .Caps(tapDanceMs: 250, oneShotMs: 2000)
         .Reserve(
-            global: ["r", "p", "tab", "/", "q"],
+            global: ["r", "p", "tab", "/"],
             subModeEntries: ["a", "s", "d", "f", "e", "w"])
         .WmBase(b => b
             .Intent("r", "wm.layout.retile")
             .Intent("p", "wm.layout.toggle-pause")
             .Intent("tab", "wm.focus.last-workspace")
             .Intent("/", "system.cheatsheet")
-            .Intent("q", "wm.move.promote")
             // Arrow passthrough: arrows always do "their thing" even in WM mode
             // (Teams meeting nav, list nav, etc.). KanataLiteral emits the key
             // as itself; the compiler propagates wm-base into every wm-* layer,
@@ -48,6 +47,7 @@ internal static class ProductionKeymap
             .Intent("j", "wm.move.down")
             .Intent("k", "wm.move.up")
             .Intent("l", "wm.move.right")
+            .Intent("q", "wm.move.promote")
             .Workspaces("wm.workspace.move-to.{0}", 0, 7))
         .SubMode("stack", "s", b => b
             .Intent("h", "wm.stack.left")
@@ -78,7 +78,7 @@ internal static class ProductionKeymap
             // psmux prefix) then the key, so psmux config is the single source
             // of truth for what each key does (pane nav h/j/k/l, new window c,
             // command prompt ;, search /, kill x, etc.). wm-base reserved keys
-            // (a/s/d/f/e/w sub-modes; r/p/tab/q/// globals; arrows) still do
+            // (a/s/d/f/e/w sub-modes; r/p/tab/ globals; arrows) still do
             // their WM thing. Active via single-tap (one-shot wm-terminal) or
             // double-tap (sticky wm-terminal-toggle) CAP in Windows Terminal.
             .Describe("Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused terminal. " +

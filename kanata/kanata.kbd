@@ -6,7 +6,7 @@
 )
 
 (defsrc
-  caps r p tab / q up down left right 1 2 3 4 5 6 7 8 h j k l g t m x y b c i n o u v z 0 9 , . \ - [ ] ;
+  caps r p tab / up down left right 1 2 3 4 5 6 7 8 h j k l g t m x y q b c i n o u v z 0 9 , . \ - [ ] ;
 )
 
 (defvar
@@ -34,7 +34,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -56,7 +55,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -84,7 +82,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -100,6 +97,7 @@
   m (macro C-spc m)
   n (macro C-spc n)
   o (macro C-spc o)
+  q (macro C-spc q)
   t (macro C-spc t)
   u (macro C-spc u)
   v (macro C-spc v)
@@ -140,7 +138,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -156,6 +153,7 @@
   m (macro C-spc m)
   n (macro C-spc n)
   o (macro C-spc o)
+  q (macro C-spc q)
   t (macro C-spc t)
   u (macro C-spc u)
   v (macro C-spc v)
@@ -202,7 +200,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -226,7 +223,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -256,7 +252,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -296,7 +291,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -355,6 +349,7 @@
   j (push-msg "wm.move.down")
   k (push-msg "wm.move.up")
   l (push-msg "wm.move.right")
+  q (push-msg "wm.move.promote")
   1 (push-msg "wm.workspace.move-to.0")
   2 (push-msg "wm.workspace.move-to.1")
   3 (push-msg "wm.workspace.move-to.2")
@@ -414,7 +409,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -444,7 +438,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -465,6 +458,7 @@
   j (push-msg "wm.move.down")
   k (push-msg "wm.move.up")
   l (push-msg "wm.move.right")
+  q (push-msg "wm.move.promote")
   1 (push-msg "wm.workspace.move-to.0")
   2 (push-msg "wm.workspace.move-to.1")
   3 (push-msg "wm.workspace.move-to.2")
@@ -477,7 +471,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -502,7 +495,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -527,7 +519,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left
@@ -552,7 +543,6 @@
   p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  q (push-msg "wm.move.promote")
   up up
   down down
   left left

@@ -81,7 +81,7 @@ public class KanataEmitterTests
     {
         var keymap = new KeymapBuilder()
             .Caps()
-            .Reserve(global: ["r", "p", "q"], subModeEntries: ["a", "s", "d", "f", "e", "w"])
+            .Reserve(global: ["r", "p"], subModeEntries: ["a", "s", "d", "f", "e", "w"])
             .WmBase(b => b.Intent("r", "wm.layout.retile"))
             .SubMode("focus", "f", b => b.Intent("h", "wm.focus.left"))
             .SubMode("workspace", "w", b => b.Intent("h", "wm.focus.left"))
