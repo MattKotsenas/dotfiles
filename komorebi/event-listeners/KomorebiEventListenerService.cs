@@ -9,15 +9,20 @@ namespace EventListeners;
 
 /// <summary>
 /// Background service that manages the Komorebi named pipe connection and dispatches events to rules.
+/// Reconnects automatically if the pipe drops (e.g., after komorebi restart or replace-configuration).
 /// </summary>
 public sealed class KomorebiEventListenerService : BackgroundService
 {
-    private readonly string _pipeName;
     private readonly ILogger<KomorebiEventListenerService> _logger;
-    private readonly IHostApplicationLifetime _appLifetime;
     private readonly IEnumerable<IEventRule> _rules;
     private readonly ICommandRunner _runner;
-    private bool _subscribed;
+
+    private static readonly TimeSpan DefaultInitialReconnectDelay = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan DefaultMaxReconnectDelay = TimeSpan.FromSeconds(30);
+
+    // Test-injectable. Production uses the defaults via the parameterless init.
+    internal TimeSpan InitialReconnectDelay { get; init; } = DefaultInitialReconnectDelay;
+    internal TimeSpan MaxReconnectDelay { get; init; } = DefaultMaxReconnectDelay;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -26,15 +31,12 @@ public sealed class KomorebiEventListenerService : BackgroundService
 
     public KomorebiEventListenerService(
         ILogger<KomorebiEventListenerService> logger,
-        IHostApplicationLifetime appLifetime,
         IEnumerable<IEventRule> rules,
         ICommandRunner runner)
     {
         _logger = logger;
-        _appLifetime = appLifetime;
         _rules = rules;
         _runner = runner;
-        _pipeName = $"komorebi-event-{Guid.NewGuid()}";
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -51,62 +53,87 @@ public sealed class KomorebiEventListenerService : BackgroundService
                 ruleNames.Count, string.Join(", ", ruleNames));
         }
 
-        try
+        var delay = InitialReconnectDelay;
+
+        while (!stoppingToken.IsCancellationRequested)
         {
-            await using var pipeServer = new NamedPipeServerStream(
-                _pipeName,
-                PipeDirection.In,
-                1,
-                PipeTransmissionMode.Byte,
-                PipeOptions.Asynchronous);
-
-            _logger.LogInformation("Created named pipe: {PipeName}", _pipeName);
-
-            // Subscribe to Komorebi events
-            if (!await SubscribeToPipeAsync())
+            try
             {
-                Environment.ExitCode = ExitCodes.SubscriptionFailed;
-                _appLifetime.StopApplication();
-                return;
+                await ConnectAndListenAsync(stoppingToken);
+                delay = InitialReconnectDelay;
             }
-
-            _subscribed = true;
-
-            _logger.LogInformation("Waiting for Komorebi to connect...");
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Komorebi pipe error, reconnecting in {Delay}s", delay.TotalSeconds);
+            }
 
             try
             {
-                await pipeServer.WaitForConnectionAsync(stoppingToken);
+                await Task.Delay(delay, stoppingToken);
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation("Shutdown requested while waiting for connection");
-                return;
+                break;
             }
 
+            delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, MaxReconnectDelay.TotalSeconds));
+        }
+    }
+
+    private async Task ConnectAndListenAsync(CancellationToken stoppingToken)
+    {
+        // Use a fresh pipe name per attempt so a stale subscription on komorebi's side
+        // doesn't collide with the new pipe server.
+        var pipeName = $"komorebi-event-{Guid.NewGuid()}";
+
+        await using var pipeServer = new NamedPipeServerStream(
+            pipeName,
+            PipeDirection.In,
+            1,
+            PipeTransmissionMode.Byte,
+            PipeOptions.Asynchronous);
+
+        _logger.LogInformation("Created named pipe: {PipeName}", pipeName);
+
+        // Track that we attempted the subscribe so we still call unsubscribe on
+        // ambiguous CLI failures (e.g., the CliWrap process-priority race where the
+        // process exits before we read the result). Best-effort cleanup avoids
+        // leaking stale subscriptions on komorebi's side.
+        var subscribeAttempted = false;
+        try
+        {
+            subscribeAttempted = true;
+            if (!await SubscribeToPipeAsync(pipeName))
+            {
+                throw new InvalidOperationException($"komorebic subscribe-pipe {pipeName} failed");
+            }
+
+            _logger.LogInformation("Waiting for Komorebi to connect...");
+            await pipeServer.WaitForConnectionAsync(stoppingToken);
             _logger.LogInformation("Komorebi connected");
 
             using var reader = new StreamReader(pipeServer);
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                string? line;
-                try
+                var line = await reader.ReadLineAsync(stoppingToken);
+
+                if (line is null)
                 {
-                    line = await reader.ReadLineAsync(stoppingToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
+                    _logger.LogWarning("Pipe disconnected (read returned null)");
+                    return;
                 }
 
                 if (string.IsNullOrEmpty(line))
                 {
-                    // Check if pipe is still connected
                     if (!pipeServer.IsConnected)
                     {
                         _logger.LogWarning("Pipe disconnected");
-                        break;
+                        return;
                     }
                     continue;
                 }
@@ -114,19 +141,12 @@ public sealed class KomorebiEventListenerService : BackgroundService
                 ProcessEvent(line);
             }
         }
-        catch (IOException ex)
-        {
-            _logger.LogError(ex, "Pipe connection error");
-            Environment.ExitCode = ExitCodes.PipeConnectionFailed;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error in event listener");
-            Environment.ExitCode = ExitCodes.UnexpectedError;
-        }
         finally
         {
-            await CleanupAsync();
+            if (subscribeAttempted)
+            {
+                await UnsubscribeFromPipeAsync(pipeName);
+            }
         }
     }
 
@@ -167,15 +187,15 @@ public sealed class KomorebiEventListenerService : BackgroundService
         }
     }
 
-    private async Task<bool> SubscribeToPipeAsync()
+    private async Task<bool> SubscribeToPipeAsync(string pipeName)
     {
-        _logger.LogInformation("Subscribing to Komorebi events with pipe: {PipeName}", _pipeName);
+        _logger.LogInformation("Subscribing to Komorebi events with pipe: {PipeName}", pipeName);
 
         try
         {
             var result = await _runner.RunAsync(
                 Cli.Wrap("komorebic")
-                    .WithArguments($"subscribe-pipe {_pipeName}")
+                    .WithArguments($"subscribe-pipe {pipeName}")
                     .WithValidation(CommandResultValidation.None));
 
             if (result.ExitCode != 0)
@@ -194,15 +214,15 @@ public sealed class KomorebiEventListenerService : BackgroundService
         }
     }
 
-    private async Task UnsubscribeFromPipeAsync()
+    private async Task UnsubscribeFromPipeAsync(string pipeName)
     {
-        _logger.LogInformation("Unsubscribing from Komorebi events for pipe: {PipeName}", _pipeName);
+        _logger.LogInformation("Unsubscribing from Komorebi events for pipe: {PipeName}", pipeName);
 
         try
         {
             var result = await _runner.RunAsync(
                 Cli.Wrap("komorebic")
-                    .WithArguments($"unsubscribe-pipe {_pipeName}")
+                    .WithArguments($"unsubscribe-pipe {pipeName}")
                     .WithValidation(CommandResultValidation.None));
 
             if (result.ExitCode != 0)
@@ -217,15 +237,6 @@ public sealed class KomorebiEventListenerService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to execute komorebic unsubscribe-pipe command");
-        }
-    }
-
-    private async Task CleanupAsync()
-    {
-        if (_subscribed)
-        {
-            await UnsubscribeFromPipeAsync();
-            _subscribed = false;
         }
     }
 }
