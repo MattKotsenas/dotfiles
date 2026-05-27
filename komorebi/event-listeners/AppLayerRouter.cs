@@ -61,6 +61,8 @@ public sealed class AppLayerRouter : IEventRule
         // meeting-only shortcuts are no-ops outside meetings, which is fine.
         // Detection-by-title isn't reliable since users name meetings freely.
         ctx => ctx.Exe == "ms-teams.exe" ? LayerCatalog.BaseTeams : null,
+        // Microsoft CodeFlow code review tool.
+        ctx => ctx.Exe == "CodeFlow.exe" ? LayerCatalog.BaseCodeflow : null,
     ];
 
     public void ProcessEvent(IEvent evt)

@@ -25,6 +25,8 @@ public class LayerIndicatorRuleTests
     [InlineData("wm-terminal-toggle", "\U0001F4BB TERM \u2022")]
     [InlineData("wm-edge", "\U0001F310 EDGE")]
     [InlineData("wm-teams", "\U0001F4AC TEAMS")]
+    [InlineData("wm-codeflow", "\U0001F50D REVIEW")]
+    [InlineData("wm-codeflow-toggle", "\U0001F50D REVIEW \u2022")]
     public void LabelForLayer_KnownLayers_ReturnsLabel(string layer, string expected)
     {
         Assert.Equal(expected, LayerIndicatorRule.LabelForLayer(layer));

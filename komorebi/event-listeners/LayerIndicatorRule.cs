@@ -91,6 +91,7 @@ public sealed class LayerIndicatorRule : IEventRule
             "terminal"  => ("TERM",      ""),
             "edge"      => ("EDGE",      ""),
             "teams"     => ("TEAMS",     ""),
+            "codeflow"  => ("REVIEW",    ""),
             "focus"     => ("FOCUS",     ""),
             "move"      => ("MOVE",      ""),
             "stack"     => ("STACK",     ""),
@@ -117,6 +118,7 @@ public sealed class LayerIndicatorRule : IEventRule
         "TERM"      => "\U0001F4BB",  // 💻 laptop
         "EDGE"      => "\U0001F310",  // 🌐 globe with meridians
         "TEAMS"     => "\U0001F4AC",  // 💬 speech bubble
+        "REVIEW"    => "\U0001F50D",  // 🔍 magnifying glass
         "FOCUS"     => "\U0001F3AF",  // 🎯 target
         "MOVE"      => "\U0001F4E6",  // 📦 package
         "STACK"     => "\U0001F4DA",  // 📚 books

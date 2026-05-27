@@ -14,18 +14,21 @@ public static class LayerCatalog
     public const string BaseTerminal = "base-terminal";
     public const string BaseEdge = "base-edge";
     public const string BaseTeams = "base-teams";
+    public const string BaseCodeflow = "base-codeflow";
 
     // WM-mode layers (CAP single-tap state per context). UI overlay shown.
     public const string Wm = "wm";
     public const string WmTerminal = "wm-terminal";
     public const string WmEdge = "wm-edge";
     public const string WmTeams = "wm-teams";
+    public const string WmCodeflow = "wm-codeflow";
 
     // WM-toggle layers (CAP double-tap state per context). UI overlay shown.
     public const string WmToggle = "wm-toggle";
     public const string WmTerminalToggle = "wm-terminal-toggle";
     public const string WmEdgeToggle = "wm-edge-toggle";
     public const string WmTeamsToggle = "wm-teams-toggle";
+    public const string WmCodeflowToggle = "wm-codeflow-toggle";
 
     // Sub-mode layers (one-shot + toggle variants). UI overlay shown.
     public const string WmWorkspace = "wm-workspace";

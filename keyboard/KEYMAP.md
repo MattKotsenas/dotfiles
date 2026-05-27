@@ -200,6 +200,25 @@ Microsoft Teams shortcuts. In-meeting actions are no-ops outside a meeting.
 | `CAP u` | raise/lower hand: macro `C-S-k` |
 | `CAP y` | accept incoming call: macro `C-S-a` |
 
+### wm-codeflow
+
+Microsoft CodeFlow code review shortcuts. wm-base reserved keys still do their WM thing.
+
+| Key | Action |
+|---|---|
+| `CAP b` | previous comment thread: macro `C-f11` |
+| `CAP c` | add comment at current line: macro `A-c` |
+| `CAP g` | go to line: macro `C-g` |
+| `CAP h` | previous file: macro `C-f7` |
+| `CAP j` | next difference: macro `f8` |
+| `CAP k` | previous difference: macro `f7` |
+| `CAP l` | next file: macro `C-f8` |
+| `CAP n` | next comment thread: macro `C-f12` |
+| `CAP o` | focus comments panel: macro `A-S-o` |
+| `CAP t` | focus file tree: macro `A-S-t` |
+| `CAP u` | refresh: macro `f5` |
+| `CAP v` | focus diff view: macro `A-S-d` |
+
 
 ---
 

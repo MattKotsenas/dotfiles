@@ -112,5 +112,23 @@ internal static class ProductionKeymap
             // Notification actions
             .Macro("y", "C-S-a").Describe("accept incoming call")
             .Macro("n", "C-S-j").Describe("join meeting from notification"))
+        .Overlay("codeflow", b => b
+            .Describe("Microsoft CodeFlow code review shortcuts. wm-base reserved keys still do their WM thing.")
+            // Diff navigation (vim-style: brings the F-row to home row)
+            .Macro("j", "f8").Describe("next difference")
+            .Macro("k", "f7").Describe("previous difference")
+            .Macro("l", "C-f8").Describe("next file")
+            .Macro("h", "C-f7").Describe("previous file")
+            // Comments
+            .Macro("c", "A-c").Describe("add comment at current line")
+            .Macro("n", "C-f12").Describe("next comment thread")
+            .Macro("b", "C-f11").Describe("previous comment thread")
+            // Focus panels
+            .Macro("t", "A-S-t").Describe("focus file tree")
+            .Macro("v", "A-S-d").Describe("focus diff view")
+            .Macro("o", "A-S-o").Describe("focus comments panel")
+            // Util
+            .Macro("g", "C-g").Describe("go to line")
+            .Macro("u", "f5").Describe("refresh"))
         .Build();
 }

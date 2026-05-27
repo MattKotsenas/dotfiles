@@ -316,6 +316,78 @@
   ___ XX
 )
 
+;; base-codeflow: typing layer (codeflow focus context). CAP enters wm-codeflow.
+(deflayermap (base-codeflow)
+  caps (tap-dance $td-timeout (
+    (one-shot $os-timeout (layer-while-held wm-codeflow))
+    (layer-switch wm-codeflow-toggle)
+  ))
+)
+
+;; wm-codeflow: one-shot WM mode (codeflow context; CAP single-tap)
+(deflayermap (wm-codeflow)
+  w (one-shot $os-timeout (layer-while-held wm-workspace))
+  f (one-shot $os-timeout (layer-while-held wm-focus))
+  d (one-shot $os-timeout (layer-while-held wm-move))
+  s (one-shot $os-timeout (layer-while-held wm-stack))
+  e (one-shot $os-timeout (layer-while-held wm-resize))
+  a (one-shot $os-timeout (layer-while-held wm-assemble))
+  r (push-msg "wm.layout.retile")
+  p (push-msg "wm.layout.toggle-pause")
+  tab (push-msg "wm.focus.last-workspace")
+  / (push-msg "system.cheatsheet")
+  up up
+  down down
+  left left
+  right right
+  j (macro f8)
+  k (macro f7)
+  l (macro C-f8)
+  h (macro C-f7)
+  c (macro A-c)
+  n (macro C-f12)
+  b (macro C-f11)
+  t (macro A-S-t)
+  v (macro A-S-d)
+  o (macro A-S-o)
+  g (macro C-g)
+  u (macro f5)
+  ___ XX
+)
+
+;; wm-codeflow-toggle: sticky WM mode (codeflow context; CAP double-tap)
+;; CAPS exits to base-codeflow.
+(deflayermap (wm-codeflow-toggle)
+  caps (layer-switch base-codeflow)
+  w (layer-switch wm-workspace-toggle)
+  f (layer-switch wm-focus-toggle)
+  d (layer-switch wm-move-toggle)
+  s (layer-switch wm-stack-toggle)
+  e (layer-switch wm-resize-toggle)
+  a (layer-switch wm-assemble-toggle)
+  r (push-msg "wm.layout.retile")
+  p (push-msg "wm.layout.toggle-pause")
+  tab (push-msg "wm.focus.last-workspace")
+  / (push-msg "system.cheatsheet")
+  up up
+  down down
+  left left
+  right right
+  j (macro f8)
+  k (macro f7)
+  l (macro C-f8)
+  h (macro C-f7)
+  c (macro A-c)
+  n (macro C-f12)
+  b (macro C-f11)
+  t (macro A-S-t)
+  v (macro A-S-d)
+  o (macro A-S-o)
+  g (macro C-g)
+  u (macro f5)
+  ___ XX
+)
+
 ;; wm-workspace: one-shot sub-mode (auto-exits after one action)
 (deflayermap (wm-workspace)
   1 (push-msg "wm.workspace.focus.0")

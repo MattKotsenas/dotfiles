@@ -76,6 +76,13 @@ public class AppLayerRouterTests
     }
 
     [Fact]
+    public void DefaultRules_RouteCodeFlowToCodeflowOverlay()
+    {
+        var ctx = new FocusContext("CodeFlow.exe", "Some review - CodeFlow / Azure DevOps", 1);
+        Assert.Equal(LayerCatalog.BaseCodeflow, FirstRuleMatch(ctx));
+    }
+
+    [Fact]
     public void DefaultRules_DoNotMatchOtherApps()
     {
         var ctx = new FocusContext("Code.exe", "VSCode", 1);

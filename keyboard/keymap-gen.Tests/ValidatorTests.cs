@@ -112,6 +112,6 @@ public class ValidatorTests
         var keymap = ProductionKeymap.Build();
         Assert.NotNull(keymap);
         Assert.Equal(6, keymap.SubModes.Count);  // workspace, focus, move, stack, resize, assemble
-        Assert.Equal(3, keymap.Overlays.Count);  // terminal, edge, teams
+        Assert.Equal(4, keymap.Overlays.Count);  // terminal, edge, teams, codeflow
     }
 }
