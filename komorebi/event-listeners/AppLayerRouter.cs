@@ -10,16 +10,24 @@ namespace EventListeners;
 /// when no rule matches).
 ///
 /// Routing rules are plain C# code in <see cref="DefaultRules"/>; add a new rule
-/// to support a new app overlay (Phases 4+). Until then the chain is empty and
-/// every focus change resolves to BaseDefault.
+/// to support a new app overlay.
+///
+/// Cache discipline: <c>_lastLayer</c> only updates from kanata's own
+/// <c>LayerChange</c> echo (filtered to base-* layers), never optimistically
+/// from a sent ChangeLayer. This makes the router self-healing -- if a send
+/// silently fails (kanata TCP write error, mid-reconnect), no echo arrives,
+/// the cache stays stale, and the next focus event re-sends instead of
+/// short-circuiting at a falsely-confirmed guard.
 /// </summary>
 public sealed class AppLayerRouter : IEventRule
 {
     private readonly ILogger<AppLayerRouter> _logger;
     private readonly Lazy<IKanataClient> _kanata;
     private readonly IReadOnlyList<Func<FocusContext, string?>> _rules;
-    private string? _lastLayer;
-    private string? _lastExe;
+    // volatile: Komorebi and Kanata listener threads both call ProcessEvent.
+    // _lastLayer mirrors what kanata reported via LayerChange echo (truth),
+    // not what we asked for, so we self-heal if a send silently fails.
+    private volatile string? _lastLayer;
 
     public string Name => "AppLayerRouter";
 
@@ -57,6 +65,20 @@ public sealed class AppLayerRouter : IEventRule
 
     public void ProcessEvent(IEvent evt)
     {
+        // Track kanata's actual base layer from its LayerChange echoes (which
+        // arrive after a successful ChangeLayer write, or any external change).
+        // Sub-mode layers (wm-*) are ignored so _lastLayer always reflects the
+        // last confirmed *base* state. If a send fails, no echo arrives, the
+        // cache stays stale, and the next focus event re-sends -- self-healing.
+        if (evt is KanataLayerChangeEvent layerEvt)
+        {
+            if (layerEvt.NewLayer.StartsWith("base-", StringComparison.Ordinal))
+            {
+                _lastLayer = layerEvt.NewLayer;
+            }
+            return;
+        }
+
         if (evt is not KomorebiWindowEvent komorebiEvt) return;
         if (komorebiEvt.State is null) return;
 
@@ -75,18 +97,16 @@ public sealed class AppLayerRouter : IEventRule
             }
         }
 
-        // Only act on actual exe transitions to avoid spamming kanata.
-        if (exe == _lastExe) return;
-        _lastExe = exe;
-
         var ctx = new FocusContext(exe, title, focusedHwnd.Value);
         var targetLayer = Route(ctx);
 
+        // Don't spam kanata when the confirmed layer already matches.
         if (targetLayer == _lastLayer) return;
-        _lastLayer = targetLayer;
 
         _logger.LogInformation("Focus changed to {Exe} -> ChangeLayer({Layer})", exe, targetLayer);
-        // Fire-and-forget; client logs warnings on failure.
+        // Fire-and-forget. Cache updates only when kanata echoes LayerChange
+        // back; that way a failed send leaves the cache stale and we retry
+        // on the next focus event instead of getting stuck.
         _ = _kanata.Value.SendChangeLayerAsync(targetLayer);
     }
 

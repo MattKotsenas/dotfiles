@@ -84,6 +84,110 @@ public class AppLayerRouterTests
 
     private static string? FirstRuleMatch(FocusContext ctx) =>
         AppLayerRouter.DefaultRules.Select(r => r(ctx)).FirstOrDefault(r => r is not null);
+
+    // --- ProcessEvent tests (cache discipline + self-heal) -----------------
+
+    [Fact]
+    public void ProcessEvent_FirstFocus_SendsTargetLayer()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+
+        Assert.Equal([LayerCatalog.BaseEdge], kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_BaseLayerEcho_SuppressesRedundantSend()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        Assert.Single(kanata.ChangeLayerCalls);
+
+        // Kanata acknowledges the change; cache should now match.
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+
+        // Re-focusing the same app must not produce another send.
+        router.ProcessEvent(FocusEvent("msedge.exe", "y", 2));
+        Assert.Single(kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_SubModeEcho_IgnoredAndDoesNotPoisonCache()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+
+        // User taps CAP -> enters wm-edge sub-mode. The echo for the sub-mode
+        // must not overwrite our remembered base layer.
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.WmEdge));
+
+        // Still on edge: no new send.
+        router.ProcessEvent(FocusEvent("msedge.exe", "y", 2));
+        Assert.Single(kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_NoEcho_RepeatedFocusResendsUntilConfirmed()
+    {
+        // Simulates the stuck-cache bug: kanata never confirms the change
+        // (TCP write failed). The router should keep sending on subsequent
+        // focus events for the same app instead of getting stuck.
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+
+        router.ProcessEvent(FocusEvent("msedge.exe", "a", 1));
+        router.ProcessEvent(FocusEvent("msedge.exe", "b", 2));
+        router.ProcessEvent(FocusEvent("msedge.exe", "c", 3));
+
+        Assert.Equal(
+            [LayerCatalog.BaseEdge, LayerCatalog.BaseEdge, LayerCatalog.BaseEdge],
+            kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_AlternatingExe_RoutesEach()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+
+        router.ProcessEvent(FocusEvent("msedge.exe", "e", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "t", 2));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseTerminal));
+
+        router.ProcessEvent(FocusEvent("msedge.exe", "e2", 3));
+
+        Assert.Equal(
+            [LayerCatalog.BaseEdge, LayerCatalog.BaseTerminal, LayerCatalog.BaseEdge],
+            kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_UnknownExe_RoutesToBaseDefault()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+
+        router.ProcessEvent(FocusEvent("notepad.exe", "x", 1));
+
+        Assert.Equal([LayerCatalog.BaseDefault], kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_NonRoutingEvent_DoesNothing()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+
+        router.ProcessEvent(new KanataMessageEvent("wm.layout.retile"));
+
+        Assert.Empty(kanata.ChangeLayerCalls);
+    }
+
+    private static KomorebiWindowEvent FocusEvent(string exe, string title, long hwnd)
+    {
+        var state = TestJson.State(tiled: [new WindowSpec(hwnd, title, exe)]);
+        return new KomorebiWindowEvent("FocusChange", null, state);
+    }
 }
 
 internal sealed class RecordingKanataClient : IKanataClient
