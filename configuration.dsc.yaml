@@ -273,13 +273,6 @@ properties:
       settings:
         id: LGUG2Z.komorebi
         source: winget
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
-      directives:
-        description: Install Windows Hotkey Daemon (whkd)
-        allowPrerelease: true
-      settings:
-        id: LGUG2Z.whkd
-        source: winget
     - resource: PSDscResources/Script
       id: install-psmux
       dependsOn:

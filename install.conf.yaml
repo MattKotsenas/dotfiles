@@ -26,7 +26,6 @@
       path: komorebi
       glob: false
     $LOCALAPPDATA/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json: wt/settings.json
-    ~/.config/whkdrc: whkd/whkdrc
     ~/.config/keyboard:
       path: keyboard
       glob: false

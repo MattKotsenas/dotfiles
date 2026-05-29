@@ -291,9 +291,6 @@ desktop (oneshot, autostart)
 └── event-listeners
 ```
 
-`whkd` is installed but disabled (the unit has `Autostart = false`); all
-hotkeys live in kanata.
-
 ## Related files
 
 - `keyboard/INTENTS.md` — vocabulary of `wm.*` / `system.*` intents

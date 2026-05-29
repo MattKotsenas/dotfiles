@@ -1,8 +1,6 @@
 [Unit]
 Name = "komorebi"
 Description = "tiling window management for Windows"
-# whkd dependency removed; hotkeys live in kanata now.
-# Re-add "whkd" here (and re-enable the whkd unit) if you ever need it back.
 
 [Service]
 Kind = "Simple"
