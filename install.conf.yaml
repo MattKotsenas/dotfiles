@@ -4,7 +4,20 @@
       create: true
       glob: true
 
-- clean: ['~']
+- clean: ['~', '~/.copilot']
+
+# Recursively prune dangling symlinks from dotbot-managed dirs that use
+# per-file globbing (otherwise removing a file from the repo leaves an
+# orphaned symlink behind, since dotbot only cleans the dirs you ask it to).
+- clean:
+    ~/.config:
+      recursive: true
+    ~/Documents/PowerShell:
+      recursive: true
+    ~/.psmux:
+      recursive: true
+    $LOCALAPPDATA/nvim:
+      recursive: true
 
 - link:
     # Don't use /** for powershell, as otherwise each file gets its own symlink, which is annoying when testing changes
