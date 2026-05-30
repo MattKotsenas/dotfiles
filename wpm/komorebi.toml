@@ -3,14 +3,17 @@ Name = "komorebi"
 Description = "tiling window management for Windows"
 
 [Service]
-Kind = "Simple"
+# Forking so wpm tracks komorebi.exe (spawned by komorebic via PowerShell
+# Start-Process, which avoids the AllowSetForegroundWindow failure that
+# happens when wpmd spawns komorebi.exe directly).
+Kind = "Forking"
 Restart = "OnFailure"
 RestartSec = 2
 
 [Service.ExecStart]
-# Run komorebi.exe directly so wpm tracks the daemon and not the CLI process.
-Executable = "komorebi.exe"
+Executable = "komorebic.exe"
 Arguments = [
+    "start",
     "--config",
     "$USERPROFILE/.config/komorebi/komorebi.json",
 ]
@@ -27,7 +30,6 @@ Arguments = ["stop"]
 Executable = "komorebic.exe"
 Arguments = ["restore-windows"]
 
-[Service.Healthcheck.Command]
-Executable = "komorebic.exe"
-Arguments = ["state"]
+[Service.Healthcheck.Process]
+Target = "komorebi.exe"
 DelaySec = 1
