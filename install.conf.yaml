@@ -77,3 +77,7 @@
     description: Installing Copilot plugins
     stdout: true
     stderr: true
+  - command: pwsh -NoProfile -File edge/extensions.ps1
+    description: Verifying Edge extensions
+    stdout: true
+    stderr: true
