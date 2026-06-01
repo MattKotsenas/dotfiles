@@ -111,6 +111,6 @@ public sealed partial class WmOverlayIndicator
     [StructLayout(LayoutKind.Sequential)]
     private struct SIZE { public int cx; public int cy; }
 
-    private const uint SWP_NOZORDER = 0x0004;
     private const uint SWP_NOACTIVATE = 0x0010;
+    private static readonly nint HWND_TOPMOST = -1;
 }

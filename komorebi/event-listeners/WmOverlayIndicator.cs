@@ -45,7 +45,10 @@ public sealed partial class WmOverlayIndicator : IWmOverlay, IDisposable
         s_currentLabel = label;
         _label = label;
         var width = MeasureWidth(label);
-        SetWindowPos(_hwnd, 0, Margin, 48 + Margin, width, Height, SWP_NOZORDER | SWP_NOACTIVATE);
+        // Use HWND_TOPMOST (not SWP_NOZORDER) to re-promote above other topmost
+        // windows like the komorebi bar -- otherwise once they cover us we never
+        // come back up since SWP_NOZORDER preserves the current z-order.
+        SetWindowPos(_hwnd, HWND_TOPMOST, Margin, 48 + Margin, width, Height, SWP_NOACTIVATE);
         InvalidateRect(_hwnd, 0, true);
         ShowWindow(_hwnd, SW_SHOWNOACTIVATE);
     }
