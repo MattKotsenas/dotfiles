@@ -35,6 +35,10 @@
       "id": "JetBrains dotPeek"
     }
   ],
+  "display_index_preferences": {
+    "0": "FR3PK7540RHL",
+    "1": "776025"
+  },
   "monitors": [
     {
       "workspaces": [
@@ -42,6 +46,21 @@
           "name": "main",
           "layout": "BSP",
           "layout_flip": "Horizontal",
+          "workspace_rules": []
+        },
+        {
+          "name": "chat",
+          "layout": "Columns",
+          "window_container_behaviour": "Create",
+          "workspace_rules": []
+        }
+      ]
+    },
+    {
+      "workspaces": [
+        {
+          "name": "main",
+          "layout": "BSP",
           "workspace_rules": []
         },
         {
@@ -75,21 +94,6 @@
               "matching_strategy": "Equals"
             }
           ]
-        }
-      ]
-    },
-    {
-      "workspaces": [
-        {
-          "name": "main",
-          "layout": "BSP",
-          "workspace_rules": []
-        },
-        {
-          "name": "chat",
-          "layout": "Columns",
-          "window_container_behaviour": "Create",
-          "workspace_rules": []
         }
       ]
     }
