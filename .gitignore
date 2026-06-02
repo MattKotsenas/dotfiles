@@ -4,3 +4,8 @@ Help/**
 
 # Work email config (not checked in)
 git/user.azdo.gitconfig
+
+# komorebi auto-creates a default bar config when ~/.config/komorebi
+# has no komorebi.bar.json; since the dir is a symlink into the repo,
+# the file lands here. Our real bar configs are komorebi.bar.{1,2}.json.
+komorebi/komorebi.bar.json
