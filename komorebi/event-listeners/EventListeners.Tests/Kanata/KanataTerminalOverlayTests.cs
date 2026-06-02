@@ -126,6 +126,64 @@ public class KanataTerminalOverlayTests
         Assert.Equal("base-terminal", output.FinalLayer);
     }
 
+    // ---------------- Single-tap CAP + Shift + symbol = shifted symbol ----------------
+
+    [Fact]
+    public async Task TerminalOverlay_SingleCap_ShiftSemicolon_EmitsPsmuxPrefixThenShiftHeldOverSemicolon()
+    {
+        // The user's psmux command prompt is bound to ':' (Shift+';'). For this
+        // to work:
+        //   (a) the wm-terminal one-shot must not be consumed by the Shift press,
+        //   (b) the Ctrl+Space prefix must be emitted WITHOUT Shift held (otherwise
+        //       Windows Terminal interprets Ctrl+Shift+Space as the command palette
+        //       shortcut and steals the keystroke before psmux sees it),
+        //   (c) Shift must be held when SColon fires so the OS interprets it as ':'.
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-terminal")
+                .Tap("caps")
+                .Down("lsft")
+                .Tap(";")
+                .Up("lsft")
+                .Settle());
+
+        var events = output.KeyEvents.ToList();
+
+        // Psmux prefix fires: Ctrl+Space.
+        var spaceDownIdx = events.FindIndex(e => e.Direction == "↓" && e.Key == "Space");
+        var scolonDownIdx = events.FindIndex(e => e.Direction == "↓" && e.Key == "SColon");
+        Assert.True(spaceDownIdx >= 0, "Ctrl+Space prefix must fire");
+        Assert.True(scolonDownIdx > spaceDownIdx, "SColon must follow the prefix");
+
+        // (b) At the moment Space is pressed, LShift must NOT be in 'down' state.
+        // Otherwise Windows sees Ctrl+Shift+Space and the command palette opens.
+        Assert.False(IsKeyDownAt(events, "LShift", spaceDownIdx),
+            "LShift must be released when Space is pressed so Windows Terminal " +
+            "doesn't interpret it as Ctrl+Shift+Space (command palette).");
+
+        // (c) At the moment SColon is pressed, LShift MUST be down so the OS
+        // interprets the keystroke as ':'.
+        Assert.True(IsKeyDownAt(events, "LShift", scolonDownIdx),
+            "LShift must be held when SColon is pressed so the OS produces ':'.");
+    }
+
+    /// <summary>
+    /// Returns true if <paramref name="key"/> is in the 'down' state at the
+    /// event index <paramref name="atIdx"/> (i.e., the most recent prior event
+    /// for that key was ↓, or there is a ↓ at that exact index).
+    /// </summary>
+    private static bool IsKeyDownAt(IReadOnlyList<KeyEvent> events, string key, int atIdx)
+    {
+        var down = false;
+        for (var i = 0; i <= atIdx; i++)
+        {
+            if (events[i].Key != key) continue;
+            down = events[i].Direction == "↓";
+        }
+        return down;
+    }
+
     // ---------------- Default context behavior unchanged ----------------
 
     [Fact]

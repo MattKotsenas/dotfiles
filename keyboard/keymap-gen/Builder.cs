@@ -117,10 +117,23 @@ public sealed class LayerBuilder(string name)
         var steps = new List<MacroStep>(elements.Length);
         foreach (var el in elements)
         {
-            steps.Add(el.Contains('-') ? new MacroChord(el) : new MacroKey(el));
+            steps.Add(LooksLikeChord(el) ? new MacroChord(el) : new MacroKey(el));
         }
         _bindings.Add(new Binding(key, new MacroAction(steps)));
         return this;
+    }
+
+    /// <summary>
+    /// True if <paramref name="el"/> matches the chord shorthand <c>X-Y</c> where
+    /// X is a single-letter modifier (C/S/A/M, possibly chained as <c>C-S-y</c>).
+    /// A bare punctuation key like <c>-</c> is NOT a chord.
+    /// </summary>
+    private static bool LooksLikeChord(string el)
+    {
+        var idx = el.IndexOf('-');
+        if (idx <= 0 || idx == el.Length - 1) return false;
+        var head = el[..idx];
+        return head is "C" or "S" or "A" or "M";
     }
 
     /// <summary>Complex macro: configure steps via builder for delays, nested intents, literals.</summary>

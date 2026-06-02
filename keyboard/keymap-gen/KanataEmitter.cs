@@ -65,7 +65,12 @@ internal static class KanataEmitter
         // plus every key bound in wm-base, every sub-mode, and every overlay so
         // those layers can actually capture them. Sub-mode layers use ___ XX to
         // deadkey unmapped keys, but that only applies to keys actually in defsrc.
-        var keys = new List<string> { "caps" };
+        //
+        // lsft/rsft are included so wm-* layers can pass shift through (mapped
+        // to themselves) instead of deadkey'ing it via ___ XX. Without this,
+        // CAP + Shift + symbol (e.g. CAP + : for psmux command mode) loses the
+        // shift event entirely.
+        var keys = new List<string> { "caps", "lsft", "rsft" };
         foreach (var b in k.WmBase.Bindings) Add(b.Key);
         foreach (var sm in k.SubModes)
             foreach (var b in sm.Bindings) Add(b.Key);
@@ -98,7 +103,11 @@ internal static class KanataEmitter
         sb.AppendLine(";; base-default: typing layer (default focus context). CAP tap-dances into WM mode.");
         sb.AppendLine("(deflayermap (base-default)");
         sb.AppendLine("  caps (tap-dance $td-timeout (");
-        sb.AppendLine("    (one-shot $os-timeout (layer-while-held wm))");
+        // one-shot-release (not one-shot/one-shot-press) so the next key press
+        // doesn't end the one-shot. Required for chords like CAP + Shift + key:
+        // the press of Shift would otherwise consume the one-shot and drop us
+        // back into base before the symbol key is processed.
+        sb.AppendLine("    (one-shot-release $os-timeout (layer-while-held wm))");
         sb.AppendLine("    (layer-switch wm-toggle)");
         sb.AppendLine("  ))");
         sb.AppendLine(")");
@@ -110,7 +119,8 @@ internal static class KanataEmitter
         sb.AppendLine(CultureInfo.InvariantCulture, $";; base-{overlayName}: typing layer ({overlayName} focus context). CAP enters wm-{overlayName}.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (base-{overlayName})");
         sb.AppendLine("  caps (tap-dance $td-timeout (");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"    (one-shot $os-timeout (layer-while-held wm-{overlayName}))");
+        // one-shot-release: see EmitBaseDefaultLayer for rationale.
+        sb.AppendLine(CultureInfo.InvariantCulture, $"    (one-shot-release $os-timeout (layer-while-held wm-{overlayName}))");
         sb.AppendLine(CultureInfo.InvariantCulture, $"    (layer-switch wm-{overlayName}-toggle)");
         sb.AppendLine("  ))");
         sb.AppendLine(")");
@@ -148,6 +158,7 @@ internal static class KanataEmitter
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
         }
+        EmitShiftPassthrough(sb);
         sb.AppendLine("  ___ XX");
         sb.AppendLine(")");
         sb.AppendLine();
@@ -173,9 +184,21 @@ internal static class KanataEmitter
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
         }
+        EmitShiftPassthrough(sb);
         sb.AppendLine("  ___ XX");
         sb.AppendLine(")");
         sb.AppendLine();
+    }
+
+    /// <summary>
+    /// Map lsft/rsft to themselves so Shift passes through to the OS while a
+    /// wm-* layer is active. Without this, ___ XX deadkeys Shift and the user
+    /// loses shifted symbols like CAP + : (Shift + ;) for psmux command mode.
+    /// </summary>
+    private static void EmitShiftPassthrough(StringBuilder sb)
+    {
+        sb.AppendLine("  lsft lsft");
+        sb.AppendLine("  rsft rsft");
     }
 
     private static void EmitSubModeOneShot(StringBuilder sb, Keymap k)

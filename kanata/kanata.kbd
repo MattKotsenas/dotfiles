@@ -6,7 +6,7 @@
 )
 
 (defsrc
-  caps r p tab / up down left right 1 2 3 4 5 6 7 8 h j k l g t m x y q b c i n o u v z 0 9 , . \ - [ ] ;
+  caps lsft rsft r p tab / up down left right 1 2 3 4 5 6 7 8 h j k l g t m x y q b c i n o u v z 0 9 , . \ - [ ] ;
 )
 
 (defvar
@@ -17,7 +17,7 @@
 ;; base-default: typing layer (default focus context). CAP tap-dances into WM mode.
 (deflayermap (base-default)
   caps (tap-dance $td-timeout (
-    (one-shot $os-timeout (layer-while-held wm))
+    (one-shot-release $os-timeout (layer-while-held wm))
     (layer-switch wm-toggle)
   ))
 )
@@ -38,6 +38,8 @@
   down down
   left left
   right right
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 
@@ -59,13 +61,15 @@
   down down
   left left
   right right
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 
 ;; base-terminal: typing layer (terminal focus context). CAP enters wm-terminal.
 (deflayermap (base-terminal)
   caps (tap-dance $td-timeout (
-    (one-shot $os-timeout (layer-while-held wm-terminal))
+    (one-shot-release $os-timeout (layer-while-held wm-terminal))
     (layer-switch wm-terminal-toggle)
   ))
 )
@@ -86,41 +90,43 @@
   down down
   left left
   right right
-  b (macro C-spc b)
-  c (macro C-spc c)
-  g (macro C-spc g)
-  h (macro C-spc h)
-  i (macro C-spc i)
-  j (macro C-spc j)
-  k (macro C-spc k)
-  l (macro C-spc l)
-  m (macro C-spc m)
-  n (macro C-spc n)
-  o (macro C-spc o)
-  q (macro C-spc q)
-  t (macro C-spc t)
-  u (macro C-spc u)
-  v (macro C-spc v)
-  x (macro C-spc x)
-  y (macro C-spc y)
-  z (macro C-spc z)
-  0 (macro C-spc (unicode "0"))
-  1 (macro C-spc (unicode "1"))
-  2 (macro C-spc (unicode "2"))
-  3 (macro C-spc (unicode "3"))
-  4 (macro C-spc (unicode "4"))
-  5 (macro C-spc (unicode "5"))
-  6 (macro C-spc (unicode "6"))
-  7 (macro C-spc (unicode "7"))
-  8 (macro C-spc (unicode "8"))
-  9 (macro C-spc (unicode "9"))
-  , (macro C-spc ,)
-  . (macro C-spc .)
-  \ (macro C-spc \)
-  - (macro C-spc -)
-  [ (macro C-spc [)
-  ] (macro C-spc ])
-  ; (macro C-spc ;)
+  b (macro (unmod lctl spc) b)
+  c (macro (unmod lctl spc) c)
+  g (macro (unmod lctl spc) g)
+  h (macro (unmod lctl spc) h)
+  i (macro (unmod lctl spc) i)
+  j (macro (unmod lctl spc) j)
+  k (macro (unmod lctl spc) k)
+  l (macro (unmod lctl spc) l)
+  m (macro (unmod lctl spc) m)
+  n (macro (unmod lctl spc) n)
+  o (macro (unmod lctl spc) o)
+  q (macro (unmod lctl spc) q)
+  t (macro (unmod lctl spc) t)
+  u (macro (unmod lctl spc) u)
+  v (macro (unmod lctl spc) v)
+  x (macro (unmod lctl spc) x)
+  y (macro (unmod lctl spc) y)
+  z (macro (unmod lctl spc) z)
+  0 (macro (unmod lctl spc) (unicode "0"))
+  1 (macro (unmod lctl spc) (unicode "1"))
+  2 (macro (unmod lctl spc) (unicode "2"))
+  3 (macro (unmod lctl spc) (unicode "3"))
+  4 (macro (unmod lctl spc) (unicode "4"))
+  5 (macro (unmod lctl spc) (unicode "5"))
+  6 (macro (unmod lctl spc) (unicode "6"))
+  7 (macro (unmod lctl spc) (unicode "7"))
+  8 (macro (unmod lctl spc) (unicode "8"))
+  9 (macro (unmod lctl spc) (unicode "9"))
+  , (macro (unmod lctl spc) ,)
+  . (macro (unmod lctl spc) .)
+  \ (macro (unmod lctl spc) \)
+  - (macro (unmod lctl spc) -)
+  [ (macro (unmod lctl spc) [)
+  ] (macro (unmod lctl spc) ])
+  ; (macro (unmod lctl spc) ;)
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 
@@ -142,48 +148,50 @@
   down down
   left left
   right right
-  b (macro C-spc b)
-  c (macro C-spc c)
-  g (macro C-spc g)
-  h (macro C-spc h)
-  i (macro C-spc i)
-  j (macro C-spc j)
-  k (macro C-spc k)
-  l (macro C-spc l)
-  m (macro C-spc m)
-  n (macro C-spc n)
-  o (macro C-spc o)
-  q (macro C-spc q)
-  t (macro C-spc t)
-  u (macro C-spc u)
-  v (macro C-spc v)
-  x (macro C-spc x)
-  y (macro C-spc y)
-  z (macro C-spc z)
-  0 (macro C-spc (unicode "0"))
-  1 (macro C-spc (unicode "1"))
-  2 (macro C-spc (unicode "2"))
-  3 (macro C-spc (unicode "3"))
-  4 (macro C-spc (unicode "4"))
-  5 (macro C-spc (unicode "5"))
-  6 (macro C-spc (unicode "6"))
-  7 (macro C-spc (unicode "7"))
-  8 (macro C-spc (unicode "8"))
-  9 (macro C-spc (unicode "9"))
-  , (macro C-spc ,)
-  . (macro C-spc .)
-  \ (macro C-spc \)
-  - (macro C-spc -)
-  [ (macro C-spc [)
-  ] (macro C-spc ])
-  ; (macro C-spc ;)
+  b (macro (unmod lctl spc) b)
+  c (macro (unmod lctl spc) c)
+  g (macro (unmod lctl spc) g)
+  h (macro (unmod lctl spc) h)
+  i (macro (unmod lctl spc) i)
+  j (macro (unmod lctl spc) j)
+  k (macro (unmod lctl spc) k)
+  l (macro (unmod lctl spc) l)
+  m (macro (unmod lctl spc) m)
+  n (macro (unmod lctl spc) n)
+  o (macro (unmod lctl spc) o)
+  q (macro (unmod lctl spc) q)
+  t (macro (unmod lctl spc) t)
+  u (macro (unmod lctl spc) u)
+  v (macro (unmod lctl spc) v)
+  x (macro (unmod lctl spc) x)
+  y (macro (unmod lctl spc) y)
+  z (macro (unmod lctl spc) z)
+  0 (macro (unmod lctl spc) (unicode "0"))
+  1 (macro (unmod lctl spc) (unicode "1"))
+  2 (macro (unmod lctl spc) (unicode "2"))
+  3 (macro (unmod lctl spc) (unicode "3"))
+  4 (macro (unmod lctl spc) (unicode "4"))
+  5 (macro (unmod lctl spc) (unicode "5"))
+  6 (macro (unmod lctl spc) (unicode "6"))
+  7 (macro (unmod lctl spc) (unicode "7"))
+  8 (macro (unmod lctl spc) (unicode "8"))
+  9 (macro (unmod lctl spc) (unicode "9"))
+  , (macro (unmod lctl spc) ,)
+  . (macro (unmod lctl spc) .)
+  \ (macro (unmod lctl spc) \)
+  - (macro (unmod lctl spc) -)
+  [ (macro (unmod lctl spc) [)
+  ] (macro (unmod lctl spc) ])
+  ; (macro (unmod lctl spc) ;)
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 
 ;; base-edge: typing layer (edge focus context). CAP enters wm-edge.
 (deflayermap (base-edge)
   caps (tap-dance $td-timeout (
-    (one-shot $os-timeout (layer-while-held wm-edge))
+    (one-shot-release $os-timeout (layer-while-held wm-edge))
     (layer-switch wm-edge-toggle)
   ))
 )
@@ -204,8 +212,10 @@
   down down
   left left
   right right
-  t (macro C-t)
-  v (macro C-l esc esc)
+  t (macro (unmod lctl t))
+  v (macro (unmod lctl l) esc esc)
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 
@@ -227,15 +237,17 @@
   down down
   left left
   right right
-  t (macro C-t)
-  v (macro C-l esc esc)
+  t (macro (unmod lctl t))
+  v (macro (unmod lctl l) esc esc)
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 
 ;; base-teams: typing layer (teams focus context). CAP enters wm-teams.
 (deflayermap (base-teams)
   caps (tap-dance $td-timeout (
-    (one-shot $os-timeout (layer-while-held wm-teams))
+    (one-shot-release $os-timeout (layer-while-held wm-teams))
     (layer-switch wm-teams-toggle)
   ))
 )
@@ -256,24 +268,26 @@
   down down
   left left
   right right
-  m (macro C-S-m)
-  c (macro C-S-o)
-  u (macro C-S-k)
-  g (macro C-e)
-  h (macro A-left)
-  l (macro A-right)
-  j (macro A-pgdn)
-  k (macro A-pgup)
-  1 (macro C-1)
-  2 (macro C-2)
-  3 (macro C-3)
-  4 (macro C-4)
-  5 (macro C-5)
-  6 (macro C-6)
-  7 (macro C-7)
-  8 (macro C-8)
-  y (macro C-S-a)
-  n (macro C-S-j)
+  m (macro (unmod lctl lsft m))
+  c (macro (unmod lctl lsft o))
+  u (macro (unmod lctl lsft k))
+  g (macro (unmod lctl e))
+  h (macro (unmod lalt left))
+  l (macro (unmod lalt right))
+  j (macro (unmod lalt pgdn))
+  k (macro (unmod lalt pgup))
+  1 (macro (unmod lctl 1))
+  2 (macro (unmod lctl 2))
+  3 (macro (unmod lctl 3))
+  4 (macro (unmod lctl 4))
+  5 (macro (unmod lctl 5))
+  6 (macro (unmod lctl 6))
+  7 (macro (unmod lctl 7))
+  8 (macro (unmod lctl 8))
+  y (macro (unmod lctl lsft a))
+  n (macro (unmod lctl lsft j))
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 
@@ -295,31 +309,33 @@
   down down
   left left
   right right
-  m (macro C-S-m)
-  c (macro C-S-o)
-  u (macro C-S-k)
-  g (macro C-e)
-  h (macro A-left)
-  l (macro A-right)
-  j (macro A-pgdn)
-  k (macro A-pgup)
-  1 (macro C-1)
-  2 (macro C-2)
-  3 (macro C-3)
-  4 (macro C-4)
-  5 (macro C-5)
-  6 (macro C-6)
-  7 (macro C-7)
-  8 (macro C-8)
-  y (macro C-S-a)
-  n (macro C-S-j)
+  m (macro (unmod lctl lsft m))
+  c (macro (unmod lctl lsft o))
+  u (macro (unmod lctl lsft k))
+  g (macro (unmod lctl e))
+  h (macro (unmod lalt left))
+  l (macro (unmod lalt right))
+  j (macro (unmod lalt pgdn))
+  k (macro (unmod lalt pgup))
+  1 (macro (unmod lctl 1))
+  2 (macro (unmod lctl 2))
+  3 (macro (unmod lctl 3))
+  4 (macro (unmod lctl 4))
+  5 (macro (unmod lctl 5))
+  6 (macro (unmod lctl 6))
+  7 (macro (unmod lctl 7))
+  8 (macro (unmod lctl 8))
+  y (macro (unmod lctl lsft a))
+  n (macro (unmod lctl lsft j))
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 
 ;; base-codeflow: typing layer (codeflow focus context). CAP enters wm-codeflow.
 (deflayermap (base-codeflow)
   caps (tap-dance $td-timeout (
-    (one-shot $os-timeout (layer-while-held wm-codeflow))
+    (one-shot-release $os-timeout (layer-while-held wm-codeflow))
     (layer-switch wm-codeflow-toggle)
   ))
 )
@@ -342,16 +358,18 @@
   right right
   j (macro f8)
   k (macro f7)
-  l (macro C-f8)
-  h (macro C-f7)
-  c (macro A-c)
-  n (macro C-f12)
-  b (macro C-f11)
-  t (macro A-S-t)
-  v (macro A-S-d)
-  o (macro A-S-o)
-  g (macro C-g)
+  l (macro (unmod lctl f8))
+  h (macro (unmod lctl f7))
+  c (macro (unmod lalt c))
+  n (macro (unmod lctl f12))
+  b (macro (unmod lctl f11))
+  t (macro (unmod lalt lsft t))
+  v (macro (unmod lalt lsft d))
+  o (macro (unmod lalt lsft o))
+  g (macro (unmod lctl g))
   u (macro f5)
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 
@@ -375,16 +393,18 @@
   right right
   j (macro f8)
   k (macro f7)
-  l (macro C-f8)
-  h (macro C-f7)
-  c (macro A-c)
-  n (macro C-f12)
-  b (macro C-f11)
-  t (macro A-S-t)
-  v (macro A-S-d)
-  o (macro A-S-o)
-  g (macro C-g)
+  l (macro (unmod lctl f8))
+  h (macro (unmod lctl f7))
+  c (macro (unmod lalt c))
+  n (macro (unmod lctl f12))
+  b (macro (unmod lctl f11))
+  t (macro (unmod lalt lsft t))
+  v (macro (unmod lalt lsft d))
+  o (macro (unmod lalt lsft o))
+  g (macro (unmod lctl g))
   u (macro f5)
+  lsft lsft
+  rsft rsft
   ___ XX
 )
 

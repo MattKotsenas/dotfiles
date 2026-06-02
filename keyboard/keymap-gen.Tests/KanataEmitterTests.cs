@@ -33,7 +33,10 @@ public class KanataEmitterTests
     public void SimpleMacro_FormatsAsKeysAndChords()
     {
         var macro = new MacroAction([new MacroChord("C-spc"), new MacroKey("h")]);
-        Assert.Equal("(macro C-spc h)", ActionFormatter.Format(macro));
+        // Chord steps render as (unmod ...) so that any modifier the user is
+        // physically holding (e.g. Shift while typing ':') is released for the
+        // chord and restored afterward. See ActionFormatter.FormatChord.
+        Assert.Equal("(macro (unmod lctl spc) h)", ActionFormatter.Format(macro));
     }
 
     [Fact]
@@ -68,12 +71,13 @@ public class KanataEmitterTests
 
         var output = KanataEmitter.Emit(keymap);
 
-        // Every key in the explicit list became a (macro C-spc <key>) binding
-        // inside both wm-term and wm-term-toggle.
+        // Every key in the explicit list became a (macro (unmod lctl spc) <key>) binding
+        // inside both wm-term and wm-term-toggle. The chord is rendered via unmod so
+        // physical modifiers (e.g. Shift) don't leak into the prefix.
         Assert.Contains("(deflayermap (wm-term)", output);
-        Assert.Contains("h (macro C-spc h)", output);
-        Assert.Contains("j (macro C-spc j)", output);
-        Assert.Contains("c (macro C-spc c)", output);
+        Assert.Contains("h (macro (unmod lctl spc) h)", output);
+        Assert.Contains("j (macro (unmod lctl spc) j)", output);
+        Assert.Contains("c (macro (unmod lctl spc) c)", output);
     }
 
     [Fact]
@@ -96,12 +100,12 @@ public class KanataEmitterTests
         var output = KanataEmitter.Emit(keymap);
 
         // Letters that ARE in the default set
-        Assert.Contains("c (macro C-spc c)", output);
-        Assert.Contains("h (macro C-spc h)", output);
+        Assert.Contains("c (macro (unmod lctl spc) c)", output);
+        Assert.Contains("h (macro (unmod lctl spc) h)", output);
         // Reserved letters are NOT in the prefixed set
-        Assert.DoesNotContain("a (macro C-spc a)", output);
-        Assert.DoesNotContain("w (macro C-spc w)", output);
-        Assert.DoesNotContain("r (macro C-spc r)", output);
+        Assert.DoesNotContain("a (macro (unmod lctl spc) a)", output);
+        Assert.DoesNotContain("w (macro (unmod lctl spc) w)", output);
+        Assert.DoesNotContain("r (macro (unmod lctl spc) r)", output);
     }
 
     [Fact]
@@ -118,10 +122,10 @@ public class KanataEmitterTests
 
         // Bare integer would be parsed by kanata as a ms delay (0 is invalid).
         // PrefixAll must route digits through (unicode "N") instead.
-        Assert.Contains("1 (macro C-spc (unicode \"1\"))", output);
-        Assert.Contains("2 (macro C-spc (unicode \"2\"))", output);
-        Assert.Contains("0 (macro C-spc (unicode \"0\"))", output);
-        Assert.DoesNotContain("1 (macro C-spc 1)", output);
+        Assert.Contains("1 (macro (unmod lctl spc) (unicode \"1\"))", output);
+        Assert.Contains("2 (macro (unmod lctl spc) (unicode \"2\"))", output);
+        Assert.Contains("0 (macro (unmod lctl spc) (unicode \"0\"))", output);
+        Assert.DoesNotContain("1 (macro (unmod lctl spc) 1)", output);
     }
 
     [Fact]
@@ -137,18 +141,18 @@ public class KanataEmitterTests
         var output = KanataEmitter.Emit(keymap);
 
         // Symbol bindings emit as bare keys.
-        Assert.Contains(", (macro C-spc ,)", output);
-        Assert.Contains(". (macro C-spc .)", output);
-        Assert.Contains("\\ (macro C-spc \\)", output);
-        Assert.Contains("- (macro C-spc -)", output);
-        Assert.Contains("[ (macro C-spc [)", output);
-        Assert.Contains("] (macro C-spc ])", output);
-        Assert.Contains("; (macro C-spc ;)", output);
+        Assert.Contains(", (macro (unmod lctl spc) ,)", output);
+        Assert.Contains(". (macro (unmod lctl spc) .)", output);
+        Assert.Contains("\\ (macro (unmod lctl spc) \\)", output);
+        Assert.Contains("- (macro (unmod lctl spc) -)", output);
+        Assert.Contains("[ (macro (unmod lctl spc) [)", output);
+        Assert.Contains("] (macro (unmod lctl spc) ])", output);
+        Assert.Contains("; (macro (unmod lctl spc) ;)", output);
         // Digits emit via unicode.
-        Assert.Contains("1 (macro C-spc (unicode \"1\"))", output);
-        Assert.Contains("9 (macro C-spc (unicode \"9\"))", output);
+        Assert.Contains("1 (macro (unmod lctl spc) (unicode \"1\"))", output);
+        Assert.Contains("9 (macro (unmod lctl spc) (unicode \"9\"))", output);
         // wm-base global "/" is reserved -- never bound by overlay.
-        Assert.DoesNotContain("/ (macro C-spc /)", output);
+        Assert.DoesNotContain("/ (macro (unmod lctl spc) /)", output);
     }
 
     [Fact]
