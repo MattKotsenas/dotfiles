@@ -120,6 +120,112 @@ public class AppLayerRouterTests
     }
 
     [Fact]
+    public void ProcessEvent_FocusEventWhileInWmMode_DefersSend()
+    {
+        // User is focused on Edge, then taps CAP into wm-edge-toggle, then a
+        // sub-mode like wm-focus-toggle. While there, focus moves to a
+        // different-app window (e.g., focus right cross-app). The router must
+        // NOT send a base ChangeLayer mid-WM-mode; that would kill WM mode and
+        // hide the on-screen • dot.
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        Assert.Single(kanata.ChangeLayerCalls);
+
+        // User enters sticky WM mode (overlay-aware then sub-mode).
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.WmEdgeToggle));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.WmFocusToggle));
+
+        // Cross-app focus event arrives mid-WM-mode (terminal got focus).
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "ps", 2));
+
+        // No additional ChangeLayer was sent — the change is deferred.
+        Assert.Single(kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_ReturnToBaseAfterDeferredFocus_RestoresDesired()
+    {
+        // Continuation of the previous scenario: after the user exits the
+        // sub-mode toggle (CAPS exits to base-default per the shared sub-mode
+        // exit binding), the router must push the deferred target so kanata
+        // ends up on base-terminal, not base-default.
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.WmEdgeToggle));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.WmFocusToggle));
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "ps", 2));
+        Assert.Single(kanata.ChangeLayerCalls);
+
+        // User taps CAPS to exit; the sub-mode toggle's CAPS binding hard-exits
+        // to base-default regardless of overlay context.
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseDefault));
+
+        // Router should have sent a corrective ChangeLayer to the deferred target.
+        Assert.Equal(
+            [LayerCatalog.BaseEdge, LayerCatalog.BaseTerminal],
+            kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_MultipleFocusEventsDuringWmMode_LatestWinsOnRestore()
+    {
+        // While the user is mid-WM-mode, multiple focus events arrive (rapid
+        // app switching by some other process, or chained focus.right intents).
+        // Only the latest desired target should be applied when WM mode exits.
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.WmEdgeToggle));
+
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "ps", 2));   // deferred
+        router.ProcessEvent(FocusEvent("ms-teams.exe", "Chat", 3));        // deferred
+        router.ProcessEvent(FocusEvent("CodeFlow.exe", "Review", 4));      // deferred
+        Assert.Single(kanata.ChangeLayerCalls);
+
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseDefault));
+
+        // Only the latest (CodeFlow) is restored, not all three.
+        Assert.Equal(
+            [LayerCatalog.BaseEdge, LayerCatalog.BaseCodeflow],
+            kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_SameAppFocusMoveWhileInWmMode_NoSend()
+    {
+        // Within-app focus move (Edge window 1 -> Edge window 2). Target matches
+        // desired (base-edge), so even without WM-mode deferral there'd be no
+        // send. Defending against accidental sends here.
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.WmEdgeToggle));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.WmFocusToggle));
+
+        router.ProcessEvent(FocusEvent("msedge.exe", "y", 2));
+
+        Assert.Single(kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_BaseEchoMatchingDesired_NoCorrectiveSend()
+    {
+        // After a normal user-driven base-* echo that already matches desired,
+        // the router must NOT send a redundant ChangeLayer (which would loop).
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        Assert.Single(kanata.ChangeLayerCalls);
+
+        // Another echo of the same base layer (e.g., spurious re-emit).
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+
+        Assert.Single(kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
     public void ProcessEvent_SubModeEcho_IgnoredAndDoesNotPoisonCache()
     {
         var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
@@ -129,6 +235,9 @@ public class AppLayerRouterTests
         // User taps CAP -> enters wm-edge sub-mode. The echo for the sub-mode
         // must not overwrite our remembered base layer.
         router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.WmEdge));
+        // User returns to base-edge via normal exit; should not trigger a
+        // corrective send since base-edge already matches desired.
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
 
         // Still on edge: no new send.
         router.ProcessEvent(FocusEvent("msedge.exe", "y", 2));

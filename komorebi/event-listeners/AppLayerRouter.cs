@@ -12,22 +12,53 @@ namespace EventListeners;
 /// Routing rules are plain C# code in <see cref="DefaultRules"/>; add a new rule
 /// to support a new app overlay.
 ///
-/// Cache discipline: <c>_lastLayer</c> only updates from kanata's own
-/// <c>LayerChange</c> echo (filtered to base-* layers), never optimistically
-/// from a sent ChangeLayer. This makes the router self-healing -- if a send
-/// silently fails (kanata TCP write error, mid-reconnect), no echo arrives,
-/// the cache stays stale, and the next focus event re-sends instead of
-/// short-circuiting at a falsely-confirmed guard.
+/// <para>
+/// Cache discipline and deferred restore: the router tracks two pieces of state
+/// behind <see cref="_stateLock"/>:
+/// <list type="bullet">
+///   <item><c>_currentLayer</c> — whatever kanata last echoed (any layer,
+///     including <c>wm-*</c> sub-modes and toggles).</item>
+///   <item><c>_desiredBaseLayer</c> — the base layer that should be active
+///     when kanata returns to a base context, based on the latest focus event.</item>
+/// </list>
+/// </para>
+///
+/// <para>
+/// Decisions:
+/// <list type="bullet">
+///   <item>On a focus event, we update <c>_desiredBaseLayer</c>. If kanata is
+///     currently in a base layer (or its current layer is unknown), we send
+///     <c>ChangeLayer(target)</c> immediately. If kanata is in a <c>wm-*</c>
+///     layer (the user is mid-WM-mode), we DEFER — sending a base ChangeLayer
+///     would kick the user out of WM mode.</item>
+///   <item>On a kanata <c>LayerChange</c> echo for a base layer that doesn't
+///     match <c>_desiredBaseLayer</c>, we send a corrective ChangeLayer. This
+///     handles two cases: (a) the user exits a shared sub-mode toggle that
+///     unconditionally exits to <c>base-default</c> regardless of overlay
+///     context; (b) deferred focus changes accumulated during WM mode.</item>
+/// </list>
+/// </para>
+///
+/// <para>
+/// Self-healing: if a send fails silently (TCP write error mid-reconnect), no
+/// echo arrives, <c>_currentLayer</c> stays stale, and the next focus event
+/// re-evaluates and re-sends.
+/// </para>
 /// </summary>
 public sealed class AppLayerRouter : IEventRule
 {
     private readonly ILogger<AppLayerRouter> _logger;
     private readonly Lazy<IKanataClient> _kanata;
     private readonly IReadOnlyList<Func<FocusContext, string?>> _rules;
-    // volatile: Komorebi and Kanata listener threads both call ProcessEvent.
-    // _lastLayer mirrors what kanata reported via LayerChange echo (truth),
-    // not what we asked for, so we self-heal if a send silently fails.
-    private volatile string? _lastLayer;
+    // Guards _currentLayer + _desiredBaseLayer atomic transitions. Two background
+    // threads (Komorebi pipe listener, Kanata TCP listener) both call ProcessEvent;
+    // the lock keeps "compare current vs desired then decide to send" race-free.
+    // ChangeLayer dispatches happen OUTSIDE the lock to avoid holding it during
+    // awaitable I/O. Stale in-flight sends are tolerable because the next event
+    // re-evaluates state and corrects.
+    private readonly object _stateLock = new();
+    private string? _currentLayer;
+    private string? _desiredBaseLayer;
 
     public string Name => "AppLayerRouter";
 
@@ -67,17 +98,9 @@ public sealed class AppLayerRouter : IEventRule
 
     public void ProcessEvent(IEvent evt)
     {
-        // Track kanata's actual base layer from its LayerChange echoes (which
-        // arrive after a successful ChangeLayer write, or any external change).
-        // Sub-mode layers (wm-*) are ignored so _lastLayer always reflects the
-        // last confirmed *base* state. If a send fails, no echo arrives, the
-        // cache stays stale, and the next focus event re-sends -- self-healing.
         if (evt is KanataLayerChangeEvent layerEvt)
         {
-            if (layerEvt.NewLayer.StartsWith("base-", StringComparison.Ordinal))
-            {
-                _lastLayer = layerEvt.NewLayer;
-            }
+            HandleLayerChange(layerEvt.NewLayer);
             return;
         }
 
@@ -100,17 +123,88 @@ public sealed class AppLayerRouter : IEventRule
         }
 
         var ctx = new FocusContext(exe, title, focusedHwnd.Value);
-        var targetLayer = Route(ctx);
-
-        // Don't spam kanata when the confirmed layer already matches.
-        if (targetLayer == _lastLayer) return;
-
-        _logger.LogInformation("Focus changed to {Exe} -> ChangeLayer({Layer})", exe, targetLayer);
-        // Fire-and-forget. Cache updates only when kanata echoes LayerChange
-        // back; that way a failed send leaves the cache stale and we retry
-        // on the next focus event instead of getting stuck.
-        _ = _kanata.Value.SendChangeLayerAsync(targetLayer);
+        HandleFocusChange(ctx);
     }
+
+    private void HandleFocusChange(FocusContext ctx)
+    {
+        var target = Route(ctx);
+        string? toSend;
+        bool deferred;
+
+        lock (_stateLock)
+        {
+            _desiredBaseLayer = target;
+            var current = _currentLayer;
+
+            // Defer when kanata is mid-WM-mode (any non-base-* layer). Sending
+            // a base ChangeLayer here would yank the user out of their active
+            // wm-focus-toggle / wm-stack-toggle / etc. and kill the • dot.
+            if (current is not null && !IsBaseLayer(current))
+            {
+                deferred = true;
+                toSend = null;
+            }
+            // current == null on startup before any echo. Allow the send so
+            // the initial focus context routes; if kanata happens to be in WM
+            // mode at startup, the next user CAP press will recover.
+            else if (current == target)
+            {
+                deferred = false;
+                toSend = null;
+            }
+            else
+            {
+                deferred = false;
+                toSend = target;
+            }
+        }
+
+        if (deferred)
+        {
+            _logger.LogDebug(
+                "Focus changed to {Exe}: deferring ChangeLayer({Layer}) (kanata is in WM mode)",
+                ctx.Exe, target);
+            return;
+        }
+
+        if (toSend is null) return;
+
+        _logger.LogInformation("Focus changed to {Exe} -> ChangeLayer({Layer})", ctx.Exe, toSend);
+        _ = _kanata.Value.SendChangeLayerAsync(toSend);
+    }
+
+    private void HandleLayerChange(string newLayer)
+    {
+        string? toSend = null;
+
+        lock (_stateLock)
+        {
+            _currentLayer = newLayer;
+
+            // Corrective restore: any time kanata lands on a base layer that
+            // doesn't match the desired one, push the desired. This recovers
+            // from (a) shared sub-mode toggles whose CAPS exits to base-default
+            // regardless of overlay context, and (b) deferred focus changes
+            // that accumulated during WM mode.
+            if (IsBaseLayer(newLayer)
+                && _desiredBaseLayer is not null
+                && _desiredBaseLayer != newLayer)
+            {
+                toSend = _desiredBaseLayer;
+            }
+        }
+
+        if (toSend is null) return;
+
+        _logger.LogInformation(
+            "Restoring base layer after echo {Echo} -> ChangeLayer({Layer})",
+            newLayer, toSend);
+        _ = _kanata.Value.SendChangeLayerAsync(toSend);
+    }
+
+    private static bool IsBaseLayer(string layerName) =>
+        layerName.StartsWith("base-", StringComparison.Ordinal);
 
     /// <summary>Pure function: run the rule chain to resolve a layer for a focus context.</summary>
     internal string Route(FocusContext context)
