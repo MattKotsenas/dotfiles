@@ -17,8 +17,6 @@ Always available inside WM mode regardless of overlay or sub-mode.
 | `CAP /` | intent `system.cheatsheet` |
 | `CAP down` | raw kanata: `down` |
 | `CAP left` | raw kanata: `left` |
-| `CAP p` | intent `wm.layout.toggle-pause` |
-| `CAP r` | intent `wm.layout.retile` |
 | `CAP right` | raw kanata: `right` |
 | `CAP tab` | intent `wm.focus.last-workspace` |
 | `CAP up` | raw kanata: `up` |
@@ -29,7 +27,7 @@ Press inside WM mode to enter a sub-mode:
 
 | Key | Sub-mode |
 |---|---|
-| `CAP a` | wm-assemble |
+| `CAP a` | wm-admin |
 | `CAP d` | wm-move |
 | `CAP e` | wm-resize |
 | `CAP f` | wm-focus |
@@ -62,10 +60,6 @@ Entered via `CAP f`.
 | `CAP f j` | intent `wm.focus.down` |
 | `CAP f k` | intent `wm.focus.up` |
 | `CAP f l` | intent `wm.focus.right` |
-| `CAP f m` | intent `wm.layout.toggle-monocle` |
-| `CAP f t` | intent `wm.layout.toggle-float` |
-| `CAP f x` | intent `wm.layout.flip-horizontal` |
-| `CAP f y` | intent `wm.layout.flip-vertical` |
 
 ## wm-move
 
@@ -85,7 +79,9 @@ Entered via `CAP d`.
 | `CAP d j` | intent `wm.move.down` |
 | `CAP d k` | intent `wm.move.up` |
 | `CAP d l` | intent `wm.move.right` |
+| `CAP d m` | intent `wm.layout.toggle-monocle` |
 | `CAP d q` | intent `wm.move.promote` |
+| `CAP d t` | intent `wm.layout.toggle-float` |
 
 ## wm-stack
 
@@ -97,6 +93,9 @@ Entered via `CAP s`.
 | `CAP s j` | intent `wm.stack.down` |
 | `CAP s k` | intent `wm.stack.up` |
 | `CAP s l` | intent `wm.stack.right` |
+| `CAP s n` | intent `wm.stack.cycle-next` |
+| `CAP s p` | intent `wm.stack.cycle-prev` |
+| `CAP s u` | intent `wm.stack.unstack` |
 
 ## wm-resize
 
@@ -109,16 +108,17 @@ Entered via `CAP e`.
 | `CAP e k` | intent `wm.resize.vertical-increase` |
 | `CAP e l` | intent `wm.resize.horizontal-increase` |
 
-## wm-assemble
+## wm-admin
 
 Entered via `CAP a`.
 
 | Key | Action |
 |---|---|
-| `CAP a h` | macro intent `wm.stack.unstack` → 100ms → intent `wm.focus.cycle-next` |
-| `CAP a j` | intent `wm.stack.cycle-prev` |
-| `CAP a k` | intent `wm.stack.cycle-next` |
-| `CAP a l` | macro intent `wm.stack.unstack` → 100ms → intent `wm.focus.cycle-next` |
+| `CAP a l` | intent `wm.system.reload` |
+| `CAP a p` | intent `wm.layout.toggle-pause` |
+| `CAP a r` | intent `wm.layout.retile` |
+| `CAP a x` | intent `wm.layout.flip-horizontal` |
+| `CAP a y` | intent `wm.layout.flip-vertical` |
 
 ## App overlays
 
@@ -158,7 +158,9 @@ Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused 
 | `CAP m` | macro `C-spc` → `m` |
 | `CAP n` | macro `C-spc` → `n` |
 | `CAP o` | macro `C-spc` → `o` |
+| `CAP p` | macro `C-spc` → `p` |
 | `CAP q` | macro `C-spc` → `q` |
+| `CAP r` | macro `C-spc` → `r` |
 | `CAP t` | macro `C-spc` → `t` |
 | `CAP u` | macro `C-spc` → `u` |
 | `CAP v` | macro `C-spc` → `v` |

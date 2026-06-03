@@ -70,7 +70,11 @@ internal static class KanataEmitter
         // to themselves) instead of deadkey'ing it via ___ XX. Without this,
         // CAP + Shift + symbol (e.g. CAP + : for psmux command mode) loses the
         // shift event entirely.
-        var keys = new List<string> { "caps", "lsft", "rsft" };
+        //
+        // esc is included so wm-* layers can bind it to "exit to base"; in
+        // base-* layers it's not bound (so process-unmapped-keys passes it
+        // through normally).
+        var keys = new List<string> { "caps", "lsft", "rsft", "esc" };
         foreach (var b in k.WmBase.Bindings) Add(b.Key);
         foreach (var sm in k.SubModes)
             foreach (var b in sm.Bindings) Add(b.Key);
@@ -139,6 +143,10 @@ internal static class KanataEmitter
         var suffix = overlayName is null ? string.Empty : $"-{overlayName}";
         var contextLabel = overlayName is null ? "default context" : $"{overlayName} context";
         var overlayKeys = overlayBindings.Select(b => b.Key).ToHashSet();
+        // Both one-shot and toggle WM variants for a given context exit to the
+        // same base layer. The toggle uses caps; both bind esc as a "panic
+        // button" exit available from any WM layer.
+        var exitTarget = overlayName is null ? "base-default" : $"base-{overlayName}";
 
         // One-shot variant
         sb.AppendLine(CultureInfo.InvariantCulture, $";; wm{suffix}: one-shot WM mode ({contextLabel}; CAP single-tap)");
@@ -158,15 +166,15 @@ internal static class KanataEmitter
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
         }
+        EmitEscExit(sb, exitTarget);
         EmitShiftPassthrough(sb);
         sb.AppendLine("  ___ XX");
         sb.AppendLine(")");
         sb.AppendLine();
 
         // Toggle variant
-        var exitTarget = overlayName is null ? "base-default" : $"base-{overlayName}";
         sb.AppendLine(CultureInfo.InvariantCulture, $";; wm{suffix}-toggle: sticky WM mode ({contextLabel}; CAP double-tap)");
-        sb.AppendLine(CultureInfo.InvariantCulture, $";; CAPS exits to {exitTarget}.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $";; CAPS or ESC exits to {exitTarget}.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm{suffix}-toggle)");
         sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch {exitTarget})");
         foreach (var sm in k.SubModes)
@@ -184,6 +192,7 @@ internal static class KanataEmitter
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
         }
+        EmitEscExit(sb, exitTarget);
         EmitShiftPassthrough(sb);
         sb.AppendLine("  ___ XX");
         sb.AppendLine(")");
@@ -201,6 +210,18 @@ internal static class KanataEmitter
         sb.AppendLine("  rsft rsft");
     }
 
+    /// <summary>
+    /// Bind ESC inside a wm-* layer to switch back to <paramref name="exitTarget"/>.
+    /// For overlay-specific WM layers, <paramref name="exitTarget"/> is the
+    /// overlay's base; for sub-mode layers (which are shared across overlay
+    /// contexts), <paramref name="exitTarget"/> is base-default and the bridge
+    /// restores the correct overlay via deferred-restore.
+    /// </summary>
+    private static void EmitEscExit(StringBuilder sb, string exitTarget)
+    {
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  esc (layer-switch {exitTarget})");
+    }
+
     private static void EmitSubModeOneShot(StringBuilder sb, Keymap k)
     {
         foreach (var sm in k.SubModes)
@@ -211,6 +232,7 @@ internal static class KanataEmitter
             {
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
             }
+            EmitEscExit(sb, "base-default");
             sb.AppendLine("  ___ XX");
             sb.AppendLine(")");
             sb.AppendLine();
@@ -221,7 +243,7 @@ internal static class KanataEmitter
     {
         foreach (var sm in k.SubModes)
         {
-            sb.AppendLine(CultureInfo.InvariantCulture, $";; wm-{sm.Name}-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)");
+            sb.AppendLine(CultureInfo.InvariantCulture, $";; wm-{sm.Name}-toggle: sticky sub-mode (CAPS/ESC exit, peer sub-modes switchable)");
             sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm-{sm.Name}-toggle)");
             sb.AppendLine("  caps (layer-switch base-default)");
             // peer sub-mode entries
@@ -244,6 +266,7 @@ internal static class KanataEmitter
                 if (subModeBindingKeys.Contains(b.Key)) continue;     // sub-mode override wins
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
             }
+            EmitEscExit(sb, "base-default");
             sb.AppendLine("  ___ XX");
             sb.AppendLine(")");
             sb.AppendLine();

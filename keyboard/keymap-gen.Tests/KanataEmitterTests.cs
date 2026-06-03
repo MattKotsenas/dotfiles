@@ -85,14 +85,16 @@ public class KanataEmitterTests
     {
         var keymap = new KeymapBuilder()
             .Caps()
-            .Reserve(global: ["r", "p"], subModeEntries: ["a", "s", "d", "f", "e", "w"])
-            .WmBase(b => b.Intent("r", "wm.layout.retile"))
+            // Production reservation post-reorg: only tab/ as globals; a/s/d/f/e/w
+            // as sub-mode entries (a is wm-admin, which owns r/p/x/y/l).
+            .Reserve(global: ["tab", "/"], subModeEntries: ["a", "s", "d", "f", "e", "w"])
+            .WmBase(b => b.Intent("/", "system.cheatsheet"))
             .SubMode("focus", "f", b => b.Intent("h", "wm.focus.left"))
             .SubMode("workspace", "w", b => b.Intent("h", "wm.focus.left"))
             .SubMode("move", "d", b => b.Intent("h", "wm.focus.left"))
             .SubMode("stack", "s", b => b.Intent("h", "wm.focus.left"))
             .SubMode("resize", "e", b => b.Intent("h", "wm.focus.left"))
-            .SubMode("assemble", "a", b => b.Intent("h", "wm.focus.left"))
+            .SubMode("admin", "a", b => b.Intent("r", "wm.layout.retile"))
             .Overlay("term", b => b.PrefixAll("C-spc"))
             .Build();
 
@@ -102,10 +104,13 @@ public class KanataEmitterTests
         // Letters that ARE in the default set
         Assert.Contains("c (macro (unmod lctl spc) c)", output);
         Assert.Contains("h (macro (unmod lctl spc) h)", output);
-        // Reserved letters are NOT in the prefixed set
+        // r and p are now in the default set (no longer reserved globals);
+        // they reach the terminal overlay as Ctrl+Space + r / + p macros.
+        Assert.Contains("r (macro (unmod lctl spc) r)", output);
+        Assert.Contains("p (macro (unmod lctl spc) p)", output);
+        // Reserved sub-mode entry letters are still NOT in the prefixed set
         Assert.DoesNotContain("a (macro (unmod lctl spc) a)", output);
         Assert.DoesNotContain("w (macro (unmod lctl spc) w)", output);
-        Assert.DoesNotContain("r (macro (unmod lctl spc) r)", output);
     }
 
     [Fact]

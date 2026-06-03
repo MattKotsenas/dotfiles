@@ -96,7 +96,7 @@ public sealed class LayerIndicatorRule : IEventRule
             "move"      => ("MOVE",      ""),
             "stack"     => ("STACK",     ""),
             "resize"    => ("RESIZE",    ""),
-            "assemble"  => ("ASSEMBLE",  ""),
+            "admin"     => ("ADMIN",     ""),
             "workspace" => ("WORKSPACE", ""),
             _ => (body.ToUpperInvariant(), ""),
         };
@@ -123,7 +123,7 @@ public sealed class LayerIndicatorRule : IEventRule
         "MOVE"      => "\U0001F4E6",  // 📦 package
         "STACK"     => "\U0001F4DA",  // 📚 books
         "RESIZE"    => "\U0001F4D0",  // 📐 triangular ruler
-        "ASSEMBLE"  => "\U0001F9E9",  // 🧩 puzzle piece
+        "ADMIN"     => "\U0001F527",  // 🔧 wrench
         "WORKSPACE" => "\U0001F5C2",  // 🗂 card index
         _ => "\u2328",                // ⌨ keyboard (fallback)
     };

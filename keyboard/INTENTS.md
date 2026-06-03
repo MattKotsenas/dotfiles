@@ -75,6 +75,7 @@ NOT as intents.
 ### System
 | Intent | Action |
 |---|---|
+| `wm.system.reload` | komorebic replace-configuration |
 | `system.cheatsheet` | open keymap reference (wt + glow) |
 
 ## When NOT to add an intent

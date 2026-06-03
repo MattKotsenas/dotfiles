@@ -45,14 +45,17 @@ public class KanataAppOverlayTests
     }
 
     [Fact]
-    public async Task EdgeOverlay_GlobalRetile_StillFires()
+    public async Task EdgeOverlay_AdminRetile_StillFires()
     {
+        // After Phase 3 reorg, retile is in the wm-admin (CAP a) sub-mode.
+        // From Edge overlay context, CAP a r must still fire retile —
+        // proving the admin sub-mode is reachable through the overlay layer.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
                 .Layer("base-edge")
                 .Tap("caps")
-                .Tap("r")
+                .Tap("a").Tap("r")
                 .Settle());
 
         Assert.Contains("wm.layout.retile", output.Intents);

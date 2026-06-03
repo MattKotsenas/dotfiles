@@ -6,11 +6,11 @@
 )
 
 (defsrc
-  caps lsft rsft r p tab / up down left right 1 2 3 4 5 6 7 8 h j k l g t m x y q b c i n o u v z 0 9 , . \ - [ ] ;
+  caps lsft rsft esc tab / up down left right 1 2 3 4 5 6 7 8 h j k l g q t m n p u r x y b c i o v z 0 9 , . \ - [ ] ;
 )
 
 (defvar
-  os-timeout 2000
+  os-timeout 65535
   td-timeout 250
 )
 
@@ -29,22 +29,21 @@
   d (one-shot $os-timeout (layer-while-held wm-move))
   s (one-shot $os-timeout (layer-while-held wm-stack))
   e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-assemble))
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (one-shot $os-timeout (layer-while-held wm-admin))
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
   down down
   left left
   right right
+  esc (layer-switch base-default)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
 ;; wm-toggle: sticky WM mode (default context; CAP double-tap)
-;; CAPS exits to base-default.
+;; CAPS or ESC exits to base-default.
 (deflayermap (wm-toggle)
   caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
@@ -52,15 +51,14 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
   down down
   left left
   right right
+  esc (layer-switch base-default)
   lsft lsft
   rsft rsft
   ___ XX
@@ -81,9 +79,7 @@
   d (one-shot $os-timeout (layer-while-held wm-move))
   s (one-shot $os-timeout (layer-while-held wm-stack))
   e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-assemble))
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (one-shot $os-timeout (layer-while-held wm-admin))
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
@@ -101,7 +97,9 @@
   m (macro (unmod lctl spc) m)
   n (macro (unmod lctl spc) n)
   o (macro (unmod lctl spc) o)
+  p (macro (unmod lctl spc) p)
   q (macro (unmod lctl spc) q)
+  r (macro (unmod lctl spc) r)
   t (macro (unmod lctl spc) t)
   u (macro (unmod lctl spc) u)
   v (macro (unmod lctl spc) v)
@@ -125,13 +123,14 @@
   [ (macro (unmod lctl spc) [)
   ] (macro (unmod lctl spc) ])
   ; (macro (unmod lctl spc) ;)
+  esc (layer-switch base-terminal)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
 ;; wm-terminal-toggle: sticky WM mode (terminal context; CAP double-tap)
-;; CAPS exits to base-terminal.
+;; CAPS or ESC exits to base-terminal.
 (deflayermap (wm-terminal-toggle)
   caps (layer-switch base-terminal)
   w (layer-switch wm-workspace-toggle)
@@ -139,9 +138,7 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
@@ -159,7 +156,9 @@
   m (macro (unmod lctl spc) m)
   n (macro (unmod lctl spc) n)
   o (macro (unmod lctl spc) o)
+  p (macro (unmod lctl spc) p)
   q (macro (unmod lctl spc) q)
+  r (macro (unmod lctl spc) r)
   t (macro (unmod lctl spc) t)
   u (macro (unmod lctl spc) u)
   v (macro (unmod lctl spc) v)
@@ -183,6 +182,7 @@
   [ (macro (unmod lctl spc) [)
   ] (macro (unmod lctl spc) ])
   ; (macro (unmod lctl spc) ;)
+  esc (layer-switch base-terminal)
   lsft lsft
   rsft rsft
   ___ XX
@@ -203,9 +203,7 @@
   d (one-shot $os-timeout (layer-while-held wm-move))
   s (one-shot $os-timeout (layer-while-held wm-stack))
   e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-assemble))
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (one-shot $os-timeout (layer-while-held wm-admin))
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
@@ -214,13 +212,14 @@
   right right
   t (macro (unmod lctl t))
   v (macro (unmod lctl l) esc esc)
+  esc (layer-switch base-edge)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
 ;; wm-edge-toggle: sticky WM mode (edge context; CAP double-tap)
-;; CAPS exits to base-edge.
+;; CAPS or ESC exits to base-edge.
 (deflayermap (wm-edge-toggle)
   caps (layer-switch base-edge)
   w (layer-switch wm-workspace-toggle)
@@ -228,9 +227,7 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
@@ -239,6 +236,7 @@
   right right
   t (macro (unmod lctl t))
   v (macro (unmod lctl l) esc esc)
+  esc (layer-switch base-edge)
   lsft lsft
   rsft rsft
   ___ XX
@@ -259,9 +257,7 @@
   d (one-shot $os-timeout (layer-while-held wm-move))
   s (one-shot $os-timeout (layer-while-held wm-stack))
   e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-assemble))
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (one-shot $os-timeout (layer-while-held wm-admin))
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
@@ -286,13 +282,14 @@
   8 (macro (unmod lctl 8))
   y (macro (unmod lctl lsft a))
   n (macro (unmod lctl lsft j))
+  esc (layer-switch base-teams)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
 ;; wm-teams-toggle: sticky WM mode (teams context; CAP double-tap)
-;; CAPS exits to base-teams.
+;; CAPS or ESC exits to base-teams.
 (deflayermap (wm-teams-toggle)
   caps (layer-switch base-teams)
   w (layer-switch wm-workspace-toggle)
@@ -300,9 +297,7 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
@@ -327,6 +322,7 @@
   8 (macro (unmod lctl 8))
   y (macro (unmod lctl lsft a))
   n (macro (unmod lctl lsft j))
+  esc (layer-switch base-teams)
   lsft lsft
   rsft rsft
   ___ XX
@@ -347,9 +343,7 @@
   d (one-shot $os-timeout (layer-while-held wm-move))
   s (one-shot $os-timeout (layer-while-held wm-stack))
   e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-assemble))
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (one-shot $os-timeout (layer-while-held wm-admin))
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
@@ -368,13 +362,14 @@
   o (macro (unmod lalt lsft o))
   g (macro (unmod lctl g))
   u (macro f5)
+  esc (layer-switch base-codeflow)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
 ;; wm-codeflow-toggle: sticky WM mode (codeflow context; CAP double-tap)
-;; CAPS exits to base-codeflow.
+;; CAPS or ESC exits to base-codeflow.
 (deflayermap (wm-codeflow-toggle)
   caps (layer-switch base-codeflow)
   w (layer-switch wm-workspace-toggle)
@@ -382,9 +377,7 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
@@ -403,6 +396,7 @@
   o (macro (unmod lalt lsft o))
   g (macro (unmod lctl g))
   u (macro f5)
+  esc (layer-switch base-codeflow)
   lsft lsft
   rsft rsft
   ___ XX
@@ -418,6 +412,7 @@
   6 (push-msg "wm.workspace.focus.5")
   7 (push-msg "wm.workspace.focus.6")
   8 (push-msg "wm.workspace.focus.7")
+  esc (layer-switch base-default)
   ___ XX
 )
 
@@ -428,10 +423,7 @@
   k (push-msg "wm.focus.up")
   l (push-msg "wm.focus.right")
   g (push-msg "wm.focus.cycle-next")
-  t (push-msg "wm.layout.toggle-float")
-  m (push-msg "wm.layout.toggle-monocle")
-  x (push-msg "wm.layout.flip-horizontal")
-  y (push-msg "wm.layout.flip-vertical")
+  esc (layer-switch base-default)
   ___ XX
 )
 
@@ -442,6 +434,8 @@
   k (push-msg "wm.move.up")
   l (push-msg "wm.move.right")
   q (push-msg "wm.move.promote")
+  t (push-msg "wm.layout.toggle-float")
+  m (push-msg "wm.layout.toggle-monocle")
   1 (push-msg "wm.workspace.move-to.0")
   2 (push-msg "wm.workspace.move-to.1")
   3 (push-msg "wm.workspace.move-to.2")
@@ -450,6 +444,7 @@
   6 (push-msg "wm.workspace.move-to.5")
   7 (push-msg "wm.workspace.move-to.6")
   8 (push-msg "wm.workspace.move-to.7")
+  esc (layer-switch base-default)
   ___ XX
 )
 
@@ -459,6 +454,10 @@
   j (push-msg "wm.stack.down")
   k (push-msg "wm.stack.up")
   l (push-msg "wm.stack.right")
+  n (push-msg "wm.stack.cycle-next")
+  p (push-msg "wm.stack.cycle-prev")
+  u (push-msg "wm.stack.unstack")
+  esc (layer-switch base-default)
   ___ XX
 )
 
@@ -468,19 +467,22 @@
   j (push-msg "wm.resize.vertical-decrease")
   k (push-msg "wm.resize.vertical-increase")
   l (push-msg "wm.resize.horizontal-increase")
+  esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-assemble: one-shot sub-mode (auto-exits after one action)
-(deflayermap (wm-assemble)
-  h (macro (push-msg "wm.stack.unstack") 100 (push-msg "wm.focus.cycle-next"))
-  j (push-msg "wm.stack.cycle-prev")
-  k (push-msg "wm.stack.cycle-next")
-  l (macro (push-msg "wm.stack.unstack") 100 (push-msg "wm.focus.cycle-next"))
+;; wm-admin: one-shot sub-mode (auto-exits after one action)
+(deflayermap (wm-admin)
+  r (push-msg "wm.layout.retile")
+  p (push-msg "wm.layout.toggle-pause")
+  x (push-msg "wm.layout.flip-horizontal")
+  y (push-msg "wm.layout.flip-vertical")
+  l (push-msg "wm.system.reload")
+  esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-workspace-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
+;; wm-workspace-toggle: sticky sub-mode (CAPS/ESC exit, peer sub-modes switchable)
 (deflayermap (wm-workspace-toggle)
   caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
@@ -488,7 +490,7 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
+  a (layer-switch wm-admin-toggle)
   1 (push-msg "wm.workspace.focus.0")
   2 (push-msg "wm.workspace.focus.1")
   3 (push-msg "wm.workspace.focus.2")
@@ -497,18 +499,17 @@
   6 (push-msg "wm.workspace.focus.5")
   7 (push-msg "wm.workspace.focus.6")
   8 (push-msg "wm.workspace.focus.7")
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
   down down
   left left
   right right
+  esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-focus-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
+;; wm-focus-toggle: sticky sub-mode (CAPS/ESC exit, peer sub-modes switchable)
 (deflayermap (wm-focus-toggle)
   caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
@@ -516,28 +517,23 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
+  a (layer-switch wm-admin-toggle)
   h (push-msg "wm.focus.left")
   j (push-msg "wm.focus.down")
   k (push-msg "wm.focus.up")
   l (push-msg "wm.focus.right")
   g (push-msg "wm.focus.cycle-next")
-  t (push-msg "wm.layout.toggle-float")
-  m (push-msg "wm.layout.toggle-monocle")
-  x (push-msg "wm.layout.flip-horizontal")
-  y (push-msg "wm.layout.flip-vertical")
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
   down down
   left left
   right right
+  esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-move-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
+;; wm-move-toggle: sticky sub-mode (CAPS/ESC exit, peer sub-modes switchable)
 (deflayermap (wm-move-toggle)
   caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
@@ -545,12 +541,14 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
+  a (layer-switch wm-admin-toggle)
   h (push-msg "wm.move.left")
   j (push-msg "wm.move.down")
   k (push-msg "wm.move.up")
   l (push-msg "wm.move.right")
   q (push-msg "wm.move.promote")
+  t (push-msg "wm.layout.toggle-float")
+  m (push-msg "wm.layout.toggle-monocle")
   1 (push-msg "wm.workspace.move-to.0")
   2 (push-msg "wm.workspace.move-to.1")
   3 (push-msg "wm.workspace.move-to.2")
@@ -559,18 +557,17 @@
   6 (push-msg "wm.workspace.move-to.5")
   7 (push-msg "wm.workspace.move-to.6")
   8 (push-msg "wm.workspace.move-to.7")
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
   down down
   left left
   right right
+  esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-stack-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
+;; wm-stack-toggle: sticky sub-mode (CAPS/ESC exit, peer sub-modes switchable)
 (deflayermap (wm-stack-toggle)
   caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
@@ -578,23 +575,25 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
+  a (layer-switch wm-admin-toggle)
   h (push-msg "wm.stack.left")
   j (push-msg "wm.stack.down")
   k (push-msg "wm.stack.up")
   l (push-msg "wm.stack.right")
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
+  n (push-msg "wm.stack.cycle-next")
+  p (push-msg "wm.stack.cycle-prev")
+  u (push-msg "wm.stack.unstack")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
   down down
   left left
   right right
+  esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-resize-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
+;; wm-resize-toggle: sticky sub-mode (CAPS/ESC exit, peer sub-modes switchable)
 (deflayermap (wm-resize-toggle)
   caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
@@ -602,43 +601,42 @@
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
+  a (layer-switch wm-admin-toggle)
   h (push-msg "wm.resize.horizontal-decrease")
   j (push-msg "wm.resize.vertical-decrease")
   k (push-msg "wm.resize.vertical-increase")
   l (push-msg "wm.resize.horizontal-increase")
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
   down down
   left left
   right right
+  esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-assemble-toggle: sticky sub-mode (CAPS exits, peer sub-modes switchable)
-(deflayermap (wm-assemble-toggle)
+;; wm-admin-toggle: sticky sub-mode (CAPS/ESC exit, peer sub-modes switchable)
+(deflayermap (wm-admin-toggle)
   caps (layer-switch base-default)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
-  a (layer-switch wm-assemble-toggle)
-  h (macro (push-msg "wm.stack.unstack") 100 (push-msg "wm.focus.cycle-next"))
-  j (push-msg "wm.stack.cycle-prev")
-  k (push-msg "wm.stack.cycle-next")
-  l (macro (push-msg "wm.stack.unstack") 100 (push-msg "wm.focus.cycle-next"))
+  a (layer-switch wm-admin-toggle)
   r (push-msg "wm.layout.retile")
   p (push-msg "wm.layout.toggle-pause")
+  x (push-msg "wm.layout.flip-horizontal")
+  y (push-msg "wm.layout.flip-vertical")
+  l (push-msg "wm.system.reload")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
   down down
   left left
   right right
+  esc (layer-switch base-default)
   ___ XX
 )
 

@@ -74,15 +74,28 @@ public class KanataBehaviorTests
     }
 
     [Theory]
-    [InlineData("j", "wm.stack.cycle-prev")]
-    [InlineData("k", "wm.stack.cycle-next")]
-    public async Task OneShot_AssembleCycle_DispatchesStackCycle(string direction, string expectedIntent)
+    [InlineData("p", "wm.stack.cycle-prev")]
+    [InlineData("n", "wm.stack.cycle-next")]
+    public async Task OneShot_StackCycle_DispatchesStackCycle(string key, string expectedIntent)
     {
+        // After Phase 3 reorg, cycle ops live in the consolidated wm-stack
+        // sub-mode (was wm-assemble in Phase 2). Keys are n/p not j/k.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
-            new SimInput().Tap("caps").Tap("a").Tap(direction).Settle());
+            new SimInput().Tap("caps").Tap("s").Tap(key).Settle());
 
         Assert.Contains(expectedIntent, output.Intents);
+    }
+
+    [Fact]
+    public async Task OneShot_StackUnstack_DispatchesUnstack()
+    {
+        // Phase 3: unstack moved from wm-assemble (h/l) to wm-stack (u).
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput().Tap("caps").Tap("s").Tap("u").Settle());
+
+        Assert.Contains("wm.stack.unstack", output.Intents);
     }
 
     // ============================================================
@@ -121,41 +134,43 @@ public class KanataBehaviorTests
     }
 
     // ============================================================
-    // Standalone actions in wm-base (truly global keys)
+    // Admin sub-mode (Phase 3): retile / pause / flip / reload moved
+    // from wm-base globals to the wm-admin (CAP a) sub-mode.
     // ============================================================
 
     [Theory]
     [InlineData("r", "wm.layout.retile")]
     [InlineData("p", "wm.layout.toggle-pause")]
-    public async Task OneShot_GlobalAction_DispatchesExpectedIntent(string key, string expectedIntent)
+    [InlineData("x", "wm.layout.flip-horizontal")]
+    [InlineData("y", "wm.layout.flip-vertical")]
+    [InlineData("l", "wm.system.reload")]
+    public async Task OneShot_AdminSubMod_DispatchesExpectedIntent(string key, string expectedIntent)
     {
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
-            new SimInput().Tap("caps").Tap(key).Settle());
+            new SimInput().Tap("caps").Tap("a").Tap(key).Settle());
 
         Assert.Contains(expectedIntent, output.Intents);
     }
 
     // ============================================================
-    // Phase 2: actions that moved from wm-base into wm-focus sub-mode
+    // Phase 3: t/m moved from wm-focus to wm-move (window-state ops).
     // ============================================================
 
     [Theory]
     [InlineData("t", "wm.layout.toggle-float")]
     [InlineData("m", "wm.layout.toggle-monocle")]
-    [InlineData("x", "wm.layout.flip-horizontal")]
-    [InlineData("y", "wm.layout.flip-vertical")]
-    public async Task OneShot_FocusSubMod_LayoutActions_Dispatch(string key, string expectedIntent)
+    public async Task OneShot_MoveSubMod_WindowStateActions_Dispatch(string key, string expectedIntent)
     {
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
-            new SimInput().Tap("caps").Tap("f").Tap(key).Settle());
+            new SimInput().Tap("caps").Tap("d").Tap(key).Settle());
 
         Assert.Contains(expectedIntent, output.Intents);
     }
 
     // ============================================================
-    // Phase 2: bare keys in wm-base no longer fire intents
+    // Phase 2/3: bare keys in wm-base no longer fire intents
     // ============================================================
 
     [Theory]
@@ -166,10 +181,15 @@ public class KanataBehaviorTests
     [InlineData("1")]
     [InlineData("t")]
     [InlineData("m")]
+    [InlineData("r")]  // Phase 3: r moved from wm-base global to wm-admin
+    [InlineData("p")]  // Phase 3: p moved from wm-base global to wm-admin
+    [InlineData("x")]  // Phase 3: x moved from wm-focus to wm-admin
+    [InlineData("y")]  // Phase 3: y moved from wm-focus to wm-admin
     public async Task OneShot_BareKey_NotInWmBase_FiresNoIntent(string key)
     {
-        // After Phase 2, wm-base does not bind these directly; pressing them
-        // inside one-shot WM mode is a deadkey (no-op).
+        // After the Phase 2/3 reorg, wm-base only retains tab and / as globals.
+        // Pressing other keys inside one-shot WM mode without a sub-mode is a
+        // deadkey (no-op).
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput().Tap("caps").Tap(key).Settle());
@@ -248,6 +268,82 @@ public class KanataBehaviorTests
             new SimInput().Tap("h").Tap("e").Tap("l").Tap("l").Tap("o").Settle());
 
         // No intents should fire when just typing
+        Assert.Empty(output.Intents);
+    }
+
+    // ============================================================
+    // ESC = "panic button" exit from any wm-* layer back to a base layer.
+    // Verified by checking that a subsequent letter passes through to the OS;
+    // inside wm-* layers, unbound letters deadkey via ___ XX, so a letter
+    // making it out proves we're back in a base layer.
+    // ============================================================
+
+    [Fact]
+    public async Task EscFromStickyWmToggle_ExitsToBaseDefault()
+    {
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Tap("caps").Tap("caps")  // sticky wm-toggle
+                .Tap("esc")                // exit
+                .Tap("h")                  // h must pass through to OS
+                .Settle());
+
+        // No intent fired and h reached the OS = we're back in base-default.
+        Assert.Empty(output.Intents);
+        Assert.Contains(output.KeyEvents, e => e.Direction == "↓" && e.Key.Equals("H", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task EscFromOneShotWm_ExitsToBaseDefault()
+    {
+        // Single-tap CAP enters one-shot wm (held layer). Pressing ESC should
+        // explicitly exit to base-default (instead of just waiting for the
+        // one-shot to expire).
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Tap("caps")
+                .Tap("esc")
+                .Tap("h")
+                .Settle());
+
+        Assert.Empty(output.Intents);
+        Assert.Contains(output.KeyEvents, e => e.Direction == "↓" && e.Key.Equals("H", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task EscFromStickySubModeToggle_ExitsToBaseDefault()
+    {
+        // CAPCAP f enters sticky wm-focus-toggle. ESC should land us back in
+        // base-default (the shared sub-mode exit; bridge restores overlay).
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Tap("caps").Tap("caps")
+                .Tap("f")          // enter wm-focus-toggle
+                .Tap("esc")        // exit
+                .Tap("h")          // h must pass through to OS
+                .Settle());
+
+        // h passing through proves we exited the sub-mode toggle. We should
+        // NOT have fired wm.focus.left (which would be the wm-focus-toggle
+        // binding for h).
+        Assert.DoesNotContain("wm.focus.left", output.Intents);
+        Assert.Contains(output.KeyEvents, e => e.Direction == "↓" && e.Key.Equals("H", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task EscIsInactiveOutsideWmMode_PassesThroughToApp()
+    {
+        // In base-default (no wm mode), ESC must not be intercepted; it should
+        // reach the focused app so Vim, dialogs, etc. still work.
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput().Tap("esc").Settle());
+
+        // The literal ESC keystroke should have been emitted to the OS.
+        Assert.Contains(output.KeyEvents, e => e.Direction == "↓" && e.Key.Equals("Escape", StringComparison.OrdinalIgnoreCase));
         Assert.Empty(output.Intents);
     }
 }

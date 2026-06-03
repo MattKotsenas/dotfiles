@@ -99,14 +99,17 @@ public class KanataTerminalOverlayTests
     }
 
     [Fact]
-    public async Task TerminalOverlay_DoubleCap_GlobalRetile_StillFires()
+    public async Task TerminalOverlay_DoubleCap_AdminRetile_StillFires()
     {
+        // After Phase 3 reorg, retile lives in the wm-admin (CAP a) sub-mode.
+        // From sticky terminal WM mode, CAP CAP a r should still fire retile —
+        // proving wm-admin is reachable from the overlay's sticky toggle.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
                 .Layer("base-terminal")
                 .Tap("caps").Tap("caps")
-                .Tap("r")
+                .Tap("a").Tap("r")
                 .Settle());
 
         Assert.Contains("wm.layout.retile", output.Intents);
@@ -124,6 +127,33 @@ public class KanataTerminalOverlayTests
                 .Settle());
 
         Assert.Equal("base-terminal", output.FinalLayer);
+    }
+
+    [Fact]
+    public async Task TerminalOverlay_DoubleCap_ThenEsc_ExitsToBaseTerminal()
+    {
+        // ESC from any wm-* layer should exit to the appropriate base. For
+        // overlay-context sticky (wm-terminal-toggle), that's base-terminal.
+        // Verified by checking 'h' subsequently passes through as the psmux
+        // C-spc h macro (base-terminal's behavior), not as a deadkey.
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-terminal")
+                .Tap("caps").Tap("caps")  // sticky wm-terminal-toggle
+                .Tap("esc")                // exit
+                .Tap("caps").Tap("h")      // back in base-terminal, CAP h fires C-spc h
+                .Settle());
+
+        // Single-tap CAP h in base-terminal fires the psmux prefix macro:
+        // Ctrl down, Space down, Space up, Ctrl up, H. If ESC had failed and
+        // we were still in wm-terminal-toggle, the second `caps` would have
+        // exited (since CAPS is the toggle's exit) and CAP h wouldn't fire
+        // the macro the same way.
+        var keys = output.KeyEvents;
+        Assert.Contains(new KeyEvent("↓", "LCtrl"), keys);
+        Assert.Contains(new KeyEvent("↓", "Space"), keys);
+        Assert.Contains(keys, e => e.Direction == "↓" && e.Key.Equals("H", StringComparison.OrdinalIgnoreCase));
     }
 
     // ---------------- Single-tap CAP + Shift + symbol = shifted symbol ----------------

@@ -199,8 +199,10 @@ public sealed class LayerBuilder(string name)
 
     private static readonly string[] DefaultPrefixKeys =
     [
-        // Letters that are not reserved by wm-base (excludes a, s, d, f, e, w, r, p).
-        "b", "c", "g", "h", "i", "j", "k", "l", "m", "n", "o", "q", "t", "u", "v", "x", "y", "z",
+        // Letters that are not reserved by wm-base sub-mode entries (a/s/d/f/e/w).
+        // Includes r and p which used to be wm-base globals but moved into the
+        // wm-admin (CAP a) sub-mode in Phase 3 reorg — they're available again.
+        "b", "c", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "t", "u", "v", "x", "y", "z",
         // Digits — emitted as (unicode "N") since kanata's macro grammar reads bare
         // integers as ms-delays.
         "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",

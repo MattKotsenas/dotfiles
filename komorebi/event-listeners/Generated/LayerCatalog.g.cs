@@ -41,6 +41,6 @@ public static class LayerCatalog
     public const string WmStackToggle = "wm-stack-toggle";
     public const string WmResize = "wm-resize";
     public const string WmResizeToggle = "wm-resize-toggle";
-    public const string WmAssemble = "wm-assemble";
-    public const string WmAssembleToggle = "wm-assemble-toggle";
+    public const string WmAdmin = "wm-admin";
+    public const string WmAdminToggle = "wm-admin-toggle";
 }

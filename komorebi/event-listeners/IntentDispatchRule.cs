@@ -113,6 +113,7 @@ public sealed class IntentDispatchRule : IEventRule
         map["wm.layout.retile"] = () => Komorebic("retile");
 
         // ----- System -----
+        map["wm.system.reload"] = () => Komorebic("replace-configuration");
         map["system.cheatsheet"] = OpenCheatsheet;
 
         return map;

@@ -19,7 +19,9 @@ public class LayerIndicatorRuleTests
     [InlineData("wm-stack-toggle", "\U0001F4DA STACK \u2022")]
     [InlineData("wm-resize", "\U0001F4D0 RESIZE")]
     [InlineData("wm-move", "\U0001F4E6 MOVE")]
-    [InlineData("wm-assemble", "\U0001F9E9 ASSEMBLE")]
+    [InlineData("wm-assemble", "\u2328 ASSEMBLE")]   // wm-assemble was removed in Phase 3 reorg; falls back to the generic ⌨ keyboard emoji
+    [InlineData("wm-admin", "\U0001F527 ADMIN")]
+    [InlineData("wm-admin-toggle", "\U0001F527 ADMIN \u2022")]
     [InlineData("wm-workspace", "\U0001F5C2 WORKSPACE")]
     [InlineData("wm-terminal", "\U0001F4BB TERM")]
     [InlineData("wm-terminal-toggle", "\U0001F4BB TERM \u2022")]

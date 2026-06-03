@@ -10,13 +10,20 @@ namespace KeymapGen;
 internal static class ProductionKeymap
 {
     public static Keymap Build() => new KeymapBuilder()
-        .Caps(tapDanceMs: 250, oneShotMs: 2000)
+        // os-timeout=65535: kanata 1.11.0 parses one-shot timeout as a non-zero
+        // u16, so 65535ms (~65s) is the maximum. Long enough that a single
+        // CAP tap effectively "stays armed until the user presses a key" in
+        // normal use; a fresh CAP tap refreshes it on the rare occasion it
+        // does expire.
+        .Caps(tapDanceMs: 250, oneShotMs: 65535)
         .Reserve(
-            global: ["r", "p", "tab", "/"],
+            // wm-base globals after Phase 3 reorg: only tab + / remain.
+            // r/p/x/y moved into the wm-admin (CAP a) sub-mode.
+            global: ["tab", "/"],
+            // Sub-mode entries: s = stack (now also covers assemble), d = move,
+            // f = focus, e = resize, w = workspace, a = admin.
             subModeEntries: ["a", "s", "d", "f", "e", "w"])
         .WmBase(b => b
-            .Intent("r", "wm.layout.retile")
-            .Intent("p", "wm.layout.toggle-pause")
             .Intent("tab", "wm.focus.last-workspace")
             .Intent("/", "system.cheatsheet")
             // Arrow passthrough: arrows always do "their thing" even in WM mode
@@ -31,45 +38,49 @@ internal static class ProductionKeymap
         .SubMode("workspace", "w", b => b
             .Workspaces("wm.workspace.focus.{0}", 0, 7))
         .SubMode("focus", "f", b => b
+            // Pure focus navigation. Window-state ops (toggle-float,
+            // toggle-monocle) moved to wm-move; workspace layout ops
+            // (flip-horizontal/vertical) moved to wm-admin.
             .Intent("h", "wm.focus.left")
             .Intent("j", "wm.focus.down")
             .Intent("k", "wm.focus.up")
             .Intent("l", "wm.focus.right")
-            // moved here from wm-base: cycle-focus is a focus op
-            .Intent("g", "wm.focus.cycle-next")
-            // moved here in Phase 2: float/monocle/flip live under focus
-            .Intent("t", "wm.layout.toggle-float")
-            .Intent("m", "wm.layout.toggle-monocle")
-            .Intent("x", "wm.layout.flip-horizontal")
-            .Intent("y", "wm.layout.flip-vertical"))
+            .Intent("g", "wm.focus.cycle-next"))
         .SubMode("move", "d", b => b
+            // Ops acting ON the focused window: relocate, promote, send to
+            // workspace, toggle float/monocle.
             .Intent("h", "wm.move.left")
             .Intent("j", "wm.move.down")
             .Intent("k", "wm.move.up")
             .Intent("l", "wm.move.right")
             .Intent("q", "wm.move.promote")
+            .Intent("t", "wm.layout.toggle-float")
+            .Intent("m", "wm.layout.toggle-monocle")
             .Workspaces("wm.workspace.move-to.{0}", 0, 7))
         .SubMode("stack", "s", b => b
+            // Consolidated stack sub-mode: all 4 directional stack ops + cycle
+            // within the focused stack + unstack. (Replaces the old separate
+            // wm-assemble sub-mode whose `a` entry is now wm-admin.)
             .Intent("h", "wm.stack.left")
             .Intent("j", "wm.stack.down")
             .Intent("k", "wm.stack.up")
-            .Intent("l", "wm.stack.right"))
+            .Intent("l", "wm.stack.right")
+            .Intent("n", "wm.stack.cycle-next")
+            .Intent("p", "wm.stack.cycle-prev")
+            .Intent("u", "wm.stack.unstack"))
         .SubMode("resize", "e", b => b
             .Intent("h", "wm.resize.horizontal-decrease")
             .Intent("j", "wm.resize.vertical-decrease")
             .Intent("k", "wm.resize.vertical-increase")
             .Intent("l", "wm.resize.horizontal-increase"))
-        .SubMode("assemble", "a", b => b
-            .Macro("h", m => m
-                .Intent("wm.stack.unstack")
-                .Delay(100)
-                .Intent("wm.focus.cycle-next"))
-            .Intent("j", "wm.stack.cycle-prev")
-            .Intent("k", "wm.stack.cycle-next")
-            .Macro("l", m => m
-                .Intent("wm.stack.unstack")
-                .Delay(100)
-                .Intent("wm.focus.cycle-next")))
+        .SubMode("admin", "a", b => b
+            // Rare workspace/system ops. Bumped from wm-base globals so the
+            // global keyspace stays minimal (only tab + / now).
+            .Intent("r", "wm.layout.retile")
+            .Intent("p", "wm.layout.toggle-pause")
+            .Intent("x", "wm.layout.flip-horizontal")
+            .Intent("y", "wm.layout.flip-vertical")
+            .Intent("l", "wm.system.reload"))
         // -------------------------------------------------------------------
         // App overlays. Routing rules live in event-listeners/AppLayerRouter.cs
         // -------------------------------------------------------------------
@@ -78,7 +89,7 @@ internal static class ProductionKeymap
             // psmux prefix) then the key, so psmux config is the single source
             // of truth for what each key does (pane nav h/j/k/l, new window c,
             // command prompt ;, search /, kill x, etc.). wm-base reserved keys
-            // (a/s/d/f/e/w sub-modes; r/p/tab/ globals; arrows) still do
+            // (a/s/d/f/e/w sub-modes; tab/ globals; arrows) still do
             // their WM thing. Active via single-tap (one-shot wm-terminal) or
             // double-tap (sticky wm-terminal-toggle) CAP in Windows Terminal.
             .Describe("Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused terminal. " +
