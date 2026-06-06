@@ -32,7 +32,6 @@ public static class Program
         builder.Services.AddHostedService(sp => sp.GetRequiredService<KanataEventListenerService>());
 
         // Register event rules
-        builder.Services.AddSingleton<IEventRule, EmptyTeamsWindowRule>();
         builder.Services.AddSingleton<IEventRule, LayerIndicatorRule>();
         builder.Services.AddSingleton<IEventRule, IntentDispatchRule>();
         builder.Services.AddSingleton<IEventRule, AppLayerRouter>();
