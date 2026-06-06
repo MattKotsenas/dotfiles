@@ -50,9 +50,9 @@ properties:
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install NVM for Windows
+        description: Install Volta (Node toolchain manager)
       settings:
-        id: CoreyButler.NVMforWindows
+        id: Volta.Volta
         source: winget
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
