@@ -62,6 +62,10 @@
     stdin: true
     stdout: true
     stderr: true
+  - command: pwsh -NoProfile -Command "[Environment]::SetEnvironmentVariable('EDITOR', 'nvim', 'User')"
+    description: Setting EDITOR=nvim (User scope)
+    stdout: true
+    stderr: true
   - command: >-
       pwsh -NoProfile -Command "
       $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
