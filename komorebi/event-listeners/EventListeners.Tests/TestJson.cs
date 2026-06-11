@@ -24,14 +24,16 @@ internal static class TestJson
 
     /// <summary>
     /// Builds a komorebi state JSON with the given tiled windows. Each tiled window becomes
-    /// its own container. Optionally include floating windows.
+    /// its own container. Optionally include floating windows, or a monocle'd container
+    /// that takes focus precedence over the tiled containers.
     /// </summary>
     public static JsonElement State(
         IEnumerable<WindowSpec> tiled,
         IEnumerable<WindowSpec>? floating = null,
         int focusedContainerIndex = 0,
         int focusedFloatingIndex = 0,
-        string layer = "Tiling")
+        string layer = "Tiling",
+        WindowSpec? monocle = null)
     {
         var tiledList = tiled.ToList();
         var floatingList = (floating ?? []).ToList();
@@ -46,6 +48,17 @@ internal static class TestJson
             """));
 
         var floatingElements = string.Join(",", floatingList.Select(Window));
+
+        var monocleJson = monocle is null
+            ? "null"
+            : $$"""
+              {
+                "windows": {
+                  "focused": 0,
+                  "elements": [{{Window(monocle)}}]
+                }
+              }
+              """;
 
         var json = $$"""
         {
@@ -62,6 +75,7 @@ internal static class TestJson
                         "focused": {{focusedContainerIndex}},
                         "elements": [{{containers}}]
                       },
+                      "monocle_container": {{monocleJson}},
                       "floating_windows": {
                         "focused": {{focusedFloatingIndex}},
                         "elements": [{{floatingElements}}]

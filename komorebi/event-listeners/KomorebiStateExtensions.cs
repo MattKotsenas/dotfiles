@@ -9,7 +9,8 @@ namespace EventListeners;
 public static class KomorebiStateExtensions
 {
     /// <summary>
-    /// Yields every window across all monitors and workspaces, both tiled containers and floating layer.
+    /// Yields every window across all monitors and workspaces: tiled containers,
+    /// the monocle'd container (when active), and the floating layer.
     /// Returns an empty sequence on malformed state rather than throwing.
     /// </summary>
     public static IEnumerable<KomorebiWindow> EnumerateAllWindows(this JsonElement state)
@@ -42,6 +43,23 @@ public static class KomorebiStateExtensions
                                     yield return parsed;
                                 }
                             }
+                        }
+                    }
+                }
+
+                // Monocle mode pulls a container out of `containers` and stores
+                // it here (with monocle_container_restore_idx). Yield its windows
+                // so AppLayerRouter's hwnd -> exe lookup can find the focused app.
+                if (workspace.TryGetProperty("monocle_container", out var monocle) &&
+                    monocle.ValueKind == JsonValueKind.Object &&
+                    TryGetElements(monocle, "windows", out var monocleWindows))
+                {
+                    foreach (var window in monocleWindows)
+                    {
+                        var parsed = TryParseWindow(window);
+                        if (parsed is not null)
+                        {
+                            yield return parsed;
                         }
                     }
                 }
@@ -80,6 +98,20 @@ public static class KomorebiStateExtensions
         if (layer == "Floating")
         {
             return GetFocusedFromCollection(workspace, "floating_windows");
+        }
+
+        // Monocle takes precedence over containers: when a window is monocle'd,
+        // it's pulled out of `containers` into `monocle_container`. The stale
+        // `containers.focused` index would otherwise point at whichever container
+        // was last focused before monocle, leading downstream consumers (e.g.
+        // AppLayerRouter) to route to the wrong app's overlay.
+        if (workspace.TryGetProperty("monocle_container", out var monocle) &&
+            monocle.ValueKind == JsonValueKind.Object &&
+            monocle.TryGetProperty("windows", out var monocleWindows) &&
+            TryGetFocusedElement(monocleWindows, out var monocleWindow) &&
+            monocleWindow.TryGetProperty("hwnd", out var monocleHwnd))
+        {
+            return monocleHwnd.GetInt64();
         }
 
         if (workspace.TryGetProperty("containers", out var containers) &&

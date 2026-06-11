@@ -124,4 +124,51 @@ public class KomorebiStateExtensionsTests
 
         Assert.Null(state.GetFocusedHwnd());
     }
+
+    [Fact]
+    public void GetFocusedHwnd_MonocleActive_ReturnsMonocledWindowNotStaleContainerFocus()
+    {
+        // Komorebi keeps the previously tiled containers around when monocle is
+        // active (along with monocle_container_restore_idx). The `focused` index
+        // on containers can point at any window that was previously focused;
+        // only monocle_container reflects what's actually on screen. Without
+        // this precedence, AppLayerRouter would route to the stale container's
+        // overlay (e.g. base-edge) instead of the visible monocle'd app.
+        var state = TestJson.State(
+            tiled: [new(11, "edge", "msedge.exe")],
+            monocle: new WindowSpec(99, "psmux", "WindowsTerminal.exe"));
+
+        Assert.Equal(99L, state.GetFocusedHwnd());
+    }
+
+    [Fact]
+    public void EnumerateAllWindows_MonocleActive_IncludesMonocledWindow()
+    {
+        // The monocle'd window is in monocle_container, not containers.
+        // AppLayerRouter looks up the focused hwnd in the enumeration to find
+        // the exe -- if the monocle'd window isn't yielded, the lookup fails
+        // and the focus context ends up with exe=null.
+        var state = TestJson.State(
+            tiled: [new(11, "edge", "msedge.exe")],
+            monocle: new WindowSpec(99, "psmux", "WindowsTerminal.exe"));
+
+        var hwnds = state.EnumerateAllWindows().Select(w => w.Hwnd).ToHashSet();
+
+        Assert.Equal(new HashSet<long> { 11L, 99L }, hwnds);
+    }
+
+    [Fact]
+    public void GetFocusedHwnd_MonocleActive_FloatingLayerStillTakesPrecedence()
+    {
+        // If the user has switched the workspace layer to Floating, focus is
+        // on a floating window even if a monocle'd container exists in the
+        // tiled stack.
+        var state = TestJson.State(
+            tiled: [new(11, "tile", "a.exe")],
+            floating: [new(44, "float", "b.exe")],
+            layer: "Floating",
+            monocle: new WindowSpec(99, "psmux", "WindowsTerminal.exe"));
+
+        Assert.Equal(44L, state.GetFocusedHwnd());
+    }
 }
