@@ -5,6 +5,7 @@ Requires = ["komorebi"]
 
 [Service]
 Kind = "Simple"
+Autostart = true
 Environment = [[
     "KOMOREBI_CONFIG_HOME",
     "$USERPROFILE/.config/komorebi",

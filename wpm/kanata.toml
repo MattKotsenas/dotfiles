@@ -4,6 +4,7 @@ Description = "software keyboard remapper"
 
 [Service]
 Kind = "Simple"
+Autostart = true
 Restart = "OnFailure"
 RestartSec = 2
 

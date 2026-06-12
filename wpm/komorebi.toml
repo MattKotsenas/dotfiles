@@ -7,6 +7,7 @@ Description = "tiling window management for Windows"
 # Start-Process, which avoids the AllowSetForegroundWindow failure that
 # happens when wpmd spawns komorebi.exe directly).
 Kind = "Forking"
+Autostart = true
 Restart = "OnFailure"
 RestartSec = 2
 
