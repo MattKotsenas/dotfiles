@@ -1,20 +1,34 @@
 <#
 .SYNOPSIS
-Emits OSC 133 (state markers) + OSC 133;C;cmdline_url= (kitty-style command
-identity) from pwsh, for terminal multiplexers and terminals that consume
+Emits OSC 133;C;cmdline_url= (kitty-style command identity) and OSC 133;D
+(command done) from pwsh, for terminal multiplexers that consume
 shell-integration signals (psmux#299, WezTerm, kitty, ghostty, etc.).
 
 .DESCRIPTION
-Two hooks:
-  * `prompt` is wrapped to emit OSC 133;D (previous command done),
-    OSC 133;A (prompt start), and OSC 133;B (prompt end / input start).
-  * The Enter key handler is replaced to emit OSC 133;C;cmdline_url=<encoded>
-    immediately after AcceptLine, capturing the literal command.
+Two hooks, neither of which wraps `$function:prompt`:
 
-OSC 7 (cwd) is NOT emitted here — oh-my-posh handles that via its
-`pwd: osc7` setting in matt.omp.json. If you change `pwd` to `osc99` or
-remove it, psmux loses cwd visibility; the right fix is to keep `pwd: osc7`
-in OMP, not to add OSC 7 emission back here.
+  * Enter / ViAcceptLine handlers are replaced to emit
+    OSC 133;C;cmdline_url=<percent-encoded command> immediately after
+    AcceptLine, capturing the literal command and setting an
+    "in-execution" flag.
+
+  * A `PowerShell.OnIdle` engine event handler emits OSC 133;D when the
+    runspace becomes idle and the in-execution flag is set, clearing the
+    flag. OnIdle fires reliably between commands regardless of who owns
+    `$function:prompt`, which is what makes this robust against profile
+    races (e.g. zoxide / oh-my-posh / pay-respects each wrap prompt at
+    undefined times during async init).
+
+OSC 133;A (prompt start) and OSC 133;B (input area start) are NOT emitted.
+They require wrapping `$function:prompt`, which is brittle in this profile,
+and they are not consumed by psmux (only OSC 133;C and 133;D are). Terminal
+emulators that use A/B for scrollback navigation (kitty, iTerm2, VS Code's
+integrated terminal, etc.) will lose that capability for pwsh sessions
+loaded with this script; add a more robust prompt mechanism if that ever
+matters in practice.
+
+OSC 7 (cwd) is NOT emitted here. oh-my-posh handles that via its
+`pwd: osc7` setting in matt.omp.json.
 
 Coexists with oh-my-posh. The Enter handler implementation matches OMP's
 contract (parse-error check + Set-TransientPrompt + AcceptLine) so transient
@@ -37,45 +51,110 @@ if ($global:__PsmuxOSC133Installed) { return }
 # OSC 133;C;cmdline_url= natively from its `shell_integration: true` mode,
 # delete this script and the line that sources it from the profile.
 
-# --- Prompt wrapper ---------------------------------------------------------
-# Capture whatever prompt function is currently bound (oh-my-posh, plain pwsh,
-# etc.) and wrap it with OSC emissions. Run in OnIdle queue position AFTER
-# oh-my-posh init so we see OMP's prompt, not the bootstrap async-init string.
-
-$global:__PsmuxOSC133OriginalPrompt = $function:prompt
 $global:__PsmuxOSC133LastInExec = $false
 $global:__PsmuxOSC133Installed = $true
 
-function global:prompt {
-    $ESC = [char]27
-    $BEL = [char]7
+# --- Idle handler for OSC 133;D --------------------------------------------
+# Wrapping `function:prompt` is unreliable here: other profile items
+# (zoxide, pay-respects, etc.) wrap the prompt at undefined times during
+# async init, so a wrapper installed by this script gets displaced out of
+# the chain. PowerShell.OnIdle fires reliably between commands, regardless
+# of who owns $function:prompt.
 
-    # OSC 133;D - previous command finished (only after at least one C).
-    # Carry the previous-command exit code into the D marker for consumers
-    # that surface it (e.g. monitor-activity 'on-command-finished' in psmux,
-    # iTerm2's command status indicator).
-    if ($global:__PsmuxOSC133LastInExec) {
-        $exitCode = if ($global:?) { 0 } else { 1 }
-        [Console]::Write("${ESC}]133;D;${exitCode}${BEL}")
-        $global:__PsmuxOSC133LastInExec = $false
+$global:__PsmuxOSC133IdleSubscriber = Register-EngineEvent `
+    -SourceIdentifier PowerShell.OnIdle `
+    -SupportEvent `
+    -Action {
+        if ($global:__PsmuxOSC133LastInExec) {
+            $ESC = [char]27
+            $BEL = [char]7
+            [Console]::Write("${ESC}]133;D${BEL}")
+            $global:__PsmuxOSC133LastInExec = $false
+        }
     }
 
-    # OSC 7 (cwd) is intentionally NOT emitted here — oh-my-posh emits it via
-    # its `pwd: osc7` setting in matt.omp.json (which is already invoked as
-    # part of the original prompt body below).
+# --- Enter key handler ------------------------------------------------------
+# Replaces oh-my-posh's bare OSC 133;C emission with the kitty-style
+# parameterized form: OSC 133;C;cmdline_url=<percent-encoded command>.
+# Preserves OMP's contract: parse-error check + transient prompt support.
 
-    # OSC 133;A - prompt start.
-    [Console]::Write("${ESC}]133;A${BEL}")
+$__psmuxEnterHandler = {
+    $cmd = $null
+    $cursor = $null
+    $parseErrors = $null
+    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState(
+        [ref]$cmd, [ref]$cursor, [ref]$parseErrors, [ref]$null
+    )
+    $executingCommand = $parseErrors.Count -eq 0
 
-    # The user's actual prompt (oh-my-posh, plain pwsh, whatever was bound
-    # at snippet-source time).
-    & $global:__PsmuxOSC133OriginalPrompt
+    try {
+        # Preserve oh-my-posh transient prompt behavior if OMP is loaded.
+        # Set-TransientPrompt is defined by OMP's init when transient is
+        # configured; absent otherwise.
+        if ($executingCommand -and (Get-Command -Name 'Set-TransientPrompt' -ErrorAction SilentlyContinue)) {
+            Set-Variable -Name TooltipCommand -Value '' -Scope Script -ErrorAction SilentlyContinue
+            Set-TransientPrompt
+        }
+    } finally {
+        [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
 
-    # OSC 133;B - end of prompt / start of input area.
-    # We can't emit this AFTER PSReadLine starts drawing - the marker must
-    # be flushed BEFORE the prompt's last character is rendered, so emit it
-    # as part of the prompt's returned string. Append via a final Write.
-    [Console]::Write("${ESC}]133;B${BEL}")
+        if ($executingCommand) {
+            $ESC = [char]27
+            $BEL = [char]7
+            if ([string]::IsNullOrEmpty($cmd)) {
+                # Bare Enter on empty line - emit C without param so the
+                # state machine still transitions cleanly.
+                [Console]::Write("${ESC}]133;C${BEL}")
+            } else {
+                $encoded = [Uri]::EscapeDataString($cmd)
+                [Console]::Write("${ESC}]133;C;cmdline_url=${encoded}${BEL}")
+            }
+            $global:__PsmuxOSC133LastInExec = $true
+        }
+    }
+}
+
+$__psmuxViEnterHandler = {
+    $cmd = $null
+    $cursor = $null
+    $parseErrors = $null
+    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState(
+        [ref]$cmd, [ref]$cursor, [ref]$parseErrors, [ref]$null
+    )
+    $executingCommand = $parseErrors.Count -eq 0
+
+    try {
+        if ($executingCommand -and (Get-Command -Name 'Set-TransientPrompt' -ErrorAction SilentlyContinue)) {
+            Set-Variable -Name TooltipCommand -Value '' -Scope Script -ErrorAction SilentlyContinue
+            Set-TransientPrompt
+        }
+    } finally {
+        [Microsoft.PowerShell.PSConsoleReadLine]::ViAcceptLine()
+
+        if ($executingCommand) {
+            $ESC = [char]27
+            $BEL = [char]7
+            if ([string]::IsNullOrEmpty($cmd)) {
+                [Console]::Write("${ESC}]133;C${BEL}")
+            } else {
+                $encoded = [Uri]::EscapeDataString($cmd)
+                [Console]::Write("${ESC}]133;C;cmdline_url=${encoded}${BEL}")
+            }
+            $global:__PsmuxOSC133LastInExec = $true
+        }
+    }
+}
+
+Set-PSReadLineKeyHandler -Key Enter `
+    -BriefDescription 'PsmuxOSC133EnterHandler' `
+    -Description 'Emit OSC 133;C;cmdline_url= with the typed command' `
+    -ScriptBlock $__psmuxEnterHandler
+
+if ((Get-PSReadLineOption).EditMode -eq 'Vi') {
+    Set-PSReadLineKeyHandler -ViMode Command -Key Enter `
+        -BriefDescription 'PsmuxOSC133ViEnterHandler' `
+        -Description 'Emit OSC 133;C;cmdline_url= with the typed command (Vi)' `
+        -ScriptBlock $__psmuxViEnterHandler
 }
 
 # --- Enter key handler ------------------------------------------------------
