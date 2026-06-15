@@ -471,6 +471,28 @@ properties:
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
           cargo install --git https://github.com/LGUG2Z/wpm.git wpmctl wpmd 2>&1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "cargo install --git wpm failed with exit code $LASTEXITCODE" }
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-rustup
+      directives:
+        # grove from MattKotsenas/grove (fork) instead of captainsafia/grove
+        # (upstream). main is the integration branch with all in-flight fixes
+        # merged. cargo install lands grove.exe in ~/.cargo/bin. It's a no-op
+        # when the git rev hasn't moved, so re-running on every winget configure
+        # is cheap.
+        description: Install grove from fork (main = all in-flight fixes merged)
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $cargoBin = if ($env:CARGO_HOME) { Join-Path $env:CARGO_HOME 'bin' } else { Join-Path $env:USERPROFILE '.cargo\bin' }
+          $bin = Join-Path $cargoBin 'grove.exe'
+          @{ Result = if (Test-Path -LiteralPath $bin) { 'present' } else { 'absent' } }
+        TestScript: |
+          $false
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          cargo install --git https://github.com/MattKotsenas/grove.git grove 2>&1 | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "cargo install --git grove failed with exit code $LASTEXITCODE" }
     - resource: PSDscResources/Registry
       directives:
         description: Enable UTF-8 for worldwide language support (Beta)
