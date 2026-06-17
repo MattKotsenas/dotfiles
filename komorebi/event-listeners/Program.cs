@@ -35,6 +35,7 @@ public static class Program
         builder.Services.AddSingleton<IEventRule, LayerIndicatorRule>();
         builder.Services.AddSingleton<IEventRule, IntentDispatchRule>();
         builder.Services.AddSingleton<IEventRule, AppLayerRouter>();
+        builder.Services.AddSingleton<IEventRule, SerenaDashboardRule>();
 
         // Komorebi listener is separate (different protocol, different server)
         builder.Services.AddHostedService<KomorebiEventListenerService>();
