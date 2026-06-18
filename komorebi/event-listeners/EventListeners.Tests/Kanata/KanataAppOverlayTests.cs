@@ -118,4 +118,45 @@ public class KanataAppOverlayTests
 
         Assert.Contains("wm.focus.cycle-next", output.Intents);
     }
+
+    // ---------------- CodeFlow ----------------
+
+    [Fact]
+    public async Task CodeflowOverlay_MarkReviewed_FocusesTree_ThenSpace_ThenDiff()
+    {
+        // CAP + r in CodeFlow marks the current file reviewed and returns to the diff:
+        //   focus file tree (Alt+Shift+T) -> tap Space (the tree's mark key) -> focus diff view (Alt+Shift+D).
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-codeflow")
+                .Tap("caps")
+                .Tap("r")
+                .Settle());
+
+        var events = output.KeyEvents.ToList();
+
+        var treeIdx = events.FindIndex(e => e.Direction == "↓" && e.Key.Equals("T", StringComparison.OrdinalIgnoreCase));
+        var spaceIdx = events.FindIndex(e => e.Direction == "↓" && e.Key == "Space");
+        var diffIdx = events.FindIndex(e => e.Direction == "↓" && e.Key.Equals("D", StringComparison.OrdinalIgnoreCase));
+
+        // Sequence order: focus tree, then the literal space, then focus diff.
+        Assert.True(treeIdx >= 0, "focus file tree (Alt+Shift+T) must fire first");
+        Assert.True(spaceIdx > treeIdx, "Space must follow the focus-tree step");
+        Assert.True(diffIdx > spaceIdx, "focus diff view (Alt+Shift+D) must follow the Space");
+
+        // Both focus steps are Alt+Shift chords, not bare t/d.
+        Assert.Contains(new KeyEvent("↓", "LAlt"), events);
+        Assert.Contains(new KeyEvent("↓", "LShift"), events);
+
+        // Each step fires exactly once. The macro emits one literal Space (not the
+        // 'r' trigger), and that Space is OS output that does not re-enter the
+        // overlay -- proves no recursion.
+        Assert.Equal(1, events.Count(e => e.Direction == "↓" && e.Key.Equals("T", StringComparison.OrdinalIgnoreCase)));
+        Assert.Equal(1, events.Count(e => e.Direction == "↓" && e.Key == "Space"));
+        Assert.Equal(1, events.Count(e => e.Direction == "↓" && e.Key.Equals("D", StringComparison.OrdinalIgnoreCase)));
+
+        // It's a key macro, not a WM intent.
+        Assert.Empty(output.Intents);
+    }
 }

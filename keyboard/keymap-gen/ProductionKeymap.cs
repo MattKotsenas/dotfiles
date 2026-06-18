@@ -138,6 +138,8 @@ internal static class ProductionKeymap
             .Macro("t", "A-S-t").Describe("focus file tree")
             .Macro("v", "A-S-d").Describe("focus diff view")
             .Macro("o", "A-S-o").Describe("focus comments panel")
+            // Mark reviewed: focus tree, tap Space (marks the file), focus diff
+            .Macro("r", "A-S-t", "spc", "A-S-d").Describe("mark file reviewed, focus diff")
             // Util
             .Macro("g", "C-g").Describe("go to line")
             .Macro("u", "f5").Describe("refresh"))

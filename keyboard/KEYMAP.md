@@ -217,6 +217,7 @@ Microsoft CodeFlow code review shortcuts. wm-base reserved keys still do their W
 | `CAP l` | next file: macro `C-f8` |
 | `CAP n` | next comment thread: macro `C-f12` |
 | `CAP o` | focus comments panel: macro `A-S-o` |
+| `CAP r` | mark file reviewed, focus diff: macro `A-S-t` → `spc` → `A-S-d` |
 | `CAP t` | focus file tree: macro `A-S-t` |
 | `CAP u` | refresh: macro `f5` |
 | `CAP v` | focus diff view: macro `A-S-d` |
