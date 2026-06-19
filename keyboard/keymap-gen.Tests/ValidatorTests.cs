@@ -9,7 +9,6 @@ public class ValidatorTests
     {
         var ex = Assert.Throws<InvalidKeymapException>(() =>
             new KeymapBuilder()
-                .Caps()
                 .Reserve(global: ["r"], subModeEntries: ["f"])
                 .WmBase(b => b.Intent("r", "wm.layout.retile"))
                 .SubMode("focus", "f", b => b.Intent("h", "wm.focus.left"))
@@ -24,7 +23,6 @@ public class ValidatorTests
     {
         var ex = Assert.Throws<InvalidKeymapException>(() =>
             new KeymapBuilder()
-                .Caps()
                 .Reserve(global: [], subModeEntries: ["f"])
                 .WmBase(b => { })
                 .SubMode("focus", "f", b => b.Intent("h", "wm.focus.left"))
@@ -39,7 +37,6 @@ public class ValidatorTests
     {
         var ex = Assert.Throws<InvalidKeymapException>(() =>
             new KeymapBuilder()
-                .Caps()
                 .Reserve(global: ["r"], subModeEntries: [])
                 .WmBase(b => b
                     .Intent("r", "wm.layout.retile")
@@ -54,7 +51,6 @@ public class ValidatorTests
     {
         var ex = Assert.Throws<InvalidKeymapException>(() =>
             new KeymapBuilder()
-                .Caps()
                 .Reserve(global: [], subModeEntries: ["f", "d"])
                 .WmBase(b => { })
                 .SubMode("focus", "f", b => b.Intent("h", "wm.focus.left"))
@@ -69,7 +65,6 @@ public class ValidatorTests
     {
         var ex = Assert.Throws<InvalidKeymapException>(() =>
             new KeymapBuilder()
-                .Caps()
                 .Reserve(global: [], subModeEntries: ["f"])
                 .WmBase(b => { })
                 .SubMode("focus", "f", b => b.Intent("h", "wm.focus.left"))
@@ -84,7 +79,6 @@ public class ValidatorTests
     {
         var ex = Assert.Throws<InvalidKeymapException>(() =>
             new KeymapBuilder()
-                .Caps()
                 .Reserve(global: [], subModeEntries: ["f"])
                 .WmBase(b => { })
                 .SubMode("focus", "f", b => b.Intent("h", "wm.focus.left"))
@@ -99,7 +93,6 @@ public class ValidatorTests
     {
         Assert.Throws<ArgumentException>(() =>
             new KeymapBuilder()
-                .Caps()
                 .Reserve(global: [], subModeEntries: [])
                 .WmBase(b => b.Workspaces("wm.workspace.focus.X", 0, 7))
                 .Build());

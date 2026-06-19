@@ -19,8 +19,9 @@ internal static class KeymapMdEmitter
         sb.AppendLine();
         sb.AppendLine("CapsLock is the WM mode trigger:");
         sb.AppendLine();
-        sb.AppendLine("- **Single tap** = one-shot WM mode (next action, then auto-exit)");
-        sb.AppendLine("- **Double tap** = sticky WM mode (CAPS exits)");
+        sb.AppendLine("- **One CAP** = one-shot WM mode (do one action, then back to typing)");
+        sb.AppendLine("- **CAP again** = lock into sticky WM mode");
+        sb.AppendLine("- CAP toggles one-shot vs sticky; **ESC** (or finishing a one-shot action) returns to typing");
         sb.AppendLine();
 
         EmitGlobals(sb, k);

@@ -1,8 +1,5 @@
 namespace KeymapGen;
 
-/// <summary>Tap-dance timeouts on CapsLock.</summary>
-public sealed record CapsConfig(int TapDanceTimeoutMs, int OneShotTimeoutMs);
-
 /// <summary>
 /// Keys that are reserved by the WM system and may not be claimed by overlays.
 /// </summary>
@@ -20,7 +17,6 @@ public sealed record ReservedKeys(
 
 /// <summary>The whole keymap, ready to be emitted as kanata.kbd + adjacent artifacts.</summary>
 public sealed record Keymap(
-    CapsConfig Caps,
     ReservedKeys Reserved,
     Layer WmBase,
     IReadOnlyList<SubMode> SubModes,

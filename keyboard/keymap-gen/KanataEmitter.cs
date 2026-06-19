@@ -8,7 +8,7 @@ namespace KeymapGen;
 ///
 /// Layer model emitted:
 /// <list type="bullet">
-///   <item>base — typing layer with CapsLock tap-dance into wm/wm-toggle</item>
+///   <item>base - typing layer; CAP enters one-shot wm (CAP again locks to wm-toggle)</item>
 ///   <item>wm — one-shot WM mode (default context)</item>
 ///   <item>wm-toggle — sticky WM mode (default context)</item>
 ///   <item>wm-X (one per sub-mode) — one-shot sub-mode (auto-exits)</item>
@@ -27,7 +27,6 @@ internal static class KanataEmitter
         EmitHeader(sb);
         EmitDefcfg(sb);
         EmitDefsrc(sb, k);
-        EmitDefvar(sb, k);
 
         EmitBaseDefaultLayer(sb);
         EmitWmLayers(sb, k, overlayName: null, overlayBindings: []);
@@ -93,43 +92,39 @@ internal static class KanataEmitter
         }
     }
 
-    private static void EmitDefvar(StringBuilder sb, Keymap k)
-    {
-        sb.AppendLine("(defvar");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"  os-timeout {k.Caps.OneShotTimeoutMs}");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"  td-timeout {k.Caps.TapDanceTimeoutMs}");
-        sb.AppendLine(")");
-        sb.AppendLine();
-    }
-
     private static void EmitBaseDefaultLayer(StringBuilder sb)
     {
-        sb.AppendLine(";; base-default: typing layer (default focus context). CAP tap-dances into WM mode.");
+        sb.AppendLine(";; base-default: typing layer (default focus context). CAP enters one-shot WM mode.");
         sb.AppendLine("(deflayermap (base-default)");
-        sb.AppendLine("  caps (tap-dance $td-timeout (");
-        // one-shot-release (not one-shot/one-shot-press) so the next key press
-        // doesn't end the one-shot. Required for chords like CAP + Shift + key:
-        // the press of Shift would otherwise consume the one-shot and drop us
-        // back into base before the symbol key is processed.
-        sb.AppendLine("    (one-shot-release $os-timeout (layer-while-held wm))");
-        sb.AppendLine("    (layer-switch wm-toggle)");
-        sb.AppendLine("  ))");
+        // CAP enters one-shot WM mode (a plain layer-switch). Inside WM, CAP
+        // toggles one-shot <-> sticky; ESC or completing an action returns here.
+        // No tap-dance and no one-shot primitive: locking is just a CAP re-press
+        // with no timing window, and the CAP+Shift psmux chord survives because
+        // Shift never ends a one-shot (there is no one-shot primitive to end).
+        sb.AppendLine("  caps (layer-switch wm)");
         sb.AppendLine(")");
         sb.AppendLine();
     }
 
     private static void EmitBaseOverlayLayer(StringBuilder sb, string overlayName)
     {
-        sb.AppendLine(CultureInfo.InvariantCulture, $";; base-{overlayName}: typing layer ({overlayName} focus context). CAP enters wm-{overlayName}.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $";; base-{overlayName}: typing layer ({overlayName} focus context). CAP enters one-shot wm-{overlayName}.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (base-{overlayName})");
-        sb.AppendLine("  caps (tap-dance $td-timeout (");
-        // one-shot-release: see EmitBaseDefaultLayer for rationale.
-        sb.AppendLine(CultureInfo.InvariantCulture, $"    (one-shot-release $os-timeout (layer-while-held wm-{overlayName}))");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"    (layer-switch wm-{overlayName}-toggle)");
-        sb.AppendLine("  ))");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch wm-{overlayName})");
         sb.AppendLine(")");
         sb.AppendLine();
     }
+
+    /// <summary>
+    /// Wrap a one-shot-layer action so it fires and then returns to the typing
+    /// layer (<paramref name="exitTarget"/>). This is the "manual one-shot": the
+    /// WM layer is entered via a plain layer-switch and each action key exits
+    /// after one use, instead of kanata's one-shot primitive (whose re-press
+    /// semantics conflict with CAP-to-lock and whose press-variant breaks the
+    /// CAP+Shift chord).
+    /// </summary>
+    private static string FormatWithExit(KAction action, string exitTarget) =>
+        $"(multi {ActionFormatter.Format(action)} (layer-switch {exitTarget}))";
 
     /// <summary>
     /// Emits the WM layers for a given context.
@@ -148,23 +143,28 @@ internal static class KanataEmitter
         // button" exit available from any WM layer.
         var exitTarget = overlayName is null ? "base-default" : $"base-{overlayName}";
 
-        // One-shot variant
-        sb.AppendLine(CultureInfo.InvariantCulture, $";; wm{suffix}: one-shot WM mode ({contextLabel}; CAP single-tap)");
+        // One-shot variant: a single CAP lands here. CAP again locks into the
+        // sticky variant; ESC or completing one action returns to typing. The
+        // "one action then exit" is manual -- every wm-base/overlay action is
+        // wrapped (see FormatWithExit) to layer-switch back to the typing layer
+        // after firing. Sub-mode entries switch to the one-shot sub-mode layers.
+        sb.AppendLine(CultureInfo.InvariantCulture, $";; wm{suffix}: one-shot WM mode ({contextLabel}; first CAP). CAP again locks to sticky.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm{suffix})");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch wm{suffix}-toggle)");
         foreach (var sm in k.SubModes)
         {
             if (overlayKeys.Contains(sm.EntryKey)) continue; // overlay overrides sub-mode entry
             sb.AppendLine(CultureInfo.InvariantCulture,
-                $"  {sm.EntryKey} (one-shot $os-timeout (layer-while-held wm-{sm.Name}))");
+                $"  {sm.EntryKey} (layer-switch wm-{sm.Name})");
         }
         foreach (var b in k.WmBase.Bindings)
         {
             if (overlayKeys.Contains(b.Key)) continue; // overlay overrides wm-base
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {FormatWithExit(b.Action, exitTarget)}");
         }
         foreach (var b in overlayBindings)
         {
-            sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {FormatWithExit(b.Action, exitTarget)}");
         }
         EmitEscExit(sb, exitTarget);
         EmitShiftPassthrough(sb);
@@ -172,11 +172,13 @@ internal static class KanataEmitter
         sb.AppendLine(")");
         sb.AppendLine();
 
-        // Toggle variant
-        sb.AppendLine(CultureInfo.InvariantCulture, $";; wm{suffix}-toggle: sticky WM mode ({contextLabel}; CAP double-tap)");
-        sb.AppendLine(CultureInfo.InvariantCulture, $";; CAPS or ESC exits to {exitTarget}.");
+        // Toggle variant: sticky WM mode. CAP returns to the one-shot variant
+        // (never directly to typing); ESC exits to the typing layer. Actions are
+        // NOT wrapped, so they stay in WM mode for repeated use.
+        sb.AppendLine(CultureInfo.InvariantCulture, $";; wm{suffix}-toggle: sticky WM mode ({contextLabel}; CAP again from one-shot).");
+        sb.AppendLine(CultureInfo.InvariantCulture, $";; CAP returns to one-shot wm{suffix}; ESC exits to {exitTarget}.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm{suffix}-toggle)");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch {exitTarget})");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch wm{suffix})");
         foreach (var sm in k.SubModes)
         {
             if (overlayKeys.Contains(sm.EntryKey)) continue;
@@ -226,11 +228,11 @@ internal static class KanataEmitter
     {
         foreach (var sm in k.SubModes)
         {
-            sb.AppendLine(CultureInfo.InvariantCulture, $";; wm-{sm.Name}: one-shot sub-mode (auto-exits after one action)");
+            sb.AppendLine(CultureInfo.InvariantCulture, $";; wm-{sm.Name}: one-shot sub-mode (each action returns to typing)");
             sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm-{sm.Name})");
             foreach (var b in sm.Bindings)
             {
-                sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {FormatWithExit(b.Action, "base-default")}");
             }
             EmitEscExit(sb, "base-default");
             sb.AppendLine("  ___ XX");

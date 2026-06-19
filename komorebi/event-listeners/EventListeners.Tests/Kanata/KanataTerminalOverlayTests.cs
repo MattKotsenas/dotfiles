@@ -21,8 +21,8 @@ public class KanataTerminalOverlayTests
     [Fact]
     public async Task TerminalOverlay_SingleCap_EmitsPsmuxPrefix()
     {
-        // Tap caps then any key. Tap-dance fires the single-tap arm immediately
-        // when another key is pressed, so the prefix lands before the next key.
+        // Tap caps then any key. CAP enters one-shot wm-terminal; the next key
+        // fires its psmux prefix macro and then the one-shot returns to typing.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
@@ -38,22 +38,27 @@ public class KanataTerminalOverlayTests
         Assert.Contains(new KeyEvent("↑", "LCtrl"), output.KeyEvents);
         // 'h' is the literal key, not a macro -- psmux interprets it.
         Assert.Contains(output.KeyEvents, e => e.Direction == "↓" && e.Key.Equals("H", StringComparison.OrdinalIgnoreCase));
-        // No WM intent fired (single tap does NOT enter WM mode in terminal).
+        // The prefix is a key macro, not a WM push-msg intent.
         Assert.Empty(output.Intents);
     }
 
     [Fact]
-    public async Task TerminalOverlay_SingleCap_StaysInBaseTerminal()
+    public async Task TerminalOverlay_SingleCap_IsOneShot_NotSticky()
     {
+        // Single CAP enters one-shot wm-terminal (not sticky). The focus
+        // sub-mode fires once and auto-exits, so a second focus action does
+        // not fire (it would if we were sticky).
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
                 .Layer("base-terminal")
                 .Tap("caps")
+                .Tap("f").Tap("h")   // focus.left, then exit to typing
+                .Tap("f").Tap("l")   // would be focus.right if sticky
                 .Settle());
 
-        // After the tap-dance times out, we should still be in base-terminal.
-        Assert.Equal("base-terminal", output.FinalLayer);
+        Assert.Contains("wm.focus.left", output.Intents);
+        Assert.DoesNotContain("wm.focus.right", output.Intents);
     }
 
     // ---------------- Double-tap CAP = sticky WM (wm-terminal-toggle) ----------------
@@ -116,17 +121,21 @@ public class KanataTerminalOverlayTests
     }
 
     [Fact]
-    public async Task TerminalOverlay_DoubleCap_ThenCaps_ExitsToBaseTerminal()
+    public async Task TerminalOverlay_CapFromSticky_ReturnsToOneShot()
     {
+        // From sticky terminal WM, a further CAP returns to ONE-SHOT (not
+        // typing). Seeded sticky; CAP then the focus sub-mode fires once and
+        // auto-exits, so a second focus action does not fire.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
-                .Layer("base-terminal")
-                .Tap("caps").Tap("caps")        // enter sticky
-                .Tap("caps")                     // exit sticky
+                .Layer("wm-terminal-toggle")
+                .Tap("caps")
+                .Tap("f").Tap("h").Tap("f").Tap("l")
                 .Settle());
 
-        Assert.Equal("base-terminal", output.FinalLayer);
+        Assert.Contains("wm.focus.left", output.Intents);
+        Assert.DoesNotContain("wm.focus.right", output.Intents);
     }
 
     [Fact]

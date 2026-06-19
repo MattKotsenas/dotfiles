@@ -5,8 +5,9 @@
 
 CapsLock is the WM mode trigger:
 
-- **Single tap** = one-shot WM mode (next action, then auto-exit)
-- **Double tap** = sticky WM mode (CAPS exits)
+- **One CAP** = one-shot WM mode (do one action, then back to typing)
+- **CAP again** = lock into sticky WM mode
+- CAP toggles one-shot vs sticky; **ESC** (or finishing a one-shot action) returns to typing
 
 ## wm-base (truly global)
 

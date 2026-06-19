@@ -6,17 +6,10 @@ namespace KeymapGen;
 /// </summary>
 public sealed class KeymapBuilder
 {
-    private CapsConfig? _caps;
     private ReservedKeys? _reserved;
     private LayerBuilder? _wmBase;
     private readonly List<SubMode> _subModes = [];
     private readonly List<Overlay> _overlays = [];
-
-    public KeymapBuilder Caps(int tapDanceMs = 250, int oneShotMs = 2000)
-    {
-        _caps = new CapsConfig(tapDanceMs, oneShotMs);
-        return this;
-    }
 
     public KeymapBuilder Reserve(string[]? global = null, string[]? subModeEntries = null)
     {
@@ -50,12 +43,10 @@ public sealed class KeymapBuilder
 
     public Keymap Build()
     {
-        if (_caps is null) throw new InvalidOperationException("Caps() must be called.");
         if (_reserved is null) throw new InvalidOperationException("Reserve() must be called.");
         if (_wmBase is null) throw new InvalidOperationException("WmBase() must be called.");
 
         var keymap = new Keymap(
-            _caps,
             _reserved,
             new Layer("wm-base", _wmBase.ToList(), _wmBase.LayerNote),
             _subModes,

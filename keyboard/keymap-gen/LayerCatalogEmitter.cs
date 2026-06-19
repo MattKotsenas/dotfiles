@@ -27,7 +27,7 @@ internal static class LayerCatalogEmitter
         sb.AppendLine("{");
 
         // Focus-context base layers (one per overlay, plus 'default')
-        sb.AppendLine("    // Focus-context base layers (typing layer; what 'caps' tap-dances FROM)");
+        sb.AppendLine("    // Focus-context base layers (typing layer; what 'caps' enters WM FROM)");
         sb.AppendLine("    public const string BaseDefault = \"base-default\";");
         foreach (var ov in k.Overlays)
         {
@@ -45,7 +45,7 @@ internal static class LayerCatalogEmitter
         }
 
         sb.AppendLine();
-        sb.AppendLine("    // WM-toggle layers (CAP double-tap state per context). UI overlay shown.");
+        sb.AppendLine("    // WM-toggle layers (sticky/locked state per context). UI overlay shown.");
         sb.AppendLine("    public const string WmToggle = \"wm-toggle\";");
         foreach (var ov in k.Overlays)
         {

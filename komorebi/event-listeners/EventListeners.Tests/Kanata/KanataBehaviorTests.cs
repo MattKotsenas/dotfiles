@@ -218,7 +218,8 @@ public class KanataBehaviorTests
     }
 
     // ============================================================
-    // Toggle mode (double CapsLock tap)
+    // Sticky mode: a second CAP locks one-shot WM into sticky (no
+    // timing window -- it is a plain CAP re-press, not a fast double-tap).
     // ============================================================
 
     [Fact]
@@ -254,6 +255,72 @@ public class KanataBehaviorTests
 
         Assert.Contains("wm.move.left", output.Intents);
         Assert.Contains("wm.stack.right", output.Intents);
+    }
+
+    // ============================================================
+    // CAP cycle: CAP toggles one-shot <-> sticky. Odd presses = one-shot
+    // (auto-exits after one action), even = sticky. An action or ESC
+    // returns to typing; CAP itself never lands in typing.
+    //
+    // Discriminator: the two-action sequence f h f l fires BOTH focus.left
+    // and focus.right when sticky, but only focus.left when one-shot (the
+    // one-shot exits to typing after the first action, so the trailing f/l
+    // type as literal keys).
+    // ============================================================
+
+    [Theory]
+    [InlineData(1, false)]  // odd  -> one-shot
+    [InlineData(2, true)]   // even -> sticky
+    [InlineData(3, false)]  // odd  -> one-shot (CAP from sticky returns to one-shot)
+    [InlineData(4, true)]   // even -> sticky
+    public async Task CapCycle_OddPressesOneShot_EvenPressesSticky(int capPresses, bool sticky)
+    {
+        var input = new SimInput();
+        for (var i = 0; i < capPresses; i++) input.Tap("caps");
+        input.Tap("f").Tap("h").Tap("f").Tap("l").Settle();
+
+        var output = await KanataSimulator.RunAsync(TestPaths.ProductionConfig, input);
+
+        Assert.Contains("wm.focus.left", output.Intents);
+        if (sticky)
+            Assert.Contains("wm.focus.right", output.Intents);
+        else
+            Assert.DoesNotContain("wm.focus.right", output.Intents);
+    }
+
+    [Fact]
+    public async Task CapCycle_LockAfterLongGap_StillSticky()
+    {
+        // No timing window: a CAP a full second after the first still locks.
+        // (The old tap-dance required the second tap within ~250ms.)
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Tap("caps").Wait(1000).Tap("caps")
+                .Tap("f").Tap("h").Tap("f").Tap("l")
+                .Settle());
+
+        Assert.Contains("wm.focus.left", output.Intents);
+        Assert.Contains("wm.focus.right", output.Intents);
+    }
+
+    [Fact]
+    public async Task CapCycle_FromSticky_ReturnsToOneShot_NotTyping()
+    {
+        // Seeded into sticky wm-toggle, CAP returns to ONE-SHOT (not typing):
+        // focus.left firing proves we are in a WM layer (in typing, f/h would
+        // type literally); focus.right NOT firing proves the one-shot was
+        // consumed by the first action. Contrast: capPresses=2 above fires both.
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("wm-toggle")
+                .Tap("caps")
+                .Tap("f").Tap("h").Tap("f").Tap("l")
+                .Settle());
+
+        Assert.Contains("wm.focus.left", output.Intents);
+        Assert.DoesNotContain("wm.focus.right", output.Intents);
     }
 
     // ============================================================

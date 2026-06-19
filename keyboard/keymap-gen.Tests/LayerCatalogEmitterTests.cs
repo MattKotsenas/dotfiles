@@ -30,7 +30,6 @@ public class LayerCatalogEmitterTests
     public void Emits_OverlayConstants_WhenPresent()
     {
         var keymap = new KeymapBuilder()
-            .Caps()
             .Reserve(global: ["r"], subModeEntries: ["f"])
             .WmBase(b => b.Intent("r", "wm.layout.retile"))
             .SubMode("focus", "f", b => b.Intent("h", "wm.focus.left"))

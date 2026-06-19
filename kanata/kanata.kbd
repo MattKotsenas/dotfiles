@@ -9,43 +9,36 @@
   caps lsft rsft esc tab / up down left right 1 2 3 4 5 6 7 8 h j k l g q t m n p u r x y b c i o v z 0 9 , . \ - [ ] ;
 )
 
-(defvar
-  os-timeout 65535
-  td-timeout 250
-)
-
-;; base-default: typing layer (default focus context). CAP tap-dances into WM mode.
+;; base-default: typing layer (default focus context). CAP enters one-shot WM mode.
 (deflayermap (base-default)
-  caps (tap-dance $td-timeout (
-    (one-shot-release $os-timeout (layer-while-held wm))
-    (layer-switch wm-toggle)
-  ))
+  caps (layer-switch wm)
 )
 
-;; wm: one-shot WM mode (default context; CAP single-tap)
+;; wm: one-shot WM mode (default context; first CAP). CAP again locks to sticky.
 (deflayermap (wm)
-  w (one-shot $os-timeout (layer-while-held wm-workspace))
-  f (one-shot $os-timeout (layer-while-held wm-focus))
-  d (one-shot $os-timeout (layer-while-held wm-move))
-  s (one-shot $os-timeout (layer-while-held wm-stack))
-  e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-admin))
-  tab (push-msg "wm.focus.last-workspace")
-  / (push-msg "system.cheatsheet")
-  up up
-  down down
-  left left
-  right right
+  caps (layer-switch wm-toggle)
+  w (layer-switch wm-workspace)
+  f (layer-switch wm-focus)
+  d (layer-switch wm-move)
+  s (layer-switch wm-stack)
+  e (layer-switch wm-resize)
+  a (layer-switch wm-admin)
+  tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-default))
+  / (multi (push-msg "system.cheatsheet") (layer-switch base-default))
+  up (multi up (layer-switch base-default))
+  down (multi down (layer-switch base-default))
+  left (multi left (layer-switch base-default))
+  right (multi right (layer-switch base-default))
   esc (layer-switch base-default)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
-;; wm-toggle: sticky WM mode (default context; CAP double-tap)
-;; CAPS or ESC exits to base-default.
+;; wm-toggle: sticky WM mode (default context; CAP again from one-shot).
+;; CAP returns to one-shot wm; ESC exits to base-default.
 (deflayermap (wm-toggle)
-  caps (layer-switch base-default)
+  caps (layer-switch wm)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -64,75 +57,73 @@
   ___ XX
 )
 
-;; base-terminal: typing layer (terminal focus context). CAP enters wm-terminal.
+;; base-terminal: typing layer (terminal focus context). CAP enters one-shot wm-terminal.
 (deflayermap (base-terminal)
-  caps (tap-dance $td-timeout (
-    (one-shot-release $os-timeout (layer-while-held wm-terminal))
-    (layer-switch wm-terminal-toggle)
-  ))
+  caps (layer-switch wm-terminal)
 )
 
-;; wm-terminal: one-shot WM mode (terminal context; CAP single-tap)
+;; wm-terminal: one-shot WM mode (terminal context; first CAP). CAP again locks to sticky.
 (deflayermap (wm-terminal)
-  w (one-shot $os-timeout (layer-while-held wm-workspace))
-  f (one-shot $os-timeout (layer-while-held wm-focus))
-  d (one-shot $os-timeout (layer-while-held wm-move))
-  s (one-shot $os-timeout (layer-while-held wm-stack))
-  e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-admin))
-  tab (push-msg "wm.focus.last-workspace")
-  / (push-msg "system.cheatsheet")
-  up up
-  down down
-  left left
-  right right
-  b (macro (unmod lctl spc) b)
-  c (macro (unmod lctl spc) c)
-  g (macro (unmod lctl spc) g)
-  h (macro (unmod lctl spc) h)
-  i (macro (unmod lctl spc) i)
-  j (macro (unmod lctl spc) j)
-  k (macro (unmod lctl spc) k)
-  l (macro (unmod lctl spc) l)
-  m (macro (unmod lctl spc) m)
-  n (macro (unmod lctl spc) n)
-  o (macro (unmod lctl spc) o)
-  p (macro (unmod lctl spc) p)
-  q (macro (unmod lctl spc) q)
-  r (macro (unmod lctl spc) r)
-  t (macro (unmod lctl spc) t)
-  u (macro (unmod lctl spc) u)
-  v (macro (unmod lctl spc) v)
-  x (macro (unmod lctl spc) x)
-  y (macro (unmod lctl spc) y)
-  z (macro (unmod lctl spc) z)
-  0 (macro (unmod lctl spc) (unicode "0"))
-  1 (macro (unmod lctl spc) (unicode "1"))
-  2 (macro (unmod lctl spc) (unicode "2"))
-  3 (macro (unmod lctl spc) (unicode "3"))
-  4 (macro (unmod lctl spc) (unicode "4"))
-  5 (macro (unmod lctl spc) (unicode "5"))
-  6 (macro (unmod lctl spc) (unicode "6"))
-  7 (macro (unmod lctl spc) (unicode "7"))
-  8 (macro (unmod lctl spc) (unicode "8"))
-  9 (macro (unmod lctl spc) (unicode "9"))
-  , (macro (unmod lctl spc) ,)
-  . (macro (unmod lctl spc) .)
-  \ (macro (unmod lctl spc) \)
-  - (macro (unmod lctl spc) -)
-  [ (macro (unmod lctl spc) [)
-  ] (macro (unmod lctl spc) ])
-  ; (macro (unmod lctl spc) ;)
+  caps (layer-switch wm-terminal-toggle)
+  w (layer-switch wm-workspace)
+  f (layer-switch wm-focus)
+  d (layer-switch wm-move)
+  s (layer-switch wm-stack)
+  e (layer-switch wm-resize)
+  a (layer-switch wm-admin)
+  tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-terminal))
+  / (multi (push-msg "system.cheatsheet") (layer-switch base-terminal))
+  up (multi up (layer-switch base-terminal))
+  down (multi down (layer-switch base-terminal))
+  left (multi left (layer-switch base-terminal))
+  right (multi right (layer-switch base-terminal))
+  b (multi (macro (unmod lctl spc) b) (layer-switch base-terminal))
+  c (multi (macro (unmod lctl spc) c) (layer-switch base-terminal))
+  g (multi (macro (unmod lctl spc) g) (layer-switch base-terminal))
+  h (multi (macro (unmod lctl spc) h) (layer-switch base-terminal))
+  i (multi (macro (unmod lctl spc) i) (layer-switch base-terminal))
+  j (multi (macro (unmod lctl spc) j) (layer-switch base-terminal))
+  k (multi (macro (unmod lctl spc) k) (layer-switch base-terminal))
+  l (multi (macro (unmod lctl spc) l) (layer-switch base-terminal))
+  m (multi (macro (unmod lctl spc) m) (layer-switch base-terminal))
+  n (multi (macro (unmod lctl spc) n) (layer-switch base-terminal))
+  o (multi (macro (unmod lctl spc) o) (layer-switch base-terminal))
+  p (multi (macro (unmod lctl spc) p) (layer-switch base-terminal))
+  q (multi (macro (unmod lctl spc) q) (layer-switch base-terminal))
+  r (multi (macro (unmod lctl spc) r) (layer-switch base-terminal))
+  t (multi (macro (unmod lctl spc) t) (layer-switch base-terminal))
+  u (multi (macro (unmod lctl spc) u) (layer-switch base-terminal))
+  v (multi (macro (unmod lctl spc) v) (layer-switch base-terminal))
+  x (multi (macro (unmod lctl spc) x) (layer-switch base-terminal))
+  y (multi (macro (unmod lctl spc) y) (layer-switch base-terminal))
+  z (multi (macro (unmod lctl spc) z) (layer-switch base-terminal))
+  0 (multi (macro (unmod lctl spc) (unicode "0")) (layer-switch base-terminal))
+  1 (multi (macro (unmod lctl spc) (unicode "1")) (layer-switch base-terminal))
+  2 (multi (macro (unmod lctl spc) (unicode "2")) (layer-switch base-terminal))
+  3 (multi (macro (unmod lctl spc) (unicode "3")) (layer-switch base-terminal))
+  4 (multi (macro (unmod lctl spc) (unicode "4")) (layer-switch base-terminal))
+  5 (multi (macro (unmod lctl spc) (unicode "5")) (layer-switch base-terminal))
+  6 (multi (macro (unmod lctl spc) (unicode "6")) (layer-switch base-terminal))
+  7 (multi (macro (unmod lctl spc) (unicode "7")) (layer-switch base-terminal))
+  8 (multi (macro (unmod lctl spc) (unicode "8")) (layer-switch base-terminal))
+  9 (multi (macro (unmod lctl spc) (unicode "9")) (layer-switch base-terminal))
+  , (multi (macro (unmod lctl spc) ,) (layer-switch base-terminal))
+  . (multi (macro (unmod lctl spc) .) (layer-switch base-terminal))
+  \ (multi (macro (unmod lctl spc) \) (layer-switch base-terminal))
+  - (multi (macro (unmod lctl spc) -) (layer-switch base-terminal))
+  [ (multi (macro (unmod lctl spc) [) (layer-switch base-terminal))
+  ] (multi (macro (unmod lctl spc) ]) (layer-switch base-terminal))
+  ; (multi (macro (unmod lctl spc) ;) (layer-switch base-terminal))
   esc (layer-switch base-terminal)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
-;; wm-terminal-toggle: sticky WM mode (terminal context; CAP double-tap)
-;; CAPS or ESC exits to base-terminal.
+;; wm-terminal-toggle: sticky WM mode (terminal context; CAP again from one-shot).
+;; CAP returns to one-shot wm-terminal; ESC exits to base-terminal.
 (deflayermap (wm-terminal-toggle)
-  caps (layer-switch base-terminal)
+  caps (layer-switch wm-terminal)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -188,40 +179,38 @@
   ___ XX
 )
 
-;; base-edge: typing layer (edge focus context). CAP enters wm-edge.
+;; base-edge: typing layer (edge focus context). CAP enters one-shot wm-edge.
 (deflayermap (base-edge)
-  caps (tap-dance $td-timeout (
-    (one-shot-release $os-timeout (layer-while-held wm-edge))
-    (layer-switch wm-edge-toggle)
-  ))
+  caps (layer-switch wm-edge)
 )
 
-;; wm-edge: one-shot WM mode (edge context; CAP single-tap)
+;; wm-edge: one-shot WM mode (edge context; first CAP). CAP again locks to sticky.
 (deflayermap (wm-edge)
-  w (one-shot $os-timeout (layer-while-held wm-workspace))
-  f (one-shot $os-timeout (layer-while-held wm-focus))
-  d (one-shot $os-timeout (layer-while-held wm-move))
-  s (one-shot $os-timeout (layer-while-held wm-stack))
-  e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-admin))
-  tab (push-msg "wm.focus.last-workspace")
-  / (push-msg "system.cheatsheet")
-  up up
-  down down
-  left left
-  right right
-  t (macro (unmod lctl t))
-  v (macro (unmod lctl l) esc esc)
+  caps (layer-switch wm-edge-toggle)
+  w (layer-switch wm-workspace)
+  f (layer-switch wm-focus)
+  d (layer-switch wm-move)
+  s (layer-switch wm-stack)
+  e (layer-switch wm-resize)
+  a (layer-switch wm-admin)
+  tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-edge))
+  / (multi (push-msg "system.cheatsheet") (layer-switch base-edge))
+  up (multi up (layer-switch base-edge))
+  down (multi down (layer-switch base-edge))
+  left (multi left (layer-switch base-edge))
+  right (multi right (layer-switch base-edge))
+  t (multi (macro (unmod lctl t)) (layer-switch base-edge))
+  v (multi (macro (unmod lctl l) esc esc) (layer-switch base-edge))
   esc (layer-switch base-edge)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
-;; wm-edge-toggle: sticky WM mode (edge context; CAP double-tap)
-;; CAPS or ESC exits to base-edge.
+;; wm-edge-toggle: sticky WM mode (edge context; CAP again from one-shot).
+;; CAP returns to one-shot wm-edge; ESC exits to base-edge.
 (deflayermap (wm-edge-toggle)
-  caps (layer-switch base-edge)
+  caps (layer-switch wm-edge)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -242,56 +231,54 @@
   ___ XX
 )
 
-;; base-teams: typing layer (teams focus context). CAP enters wm-teams.
+;; base-teams: typing layer (teams focus context). CAP enters one-shot wm-teams.
 (deflayermap (base-teams)
-  caps (tap-dance $td-timeout (
-    (one-shot-release $os-timeout (layer-while-held wm-teams))
-    (layer-switch wm-teams-toggle)
-  ))
+  caps (layer-switch wm-teams)
 )
 
-;; wm-teams: one-shot WM mode (teams context; CAP single-tap)
+;; wm-teams: one-shot WM mode (teams context; first CAP). CAP again locks to sticky.
 (deflayermap (wm-teams)
-  w (one-shot $os-timeout (layer-while-held wm-workspace))
-  f (one-shot $os-timeout (layer-while-held wm-focus))
-  d (one-shot $os-timeout (layer-while-held wm-move))
-  s (one-shot $os-timeout (layer-while-held wm-stack))
-  e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-admin))
-  tab (push-msg "wm.focus.last-workspace")
-  / (push-msg "system.cheatsheet")
-  up up
-  down down
-  left left
-  right right
-  m (macro (unmod lctl lsft m))
-  c (macro (unmod lctl lsft o))
-  u (macro (unmod lctl lsft k))
-  g (macro (unmod lctl e))
-  h (macro (unmod lalt left))
-  l (macro (unmod lalt right))
-  j (macro (unmod lalt pgdn))
-  k (macro (unmod lalt pgup))
-  1 (macro (unmod lctl 1))
-  2 (macro (unmod lctl 2))
-  3 (macro (unmod lctl 3))
-  4 (macro (unmod lctl 4))
-  5 (macro (unmod lctl 5))
-  6 (macro (unmod lctl 6))
-  7 (macro (unmod lctl 7))
-  8 (macro (unmod lctl 8))
-  y (macro (unmod lctl lsft a))
-  n (macro (unmod lctl lsft j))
+  caps (layer-switch wm-teams-toggle)
+  w (layer-switch wm-workspace)
+  f (layer-switch wm-focus)
+  d (layer-switch wm-move)
+  s (layer-switch wm-stack)
+  e (layer-switch wm-resize)
+  a (layer-switch wm-admin)
+  tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-teams))
+  / (multi (push-msg "system.cheatsheet") (layer-switch base-teams))
+  up (multi up (layer-switch base-teams))
+  down (multi down (layer-switch base-teams))
+  left (multi left (layer-switch base-teams))
+  right (multi right (layer-switch base-teams))
+  m (multi (macro (unmod lctl lsft m)) (layer-switch base-teams))
+  c (multi (macro (unmod lctl lsft o)) (layer-switch base-teams))
+  u (multi (macro (unmod lctl lsft k)) (layer-switch base-teams))
+  g (multi (macro (unmod lctl e)) (layer-switch base-teams))
+  h (multi (macro (unmod lalt left)) (layer-switch base-teams))
+  l (multi (macro (unmod lalt right)) (layer-switch base-teams))
+  j (multi (macro (unmod lalt pgdn)) (layer-switch base-teams))
+  k (multi (macro (unmod lalt pgup)) (layer-switch base-teams))
+  1 (multi (macro (unmod lctl 1)) (layer-switch base-teams))
+  2 (multi (macro (unmod lctl 2)) (layer-switch base-teams))
+  3 (multi (macro (unmod lctl 3)) (layer-switch base-teams))
+  4 (multi (macro (unmod lctl 4)) (layer-switch base-teams))
+  5 (multi (macro (unmod lctl 5)) (layer-switch base-teams))
+  6 (multi (macro (unmod lctl 6)) (layer-switch base-teams))
+  7 (multi (macro (unmod lctl 7)) (layer-switch base-teams))
+  8 (multi (macro (unmod lctl 8)) (layer-switch base-teams))
+  y (multi (macro (unmod lctl lsft a)) (layer-switch base-teams))
+  n (multi (macro (unmod lctl lsft j)) (layer-switch base-teams))
   esc (layer-switch base-teams)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
-;; wm-teams-toggle: sticky WM mode (teams context; CAP double-tap)
-;; CAPS or ESC exits to base-teams.
+;; wm-teams-toggle: sticky WM mode (teams context; CAP again from one-shot).
+;; CAP returns to one-shot wm-teams; ESC exits to base-teams.
 (deflayermap (wm-teams-toggle)
-  caps (layer-switch base-teams)
+  caps (layer-switch wm-teams)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -328,51 +315,49 @@
   ___ XX
 )
 
-;; base-codeflow: typing layer (codeflow focus context). CAP enters wm-codeflow.
+;; base-codeflow: typing layer (codeflow focus context). CAP enters one-shot wm-codeflow.
 (deflayermap (base-codeflow)
-  caps (tap-dance $td-timeout (
-    (one-shot-release $os-timeout (layer-while-held wm-codeflow))
-    (layer-switch wm-codeflow-toggle)
-  ))
+  caps (layer-switch wm-codeflow)
 )
 
-;; wm-codeflow: one-shot WM mode (codeflow context; CAP single-tap)
+;; wm-codeflow: one-shot WM mode (codeflow context; first CAP). CAP again locks to sticky.
 (deflayermap (wm-codeflow)
-  w (one-shot $os-timeout (layer-while-held wm-workspace))
-  f (one-shot $os-timeout (layer-while-held wm-focus))
-  d (one-shot $os-timeout (layer-while-held wm-move))
-  s (one-shot $os-timeout (layer-while-held wm-stack))
-  e (one-shot $os-timeout (layer-while-held wm-resize))
-  a (one-shot $os-timeout (layer-while-held wm-admin))
-  tab (push-msg "wm.focus.last-workspace")
-  / (push-msg "system.cheatsheet")
-  up up
-  down down
-  left left
-  right right
-  j (macro f8)
-  k (macro f7)
-  l (macro (unmod lctl f8))
-  h (macro (unmod lctl f7))
-  c (macro (unmod lalt c))
-  n (macro (unmod lctl f12))
-  b (macro (unmod lctl f11))
-  t (macro (unmod lalt lsft t))
-  v (macro (unmod lalt lsft d))
-  o (macro (unmod lalt lsft o))
-  r (macro (unmod lalt lsft t) spc (unmod lalt lsft d))
-  g (macro (unmod lctl g))
-  u (macro f5)
+  caps (layer-switch wm-codeflow-toggle)
+  w (layer-switch wm-workspace)
+  f (layer-switch wm-focus)
+  d (layer-switch wm-move)
+  s (layer-switch wm-stack)
+  e (layer-switch wm-resize)
+  a (layer-switch wm-admin)
+  tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-codeflow))
+  / (multi (push-msg "system.cheatsheet") (layer-switch base-codeflow))
+  up (multi up (layer-switch base-codeflow))
+  down (multi down (layer-switch base-codeflow))
+  left (multi left (layer-switch base-codeflow))
+  right (multi right (layer-switch base-codeflow))
+  j (multi (macro f8) (layer-switch base-codeflow))
+  k (multi (macro f7) (layer-switch base-codeflow))
+  l (multi (macro (unmod lctl f8)) (layer-switch base-codeflow))
+  h (multi (macro (unmod lctl f7)) (layer-switch base-codeflow))
+  c (multi (macro (unmod lalt c)) (layer-switch base-codeflow))
+  n (multi (macro (unmod lctl f12)) (layer-switch base-codeflow))
+  b (multi (macro (unmod lctl f11)) (layer-switch base-codeflow))
+  t (multi (macro (unmod lalt lsft t)) (layer-switch base-codeflow))
+  v (multi (macro (unmod lalt lsft d)) (layer-switch base-codeflow))
+  o (multi (macro (unmod lalt lsft o)) (layer-switch base-codeflow))
+  r (multi (macro (unmod lalt lsft t) spc (unmod lalt lsft d)) (layer-switch base-codeflow))
+  g (multi (macro (unmod lctl g)) (layer-switch base-codeflow))
+  u (multi (macro f5) (layer-switch base-codeflow))
   esc (layer-switch base-codeflow)
   lsft lsft
   rsft rsft
   ___ XX
 )
 
-;; wm-codeflow-toggle: sticky WM mode (codeflow context; CAP double-tap)
-;; CAPS or ESC exits to base-codeflow.
+;; wm-codeflow-toggle: sticky WM mode (codeflow context; CAP again from one-shot).
+;; CAP returns to one-shot wm-codeflow; ESC exits to base-codeflow.
 (deflayermap (wm-codeflow-toggle)
-  caps (layer-switch base-codeflow)
+  caps (layer-switch wm-codeflow)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -404,82 +389,82 @@
   ___ XX
 )
 
-;; wm-workspace: one-shot sub-mode (auto-exits after one action)
+;; wm-workspace: one-shot sub-mode (each action returns to typing)
 (deflayermap (wm-workspace)
-  1 (push-msg "wm.workspace.focus.0")
-  2 (push-msg "wm.workspace.focus.1")
-  3 (push-msg "wm.workspace.focus.2")
-  4 (push-msg "wm.workspace.focus.3")
-  5 (push-msg "wm.workspace.focus.4")
-  6 (push-msg "wm.workspace.focus.5")
-  7 (push-msg "wm.workspace.focus.6")
-  8 (push-msg "wm.workspace.focus.7")
+  1 (multi (push-msg "wm.workspace.focus.0") (layer-switch base-default))
+  2 (multi (push-msg "wm.workspace.focus.1") (layer-switch base-default))
+  3 (multi (push-msg "wm.workspace.focus.2") (layer-switch base-default))
+  4 (multi (push-msg "wm.workspace.focus.3") (layer-switch base-default))
+  5 (multi (push-msg "wm.workspace.focus.4") (layer-switch base-default))
+  6 (multi (push-msg "wm.workspace.focus.5") (layer-switch base-default))
+  7 (multi (push-msg "wm.workspace.focus.6") (layer-switch base-default))
+  8 (multi (push-msg "wm.workspace.focus.7") (layer-switch base-default))
   esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-focus: one-shot sub-mode (auto-exits after one action)
+;; wm-focus: one-shot sub-mode (each action returns to typing)
 (deflayermap (wm-focus)
-  h (push-msg "wm.focus.left")
-  j (push-msg "wm.focus.down")
-  k (push-msg "wm.focus.up")
-  l (push-msg "wm.focus.right")
-  g (push-msg "wm.focus.cycle-next")
+  h (multi (push-msg "wm.focus.left") (layer-switch base-default))
+  j (multi (push-msg "wm.focus.down") (layer-switch base-default))
+  k (multi (push-msg "wm.focus.up") (layer-switch base-default))
+  l (multi (push-msg "wm.focus.right") (layer-switch base-default))
+  g (multi (push-msg "wm.focus.cycle-next") (layer-switch base-default))
   esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-move: one-shot sub-mode (auto-exits after one action)
+;; wm-move: one-shot sub-mode (each action returns to typing)
 (deflayermap (wm-move)
-  h (push-msg "wm.move.left")
-  j (push-msg "wm.move.down")
-  k (push-msg "wm.move.up")
-  l (push-msg "wm.move.right")
-  q (push-msg "wm.move.promote")
-  t (push-msg "wm.layout.toggle-float")
-  m (push-msg "wm.layout.toggle-monocle")
-  1 (push-msg "wm.workspace.move-to.0")
-  2 (push-msg "wm.workspace.move-to.1")
-  3 (push-msg "wm.workspace.move-to.2")
-  4 (push-msg "wm.workspace.move-to.3")
-  5 (push-msg "wm.workspace.move-to.4")
-  6 (push-msg "wm.workspace.move-to.5")
-  7 (push-msg "wm.workspace.move-to.6")
-  8 (push-msg "wm.workspace.move-to.7")
+  h (multi (push-msg "wm.move.left") (layer-switch base-default))
+  j (multi (push-msg "wm.move.down") (layer-switch base-default))
+  k (multi (push-msg "wm.move.up") (layer-switch base-default))
+  l (multi (push-msg "wm.move.right") (layer-switch base-default))
+  q (multi (push-msg "wm.move.promote") (layer-switch base-default))
+  t (multi (push-msg "wm.layout.toggle-float") (layer-switch base-default))
+  m (multi (push-msg "wm.layout.toggle-monocle") (layer-switch base-default))
+  1 (multi (push-msg "wm.workspace.move-to.0") (layer-switch base-default))
+  2 (multi (push-msg "wm.workspace.move-to.1") (layer-switch base-default))
+  3 (multi (push-msg "wm.workspace.move-to.2") (layer-switch base-default))
+  4 (multi (push-msg "wm.workspace.move-to.3") (layer-switch base-default))
+  5 (multi (push-msg "wm.workspace.move-to.4") (layer-switch base-default))
+  6 (multi (push-msg "wm.workspace.move-to.5") (layer-switch base-default))
+  7 (multi (push-msg "wm.workspace.move-to.6") (layer-switch base-default))
+  8 (multi (push-msg "wm.workspace.move-to.7") (layer-switch base-default))
   esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-stack: one-shot sub-mode (auto-exits after one action)
+;; wm-stack: one-shot sub-mode (each action returns to typing)
 (deflayermap (wm-stack)
-  h (push-msg "wm.stack.left")
-  j (push-msg "wm.stack.down")
-  k (push-msg "wm.stack.up")
-  l (push-msg "wm.stack.right")
-  n (push-msg "wm.stack.cycle-next")
-  p (push-msg "wm.stack.cycle-prev")
-  u (push-msg "wm.stack.unstack")
+  h (multi (push-msg "wm.stack.left") (layer-switch base-default))
+  j (multi (push-msg "wm.stack.down") (layer-switch base-default))
+  k (multi (push-msg "wm.stack.up") (layer-switch base-default))
+  l (multi (push-msg "wm.stack.right") (layer-switch base-default))
+  n (multi (push-msg "wm.stack.cycle-next") (layer-switch base-default))
+  p (multi (push-msg "wm.stack.cycle-prev") (layer-switch base-default))
+  u (multi (push-msg "wm.stack.unstack") (layer-switch base-default))
   esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-resize: one-shot sub-mode (auto-exits after one action)
+;; wm-resize: one-shot sub-mode (each action returns to typing)
 (deflayermap (wm-resize)
-  h (push-msg "wm.resize.horizontal-decrease")
-  j (push-msg "wm.resize.vertical-decrease")
-  k (push-msg "wm.resize.vertical-increase")
-  l (push-msg "wm.resize.horizontal-increase")
+  h (multi (push-msg "wm.resize.horizontal-decrease") (layer-switch base-default))
+  j (multi (push-msg "wm.resize.vertical-decrease") (layer-switch base-default))
+  k (multi (push-msg "wm.resize.vertical-increase") (layer-switch base-default))
+  l (multi (push-msg "wm.resize.horizontal-increase") (layer-switch base-default))
   esc (layer-switch base-default)
   ___ XX
 )
 
-;; wm-admin: one-shot sub-mode (auto-exits after one action)
+;; wm-admin: one-shot sub-mode (each action returns to typing)
 (deflayermap (wm-admin)
-  r (push-msg "wm.layout.retile")
-  p (push-msg "wm.layout.toggle-pause")
-  x (push-msg "wm.layout.flip-horizontal")
-  y (push-msg "wm.layout.flip-vertical")
-  l (push-msg "wm.system.reload")
+  r (multi (push-msg "wm.layout.retile") (layer-switch base-default))
+  p (multi (push-msg "wm.layout.toggle-pause") (layer-switch base-default))
+  x (multi (push-msg "wm.layout.flip-horizontal") (layer-switch base-default))
+  y (multi (push-msg "wm.layout.flip-vertical") (layer-switch base-default))
+  l (multi (push-msg "wm.system.reload") (layer-switch base-default))
   esc (layer-switch base-default)
   ___ XX
 )

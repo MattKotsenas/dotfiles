@@ -63,7 +63,6 @@ public class KanataEmitterTests
     public void PrefixAll_ExpandsToMacroPerKey()
     {
         var keymap = new KeymapBuilder()
-            .Caps()
             .Reserve()
             .WmBase(b => b.Intent("r", "wm.layout.retile"))
             .Overlay("term", b => b.PrefixAll("C-spc", "h", "j", "c"))
@@ -84,7 +83,6 @@ public class KanataEmitterTests
     public void PrefixAll_DefaultKeys_ExcludesReservedAndArrows()
     {
         var keymap = new KeymapBuilder()
-            .Caps()
             // Production reservation post-reorg: only tab/ as globals; a/s/d/f/e/w
             // as sub-mode entries (a is wm-admin, which owns r/p/x/y/l).
             .Reserve(global: ["tab", "/"], subModeEntries: ["a", "s", "d", "f", "e", "w"])
@@ -117,7 +115,6 @@ public class KanataEmitterTests
     public void PrefixAll_Digits_EmittedAsUnicodeMacroStep()
     {
         var keymap = new KeymapBuilder()
-            .Caps()
             .Reserve()
             .WmBase(b => b.Intent("r", "wm.layout.retile"))
             .Overlay("term", b => b.PrefixAll("C-spc", "1", "2", "0"))
@@ -137,7 +134,6 @@ public class KanataEmitterTests
     public void PrefixAll_DefaultKeys_IncludeSymbolsAndDigits()
     {
         var keymap = new KeymapBuilder()
-            .Caps()
             .Reserve()
             .WmBase(b => b.Intent("r", "wm.layout.retile"))
             .Overlay("term", b => b.PrefixAll("C-spc"))

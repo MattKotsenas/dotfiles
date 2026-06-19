@@ -9,7 +9,7 @@ namespace EventListeners.Generated;
 /// </summary>
 public static class LayerCatalog
 {
-    // Focus-context base layers (typing layer; what 'caps' tap-dances FROM)
+    // Focus-context base layers (typing layer; what 'caps' enters WM FROM)
     public const string BaseDefault = "base-default";
     public const string BaseTerminal = "base-terminal";
     public const string BaseEdge = "base-edge";
@@ -23,7 +23,7 @@ public static class LayerCatalog
     public const string WmTeams = "wm-teams";
     public const string WmCodeflow = "wm-codeflow";
 
-    // WM-toggle layers (CAP double-tap state per context). UI overlay shown.
+    // WM-toggle layers (sticky/locked state per context). UI overlay shown.
     public const string WmToggle = "wm-toggle";
     public const string WmTerminalToggle = "wm-terminal-toggle";
     public const string WmEdgeToggle = "wm-edge-toggle";

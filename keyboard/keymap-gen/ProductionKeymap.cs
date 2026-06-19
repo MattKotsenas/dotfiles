@@ -10,12 +10,6 @@ namespace KeymapGen;
 internal static class ProductionKeymap
 {
     public static Keymap Build() => new KeymapBuilder()
-        // os-timeout=65535: kanata 1.11.0 parses one-shot timeout as a non-zero
-        // u16, so 65535ms (~65s) is the maximum. Long enough that a single
-        // CAP tap effectively "stays armed until the user presses a key" in
-        // normal use; a fresh CAP tap refreshes it on the rare occasion it
-        // does expire.
-        .Caps(tapDanceMs: 250, oneShotMs: 65535)
         .Reserve(
             // wm-base globals after Phase 3 reorg: only tab + / remain.
             // r/p/x/y moved into the wm-admin (CAP a) sub-mode.
@@ -90,8 +84,8 @@ internal static class ProductionKeymap
             // of truth for what each key does (pane nav h/j/k/l, new window c,
             // command prompt ;, search /, kill x, etc.). wm-base reserved keys
             // (a/s/d/f/e/w sub-modes; tab/ globals; arrows) still do
-            // their WM thing. Active via single-tap (one-shot wm-terminal) or
-            // double-tap (sticky wm-terminal-toggle) CAP in Windows Terminal.
+            // their WM thing. Active via a single CAP (one-shot wm-terminal) or
+            // a second CAP (sticky wm-terminal-toggle) in Windows Terminal.
             .Describe("Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused terminal. " +
                       "See `psmux/.psmux.conf` for what each key does in psmux (or hit `CAP ?` inside psmux to list binds).")
             .PrefixAll("C-spc"))
