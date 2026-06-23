@@ -48,7 +48,7 @@ public class IntentDispatchRuleTests
     // Window
     [InlineData("wm.window.manage", "komorebic", "manage")]
     // System
-    [InlineData("wm.system.reload", "wpmctl", "restart komorebi")]
+    [InlineData("wm.system.reload", "wpmctl", "restart komorebi komorebi-bar-1 komorebi-bar-2")]
     public void KnownIntent_DispatchesExpectedCommand(string intent, string expectedExe, string expectedArgs)
     {
         var rule = CreateRule(out var runner);

@@ -135,13 +135,13 @@ public sealed class IntentDispatchRule : IEventRule
         map["wm.window.manage"] = () => Komorebic("manage");
 
         // ----- System -----
-        // A clean komorebi restart re-walks every monitor (re-running EnumWindows) to
-        // re-acquire untracked windows, and is bar-safe for this wpm-managed setup --
-        // unlike `komorebic replace-configuration`, which kills the wpm-managed bars,
-        // spawns a stray default bar, and resets each monitor's focused workspace.
-        // `restart` without --with-dependents leaves this service (which Requires
-        // komorebi) running.
-        map["wm.system.reload"] = () => Wpmctl("restart komorebi");
+        // Full clean re-walk: restart komorebi (re-running EnumWindows on every
+        // monitor to re-acquire untracked windows) AND its bars. The bars must
+        // restart too -- each komorebi-bar applies its work_area_offset only on its
+        // own startup, so a komorebi-only restart leaves windows tiling over the bar.
+        // Listing the bar units explicitly (rather than `restart -d komorebi`) avoids
+        // restarting this service, which also Requires komorebi.
+        map["wm.system.reload"] = () => Wpmctl("restart komorebi komorebi-bar-1 komorebi-bar-2");
         map["system.cheatsheet"] = OpenCheatsheet;
 
         return map;
