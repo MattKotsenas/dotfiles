@@ -96,13 +96,38 @@ public class IntentDispatchRuleTests
     public void CheatsheetIntent_OpensWtWithGlow()
     {
         var rule = CreateRule(out var runner);
+        // komorebic configuration is queried first to locate the config home.
+        runner.BufferedStandardOutput = "C:\\home\\.config\\komorebi\\komorebi.json\r\n";
 
         rule.ProcessEvent(new KanataMessageEvent("system.cheatsheet"));
 
-        var cmd = Assert.Single(runner.Commands);
+        Assert.Contains(runner.Commands,
+            c => c.TargetFilePath == "komorebic" && c.Arguments == "configuration");
+
+        var cmd = runner.Commands.Last();
         Assert.Equal("wt.exe", cmd.TargetFilePath);
-        Assert.Contains("KEYMAP.md", cmd.Arguments);
         Assert.Contains("glow", cmd.Arguments);
+        // Derived as the sibling of komorebi's config home, not a hard-coded %USERPROFILE%.
+        Assert.Contains("\\home\\.config\\keyboard\\KEYMAP.md", cmd.Arguments);
+    }
+
+    [Fact]
+    public void ReloadIntent_ResolvesConfigPathThenReplacesConfiguration()
+    {
+        var rule = CreateRule(out var runner);
+        // Realistic komorebic output: a single line with a trailing newline.
+        runner.BufferedStandardOutput = "C:\\home\\.config\\komorebi\\komorebi.json\r\n";
+
+        rule.ProcessEvent(new KanataMessageEvent("wm.system.reload"));
+
+        // First it asks komorebic where the config lives, then replaces it with that path.
+        Assert.Contains(runner.Commands,
+            c => c.TargetFilePath == "komorebic" && c.Arguments == "configuration");
+
+        var cmd = runner.Commands.Last();
+        Assert.Equal("komorebic", cmd.TargetFilePath);
+        Assert.Equal("replace-configuration \"C:\\home\\.config\\komorebi\\komorebi.json\"", cmd.Arguments);
+        Assert.Equal(CommandResultValidation.None, cmd.Validation);
     }
 
     [Theory]

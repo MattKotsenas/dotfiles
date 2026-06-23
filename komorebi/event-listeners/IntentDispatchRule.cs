@@ -21,6 +21,9 @@ public sealed class IntentDispatchRule : IEventRule
     private readonly ICommandRunner _runner;
     private readonly Dictionary<string, Func<Command>> _commandMap;
 
+    // Resolved lazily via `komorebic configuration`; see KomorebiConfigPath.
+    private string? _komorebiConfigPath;
+
     public string Name => "IntentDispatchRule";
 
     public IntentDispatchRule(
@@ -38,7 +41,20 @@ public sealed class IntentDispatchRule : IEventRule
 
         if (_commandMap.TryGetValue(intent, out var commandFactory))
         {
-            var command = commandFactory();
+            Command command;
+            try
+            {
+                command = commandFactory();
+            }
+            catch (Exception ex)
+            {
+                // Building a command can fail if it needs to resolve external state
+                // (e.g. `komorebic configuration` for the reload/cheatsheet paths).
+                // A failure here must not take down the event loop.
+                _logger.LogWarning(ex, "Failed to resolve command for intent {Intent}", intent);
+                return;
+            }
+
             _ = RunAsync(command, intent);
             return;
         }
@@ -62,7 +78,7 @@ public sealed class IntentDispatchRule : IEventRule
         }
     }
 
-    private static Dictionary<string, Func<Command>> BuildCommandMap()
+    private Dictionary<string, Func<Command>> BuildCommandMap()
     {
         var map = new Dictionary<string, Func<Command>>(StringComparer.Ordinal);
 
@@ -113,7 +129,12 @@ public sealed class IntentDispatchRule : IEventRule
         map["wm.layout.retile"] = () => Komorebic("retile");
 
         // ----- System -----
-        map["wm.system.reload"] = () => Komorebic("replace-configuration");
+        // replace-configuration rebuilds the window manager in-process (re-running
+        // EnumWindows), which re-acquires any windows that should be managed but have
+        // drifted untracked -- unlike retile, which only re-tiles managed windows. It
+        // requires the path to the active komorebi.json, resolved from komorebic itself
+        // rather than hard-coding %USERPROFILE%\.config.
+        map["wm.system.reload"] = () => Komorebic($"replace-configuration \"{KomorebiConfigPath}\"");
         map["system.cheatsheet"] = OpenCheatsheet;
 
         return map;
@@ -122,11 +143,36 @@ public sealed class IntentDispatchRule : IEventRule
     private static Command Komorebic(string args) =>
         Cli.Wrap("komorebic").WithArguments(args).WithValidation(CommandResultValidation.None);
 
-    private static Command OpenCheatsheet()
+    /// <summary>
+    /// Absolute path to the active komorebi.json, resolved once via
+    /// <c>komorebic configuration</c> and memoized for the process lifetime (it
+    /// cannot change without restarting komorebi).
+    /// </summary>
+    private string KomorebiConfigPath => _komorebiConfigPath ??= ResolveKomorebiConfigPath();
+
+    private string ResolveKomorebiConfigPath()
     {
-        var keymap = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".config", "keyboard", "KEYMAP.md");
+        var result = _runner.RunBufferedAsync(Komorebic("configuration")).GetAwaiter().GetResult();
+        var path = result.StandardOutput.Trim();
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new InvalidOperationException("`komorebic configuration` returned an empty path");
+        }
+
+        return path;
+    }
+
+    private Command OpenCheatsheet()
+    {
+        // The keyboard cheatsheet (KEYMAP.md) lives alongside komorebi's config:
+        // komorebi.json is <config-home>/komorebi/komorebi.json, so the cheatsheet is
+        // the sibling <config-home>/keyboard/KEYMAP.md. Deriving it from the resolved
+        // komorebi path keeps both intents anchored to one source of truth.
+        var configHome = Directory.GetParent(KomorebiConfigPath)?.Parent
+            ?? throw new InvalidOperationException(
+                $"Could not derive config home from komorebi config path '{KomorebiConfigPath}'");
+        var keymap = Path.Combine(configHome.FullName, "keyboard", "KEYMAP.md");
+
         return Cli.Wrap("wt.exe")
             .WithArguments($"-w _quake glow -p \"{keymap}\"")
             .WithValidation(CommandResultValidation.None);

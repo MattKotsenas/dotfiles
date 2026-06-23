@@ -1,4 +1,5 @@
 using CliWrap;
+using CliWrap.Buffered;
 
 namespace EventListeners;
 
@@ -9,6 +10,13 @@ namespace EventListeners;
 public interface ICommandRunner
 {
     Task<CommandResult> RunAsync(Command command, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Runs the command and buffers its output, for the rare cases where stdout is
+    /// needed (e.g. resolving a path from <c>komorebic configuration</c>). Mirrors
+    /// CliWrap's own <c>ExecuteAsync</c>/<c>ExecuteBufferedAsync</c> pairing.
+    /// </summary>
+    Task<BufferedCommandResult> RunBufferedAsync(Command command, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -19,5 +27,10 @@ public sealed class CliWrapCommandRunner : ICommandRunner
     public Task<CommandResult> RunAsync(Command command, CancellationToken cancellationToken = default)
     {
         return command.ExecuteAsync(cancellationToken);
+    }
+
+    public Task<BufferedCommandResult> RunBufferedAsync(Command command, CancellationToken cancellationToken = default)
+    {
+        return command.ExecuteBufferedAsync(cancellationToken);
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using CliWrap;
+using CliWrap.Buffered;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EventListeners.Tests;
@@ -116,6 +117,13 @@ public class KomorebiEventListenerServiceTests
         {
             _commands.Enqueue(command);
             return Task.FromResult(_script(command));
+        }
+
+        public Task<BufferedCommandResult> RunBufferedAsync(Command command, CancellationToken cancellationToken = default)
+        {
+            _commands.Enqueue(command);
+            return Task.FromResult(new BufferedCommandResult(
+                0, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, string.Empty, string.Empty));
         }
     }
 }
