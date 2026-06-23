@@ -128,13 +128,20 @@ public sealed class IntentDispatchRule : IEventRule
         map["wm.layout.toggle-pause"] = () => Komorebic("toggle-pause");
         map["wm.layout.retile"] = () => Komorebic("retile");
 
+        // ----- Window -----
+        // Force-manage the focused window: the surgical way to pull in a window
+        // komorebi failed to track (e.g. opened in a state it didn't hook). No bars
+        // touched, no workspace reset, works on whichever monitor has focus.
+        map["wm.window.manage"] = () => Komorebic("manage");
+
         // ----- System -----
-        // replace-configuration rebuilds the window manager in-process (re-running
-        // EnumWindows), which re-acquires any windows that should be managed but have
-        // drifted untracked -- unlike retile, which only re-tiles managed windows. It
-        // requires the path to the active komorebi.json, resolved from komorebic itself
-        // rather than hard-coding %USERPROFILE%\.config.
-        map["wm.system.reload"] = () => Komorebic($"replace-configuration \"{KomorebiConfigPath}\"");
+        // A clean komorebi restart re-walks every monitor (re-running EnumWindows) to
+        // re-acquire untracked windows, and is bar-safe for this wpm-managed setup --
+        // unlike `komorebic replace-configuration`, which kills the wpm-managed bars,
+        // spawns a stray default bar, and resets each monitor's focused workspace.
+        // `restart` without --with-dependents leaves this service (which Requires
+        // komorebi) running.
+        map["wm.system.reload"] = () => Wpmctl("restart komorebi");
         map["system.cheatsheet"] = OpenCheatsheet;
 
         return map;
@@ -142,6 +149,9 @@ public sealed class IntentDispatchRule : IEventRule
 
     private static Command Komorebic(string args) =>
         Cli.Wrap("komorebic").WithArguments(args).WithValidation(CommandResultValidation.None);
+
+    private static Command Wpmctl(string args) =>
+        Cli.Wrap("wpmctl").WithArguments(args).WithValidation(CommandResultValidation.None);
 
     /// <summary>
     /// Absolute path to the active komorebi.json, resolved once via

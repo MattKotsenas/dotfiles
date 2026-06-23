@@ -45,6 +45,10 @@ public class IntentDispatchRuleTests
     [InlineData("wm.layout.toggle-monocle", "komorebic", "toggle-monocle")]
     [InlineData("wm.layout.toggle-pause", "komorebic", "toggle-pause")]
     [InlineData("wm.layout.retile", "komorebic", "retile")]
+    // Window
+    [InlineData("wm.window.manage", "komorebic", "manage")]
+    // System
+    [InlineData("wm.system.reload", "wpmctl", "restart komorebi")]
     public void KnownIntent_DispatchesExpectedCommand(string intent, string expectedExe, string expectedArgs)
     {
         var rule = CreateRule(out var runner);
@@ -109,25 +113,6 @@ public class IntentDispatchRuleTests
         Assert.Contains("glow", cmd.Arguments);
         // Derived as the sibling of komorebi's config home, not a hard-coded %USERPROFILE%.
         Assert.Contains("\\home\\.config\\keyboard\\KEYMAP.md", cmd.Arguments);
-    }
-
-    [Fact]
-    public void ReloadIntent_ResolvesConfigPathThenReplacesConfiguration()
-    {
-        var rule = CreateRule(out var runner);
-        // Realistic komorebic output: a single line with a trailing newline.
-        runner.BufferedStandardOutput = "C:\\home\\.config\\komorebi\\komorebi.json\r\n";
-
-        rule.ProcessEvent(new KanataMessageEvent("wm.system.reload"));
-
-        // First it asks komorebic where the config lives, then replaces it with that path.
-        Assert.Contains(runner.Commands,
-            c => c.TargetFilePath == "komorebic" && c.Arguments == "configuration");
-
-        var cmd = runner.Commands.Last();
-        Assert.Equal("komorebic", cmd.TargetFilePath);
-        Assert.Equal("replace-configuration \"C:\\home\\.config\\komorebi\\komorebi.json\"", cmd.Arguments);
-        Assert.Equal(CommandResultValidation.None, cmd.Validation);
     }
 
     [Theory]

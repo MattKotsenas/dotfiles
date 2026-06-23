@@ -140,6 +140,7 @@ public class KanataBehaviorTests
 
     [Theory]
     [InlineData("r", "wm.layout.retile")]
+    [InlineData("m", "wm.window.manage")]
     [InlineData("p", "wm.layout.toggle-pause")]
     [InlineData("x", "wm.layout.flip-horizontal")]
     [InlineData("y", "wm.layout.flip-vertical")]

@@ -71,6 +71,7 @@ internal static class ProductionKeymap
             // Rare workspace/system ops. Bumped from wm-base globals so the
             // global keyspace stays minimal (only tab + / now).
             .Intent("r", "wm.layout.retile")
+            .Intent("m", "wm.window.manage")
             .Intent("p", "wm.layout.toggle-pause")
             .Intent("x", "wm.layout.flip-horizontal")
             .Intent("y", "wm.layout.flip-vertical")

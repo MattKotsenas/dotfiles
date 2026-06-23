@@ -72,10 +72,15 @@ NOT as intents.
 | `wm.layout.retile` | komorebic retile |
 | `wm.layout.toggle-pause` | komorebic toggle-pause |
 
+### Window
+| Intent | Action |
+|---|---|
+| `wm.window.manage` | komorebic manage (force-manage focused window) |
+
 ### System
 | Intent | Action |
 |---|---|
-| `wm.system.reload` | komorebic replace-configuration |
+| `wm.system.reload` | wpmctl restart komorebi |
 | `system.cheatsheet` | open keymap reference (wt + glow) |
 
 ## When NOT to add an intent
