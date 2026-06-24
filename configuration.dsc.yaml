@@ -493,6 +493,30 @@ properties:
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
           cargo install --git https://github.com/MattKotsenas/grove.git grove 2>&1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "cargo install --git grove failed with exit code $LASTEXITCODE" }
+    - resource: PSDscResources/Script
+      directives:
+        # mousemaster.exe is a ~122MB GraalVM native image, so it's fetched here
+        # (pinned to a release tag) rather than committed to the repo. The
+        # mousemaster.properties config is symlinked from the repo by dotbot;
+        # the exe lands next to it in ~/.config/mousemaster so mousemaster finds
+        # the config. Test = "exe present" keeps it idempotent (pinned version,
+        # so no re-download on every winget configure).
+        description: Download mousemaster.exe (pinned release; 122MB, gitignored not committed)
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $exe = Join-Path $env:USERPROFILE '.config\mousemaster\mousemaster.exe'
+          @{ Result = if (Test-Path -LiteralPath $exe) { 'present' } else { 'absent' } }
+        TestScript: |
+          $exe = Join-Path $env:USERPROFILE '.config\mousemaster\mousemaster.exe'
+          Test-Path -LiteralPath $exe
+        SetScript: |
+          $dir = Join-Path $env:USERPROFILE '.config\mousemaster'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          $url = 'https://github.com/petoncle/mousemaster/releases/download/88/mousemaster.exe'
+          $exe = Join-Path $dir 'mousemaster.exe'
+          Invoke-WebRequest -Uri $url -OutFile $exe -UseBasicParsing
+          if (-not (Test-Path -LiteralPath $exe)) { throw 'mousemaster.exe download failed' }
     - resource: PSDscResources/Registry
       directives:
         description: Enable UTF-8 for worldwide language support (Beta)

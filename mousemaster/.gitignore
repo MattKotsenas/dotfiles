@@ -1,0 +1,4 @@
+# mousemaster.exe is fetched by configuration.dsc.yaml (122MB GraalVM native image), never committed
+mousemaster.exe
+mm.out.txt
+mm.err.txt

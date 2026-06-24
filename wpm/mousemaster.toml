@@ -1,0 +1,23 @@
+[Unit]
+Name = "mousemaster"
+Description = "keyboard-driven mouse control (grid + hint pointer)"
+
+[Service]
+Kind = "Simple"
+Autostart = true
+Restart = "OnFailure"
+RestartSec = 2
+# mousemaster loads ./mousemaster.properties relative to its working directory,
+# so pin cwd to where the config (symlinked from the repo) and the exe live.
+WorkingDirectory = "$USERPROFILE/.config/mousemaster"
+
+# The exe (fetched by configuration.dsc.yaml) and the config (symlinked from the
+# repo) both live in WorkingDirectory above, so mousemaster's cwd-relative
+# config load finds it. Runs non-elevated like kanata; the overlay then draws
+# over non-elevated windows only (elevated windows are out of scope, same as
+# kanata today).
+[Service.ExecStart]
+Executable = "$USERPROFILE/.config/mousemaster/mousemaster.exe"
+
+[Service.Healthcheck.Process]
+DelaySec = 1
