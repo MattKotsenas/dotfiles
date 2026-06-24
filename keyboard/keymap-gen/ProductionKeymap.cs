@@ -93,7 +93,7 @@ internal static class ProductionKeymap
         .Overlay("edge", b => b
             .Describe("Browser shortcuts forwarded through the WM layer. wm-base reserved keys still do their WM thing.")
             .Macro("t", "C-t").Describe("new tab")
-            .Macro("v", "C-l", "esc", "esc").Describe("vimium reset (focus URL bar, then drop focus)"))
+            .Macro("[", "C-[").Describe("safely exit Vimium insert mode: sends Ctrl+[ which Vimium treats as Esc, so the site never sees a real Esc"))
         .Overlay("teams", b => b
             .Describe("Microsoft Teams shortcuts. In-meeting actions are no-ops outside a meeting.")
             // In-meeting actions

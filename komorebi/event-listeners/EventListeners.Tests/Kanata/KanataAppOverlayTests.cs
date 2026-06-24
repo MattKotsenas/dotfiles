@@ -28,20 +28,28 @@ public class KanataAppOverlayTests
     }
 
     [Fact]
-    public async Task EdgeOverlay_VimiumReset_EmitsCtrlLEscEsc()
+    public async Task EdgeOverlay_VimiumSafeEscape_EmitsCtrlLeftBracket_WithNoEsc()
     {
+        // CAP [ sends Ctrl+[ which Vimium treats as Escape, so it exits insert
+        // mode without the page ever seeing a real Esc. The "no Escape"
+        // assertion is the whole point: the previous C-l/esc/esc binding leaked
+        // literal Esc presses to the page (the bug being fixed).
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
                 .Layer("base-edge")
                 .Tap("caps")
-                .Tap("v")
+                .Tap("[")
                 .Settle());
 
-        // Ctrl+L chord, then esc x 2
+        // Ctrl is held while [ is pressed, so the browser sees <c-[>.
         Assert.Contains(new KeyEvent("↓", "LCtrl"), output.KeyEvents);
-        Assert.Contains(output.KeyEvents, e => e.Direction == "↓" && e.Key.Equals("L", StringComparison.OrdinalIgnoreCase));
-        Assert.Equal(2, output.KeyEvents.Count(e => e.Direction == "↓" && e.Key.Equals("Escape", StringComparison.OrdinalIgnoreCase)));
+        Assert.Contains(new KeyEvent("↓", "LBracket"), output.KeyEvents);
+        Assert.Contains(new KeyEvent("↑", "LCtrl"), output.KeyEvents);
+        // Precondition that makes the escape "safe": no literal Esc is emitted.
+        Assert.DoesNotContain(
+            output.KeyEvents,
+            e => e.Key.Equals("Escape", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

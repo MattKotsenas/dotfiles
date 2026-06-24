@@ -176,8 +176,8 @@ Browser shortcuts forwarded through the WM layer. wm-base reserved keys still do
 
 | Key | Action |
 |---|---|
+| `CAP [` | safely exit Vimium insert mode: sends Ctrl+[ which Vimium treats as Esc, so the site never sees a real Esc: macro `C-[` |
 | `CAP t` | new tab: macro `C-t` |
-| `CAP v` | vimium reset (focus URL bar, then drop focus): macro `C-l` → `esc` → `esc` |
 
 ### wm-teams
 

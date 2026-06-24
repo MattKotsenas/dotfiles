@@ -200,7 +200,7 @@
   left (multi left (layer-switch base-edge))
   right (multi right (layer-switch base-edge))
   t (multi (macro (unmod lctl t)) (layer-switch base-edge))
-  v (multi (macro (unmod lctl l) esc esc) (layer-switch base-edge))
+  [ (multi (macro (unmod lctl [)) (layer-switch base-edge))
   esc (layer-switch base-edge)
   lsft lsft
   rsft rsft
@@ -224,7 +224,7 @@
   left left
   right right
   t (macro (unmod lctl t))
-  v (macro (unmod lctl l) esc esc)
+  [ (macro (unmod lctl [))
   esc (layer-switch base-edge)
   lsft lsft
   rsft rsft
