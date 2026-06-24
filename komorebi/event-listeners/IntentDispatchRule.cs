@@ -8,7 +8,8 @@ namespace EventListeners;
 /// Dispatches semantic intents received from kanata (via push-msg) to concrete
 /// actions. Intent vocabulary is documented in keyboard/INTENTS.md.
 ///
-/// `wm.*` intents map 1:1 to komorebic commands.
+/// Most `wm.*` intents map 1:1 to komorebic commands; `wm.window.reacquire` is a
+/// multi-step sweep delegated to <see cref="IWindowSweeper"/>.
 /// `system.*` intents are misc actions (cheatsheet).
 ///
 /// Application-specific behavior (e.g. psmux pane nav in Windows Terminal) is
@@ -19,6 +20,7 @@ public sealed class IntentDispatchRule : IEventRule
 {
     private readonly ILogger<IntentDispatchRule> _logger;
     private readonly ICommandRunner _runner;
+    private readonly IWindowSweeper _sweeper;
     private readonly Dictionary<string, Func<Command>> _commandMap;
 
     // Resolved lazily via `komorebic configuration`; see KomorebiConfigPath.
@@ -28,16 +30,26 @@ public sealed class IntentDispatchRule : IEventRule
 
     public IntentDispatchRule(
         ILogger<IntentDispatchRule> logger,
-        ICommandRunner runner)
+        ICommandRunner runner,
+        IWindowSweeper sweeper)
     {
         _logger = logger;
         _runner = runner;
+        _sweeper = sweeper;
         _commandMap = BuildCommandMap();
     }
 
     public void ProcessEvent(IEvent evt)
     {
         if (evt is not KanataMessageEvent { Message: var intent }) return;
+
+        // The reacquire sweep is multi-step (enumerate -> focus -> manage per window),
+        // so it doesn't fit the 1:1 command map -- route it to the sweeper directly.
+        if (intent == "wm.window.reacquire")
+        {
+            _ = _sweeper.SweepAsync();
+            return;
+        }
 
         if (_commandMap.TryGetValue(intent, out var commandFactory))
         {
@@ -133,15 +145,10 @@ public sealed class IntentDispatchRule : IEventRule
         // komorebi failed to track (e.g. opened in a state it didn't hook). No bars
         // touched, no workspace reset, works on whichever monitor has focus.
         map["wm.window.manage"] = () => Komorebic("manage");
+        // wm.window.reacquire (the sweep) is handled in ProcessEvent, not here --
+        // it's a multi-step operation rather than a single komorebic command.
 
         // ----- System -----
-        // Full clean re-walk: restart komorebi (re-running EnumWindows on every
-        // monitor to re-acquire untracked windows) AND its bars. The bars must
-        // restart too -- each komorebi-bar applies its work_area_offset only on its
-        // own startup, so a komorebi-only restart leaves windows tiling over the bar.
-        // Listing the bar units explicitly (rather than `restart -d komorebi`) avoids
-        // restarting this service, which also Requires komorebi.
-        map["wm.system.reload"] = () => Wpmctl("restart komorebi komorebi-bar-1 komorebi-bar-2");
         map["system.cheatsheet"] = OpenCheatsheet;
 
         return map;
@@ -149,9 +156,6 @@ public sealed class IntentDispatchRule : IEventRule
 
     private static Command Komorebic(string args) =>
         Cli.Wrap("komorebic").WithArguments(args).WithValidation(CommandResultValidation.None);
-
-    private static Command Wpmctl(string args) =>
-        Cli.Wrap("wpmctl").WithArguments(args).WithValidation(CommandResultValidation.None);
 
     /// <summary>
     /// Absolute path to the active komorebi.json, resolved once via

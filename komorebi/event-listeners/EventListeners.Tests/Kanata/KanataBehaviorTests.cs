@@ -134,17 +134,15 @@ public class KanataBehaviorTests
     }
 
     // ============================================================
-    // Admin sub-mode (Phase 3): retile / pause / flip / reload moved
-    // from wm-base globals to the wm-admin (CAP a) sub-mode.
+    // Admin sub-mode (CAP a): reacquire / manage / pause / flip.
     // ============================================================
 
     [Theory]
-    [InlineData("r", "wm.layout.retile")]
+    [InlineData("r", "wm.window.reacquire")]
     [InlineData("m", "wm.window.manage")]
     [InlineData("p", "wm.layout.toggle-pause")]
     [InlineData("x", "wm.layout.flip-horizontal")]
     [InlineData("y", "wm.layout.flip-vertical")]
-    [InlineData("l", "wm.system.reload")]
     public async Task OneShot_AdminSubMod_DispatchesExpectedIntent(string key, string expectedIntent)
     {
         var output = await KanataSimulator.RunAsync(

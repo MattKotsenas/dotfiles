@@ -115,10 +115,9 @@ Entered via `CAP a`.
 
 | Key | Action |
 |---|---|
-| `CAP a l` | intent `wm.system.reload` |
 | `CAP a m` | intent `wm.window.manage` |
 | `CAP a p` | intent `wm.layout.toggle-pause` |
-| `CAP a r` | intent `wm.layout.retile` |
+| `CAP a r` | intent `wm.window.reacquire` |
 | `CAP a x` | intent `wm.layout.flip-horizontal` |
 | `CAP a y` | intent `wm.layout.flip-vertical` |
 

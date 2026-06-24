@@ -5,10 +5,14 @@ namespace EventListeners.Tests;
 
 public class IntentDispatchRuleTests
 {
-    private static IntentDispatchRule CreateRule(out RecordingCommandRunner runner)
+    private static IntentDispatchRule CreateRule(out RecordingCommandRunner runner) =>
+        CreateRule(out runner, out _);
+
+    private static IntentDispatchRule CreateRule(out RecordingCommandRunner runner, out FakeWindowSweeper sweeper)
     {
         runner = new RecordingCommandRunner();
-        return new IntentDispatchRule(NullLogger<IntentDispatchRule>.Instance, runner);
+        sweeper = new FakeWindowSweeper();
+        return new IntentDispatchRule(NullLogger<IntentDispatchRule>.Instance, runner, sweeper);
     }
 
     [Theory]
@@ -47,8 +51,6 @@ public class IntentDispatchRuleTests
     [InlineData("wm.layout.retile", "komorebic", "retile")]
     // Window
     [InlineData("wm.window.manage", "komorebic", "manage")]
-    // System
-    [InlineData("wm.system.reload", "wpmctl", "restart komorebi komorebi-bar-1 komorebi-bar-2")]
     public void KnownIntent_DispatchesExpectedCommand(string intent, string expectedExe, string expectedArgs)
     {
         var rule = CreateRule(out var runner);
@@ -59,6 +61,20 @@ public class IntentDispatchRuleTests
         Assert.Equal(expectedExe, cmd.TargetFilePath);
         Assert.Equal(expectedArgs, cmd.Arguments);
         Assert.Equal(CommandResultValidation.None, cmd.Validation);
+    }
+
+    [Fact]
+    public void ReacquireIntent_InvokesSweeper_WithoutRunningCommand()
+    {
+        var rule = CreateRule(out var runner, out var sweeper);
+
+        Assert.Equal(0, sweeper.SweepCount); // precondition: not yet swept
+
+        rule.ProcessEvent(new KanataMessageEvent("wm.window.reacquire"));
+
+        Assert.Equal(1, sweeper.SweepCount);
+        // The sweep is delegated to IWindowSweeper; the dispatcher itself issues no command.
+        Assert.Empty(runner.Commands);
     }
 
     [Theory]

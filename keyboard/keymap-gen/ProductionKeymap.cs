@@ -70,12 +70,11 @@ internal static class ProductionKeymap
         .SubMode("admin", "a", b => b
             // Rare workspace/system ops. Bumped from wm-base globals so the
             // global keyspace stays minimal (only tab + / now).
-            .Intent("r", "wm.layout.retile")
+            .Intent("r", "wm.window.reacquire")
             .Intent("m", "wm.window.manage")
             .Intent("p", "wm.layout.toggle-pause")
             .Intent("x", "wm.layout.flip-horizontal")
-            .Intent("y", "wm.layout.flip-vertical")
-            .Intent("l", "wm.system.reload"))
+            .Intent("y", "wm.layout.flip-vertical"))
         // -------------------------------------------------------------------
         // App overlays. Routing rules live in event-listeners/AppLayerRouter.cs
         // -------------------------------------------------------------------

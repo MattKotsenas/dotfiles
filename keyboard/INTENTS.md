@@ -76,11 +76,11 @@ NOT as intents.
 | Intent | Action |
 |---|---|
 | `wm.window.manage` | komorebic manage (force-manage focused window) |
+| `wm.window.reacquire` | force-manage all untracked tileable windows, then retile (event-listener sweep) |
 
 ### System
 | Intent | Action |
 |---|---|
-| `wm.system.reload` | wpmctl restart komorebi komorebi-bar-1 komorebi-bar-2 |
 | `system.cheatsheet` | open keymap reference (wt + glow) |
 
 ## When NOT to add an intent

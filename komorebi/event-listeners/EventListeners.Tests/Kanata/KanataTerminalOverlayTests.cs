@@ -104,11 +104,11 @@ public class KanataTerminalOverlayTests
     }
 
     [Fact]
-    public async Task TerminalOverlay_DoubleCap_AdminRetile_StillFires()
+    public async Task TerminalOverlay_DoubleCap_AdminReacquire_StillFires()
     {
-        // After Phase 3 reorg, retile lives in the wm-admin (CAP a) sub-mode.
-        // From sticky terminal WM mode, CAP CAP a r should still fire retile —
-        // proving wm-admin is reachable from the overlay's sticky toggle.
+        // reacquire lives in the wm-admin (CAP a) sub-mode. From sticky terminal
+        // WM mode, CAP CAP a r should still fire it — proving wm-admin is reachable
+        // from the overlay's sticky toggle.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
@@ -117,7 +117,7 @@ public class KanataTerminalOverlayTests
                 .Tap("a").Tap("r")
                 .Settle());
 
-        Assert.Contains("wm.layout.retile", output.Intents);
+        Assert.Contains("wm.window.reacquire", output.Intents);
     }
 
     [Fact]

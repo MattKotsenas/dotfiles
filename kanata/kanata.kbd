@@ -460,12 +460,11 @@
 
 ;; wm-admin: one-shot sub-mode (each action returns to typing)
 (deflayermap (wm-admin)
-  r (multi (push-msg "wm.layout.retile") (layer-switch base-default))
+  r (multi (push-msg "wm.window.reacquire") (layer-switch base-default))
   m (multi (push-msg "wm.window.manage") (layer-switch base-default))
   p (multi (push-msg "wm.layout.toggle-pause") (layer-switch base-default))
   x (multi (push-msg "wm.layout.flip-horizontal") (layer-switch base-default))
   y (multi (push-msg "wm.layout.flip-vertical") (layer-switch base-default))
-  l (multi (push-msg "wm.system.reload") (layer-switch base-default))
   esc (layer-switch base-default)
   ___ XX
 )
@@ -613,12 +612,11 @@
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
   a (layer-switch wm-admin-toggle)
-  r (push-msg "wm.layout.retile")
+  r (push-msg "wm.window.reacquire")
   m (push-msg "wm.window.manage")
   p (push-msg "wm.layout.toggle-pause")
   x (push-msg "wm.layout.flip-horizontal")
   y (push-msg "wm.layout.flip-vertical")
-  l (push-msg "wm.system.reload")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
   up up
