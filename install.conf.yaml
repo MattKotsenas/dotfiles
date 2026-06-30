@@ -74,12 +74,14 @@
       $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
       copilot plugin marketplace add aaronontheweb/dotnet-skills;
       copilot plugin marketplace add mattkotsenas/agent-plugins;
+      copilot plugin marketplace add MattKotsenas/grove;
       copilot plugin install dotnet-skills@dotnet-skills;
       copilot plugin install delve@agent-plugins;
       copilot plugin install git-good@agent-plugins;
       copilot plugin install prune@agent-plugins;
       copilot plugin install toasty@agent-plugins;
       copilot plugin install gnhf@agent-plugins;
+      copilot plugin install grove@grove;
       copilot plugin install richlander/dotnet-inspect"
     description: Installing Copilot plugins
     stdout: true
