@@ -16,6 +16,8 @@
       recursive: true
     ~/.psmux:
       recursive: true
+    ~/.copilot/instructions:
+      recursive: true
     $LOCALAPPDATA/nvim:
       recursive: true
 
@@ -50,7 +52,7 @@
     ~/.config/wpm: wpm/**
     ~/.config/kanata: kanata/**
     ~/.config/mousemaster: mousemaster/**
-    ~/.copilot/copilot-instructions.md: copilot/copilot-instructions.md
+    ~/.copilot/instructions: copilot/instructions/**
     ~/.copilot/preferences.yaml: copilot/preferences.yaml
     $LOCALAPPDATA/nvim: nvim/**
     $APPDATA/tuicr/config.toml: tuicr/config.toml
