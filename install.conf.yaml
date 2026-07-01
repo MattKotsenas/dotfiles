@@ -81,6 +81,7 @@
       copilot plugin install prune@agent-plugins;
       copilot plugin install toasty@agent-plugins;
       copilot plugin install gnhf@agent-plugins;
+      copilot plugin install tuicr@agent-plugins;
       copilot plugin install grove@grove;
       copilot plugin install richlander/dotnet-inspect"
     description: Installing Copilot plugins
