@@ -110,12 +110,19 @@ function prompt {
     }
 )
 
-Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -SupportEvent -Action {
-    if ($__initQueue.Count -gt 0) {
-        & $__initQueue.Dequeue()
-    } else {
-        Unregister-Event -SubscriptionId $EventSubscriber.SubscriptionId -Force
-        Remove-Variable -Name '__initQueue' -Scope Global -Force
-        [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+if ($env:PSMUX_SESSION) {
+    # psmux pre-warms the pane, so load synchronously; the pane is fully ready before the user interacts.
+    while ($__initQueue.Count -gt 0) { & $__initQueue.Dequeue() }
+    Remove-Variable -Name '__initQueue' -Scope Global -Force
+} else {
+    # No psmux, so load asynchronously to allow typing interleaved with initialization.
+    Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -SupportEvent -Action {
+        if ($__initQueue.Count -gt 0) {
+            & $__initQueue.Dequeue()
+        } else {
+            Unregister-Event -SubscriptionId $EventSubscriber.SubscriptionId -Force
+            Remove-Variable -Name '__initQueue' -Scope Global -Force
+            [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+        }
     }
 }
