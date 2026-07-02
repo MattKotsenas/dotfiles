@@ -17,6 +17,7 @@ Always available inside WM mode regardless of overlay or sub-mode.
 |---|---|
 | `CAP /` | intent `system.cheatsheet` |
 | `CAP down` | raw kanata: `down` |
+| `CAP grv` | macro `f13` |
 | `CAP left` | raw kanata: `left` |
 | `CAP right` | raw kanata: `right` |
 | `CAP tab` | intent `wm.focus.last-workspace` |

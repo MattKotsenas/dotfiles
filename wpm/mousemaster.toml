@@ -4,7 +4,11 @@ Description = "keyboard-driven mouse control (grid + hint pointer)"
 
 [Service]
 Kind = "Simple"
-Autostart = true
+# Not autostarted directly: kanata sets Requires = ["mousemaster"], so wpm starts
+# mousemaster as kanata's dependency and blocks kanata until mousemaster's hook is up.
+# Autostarting it here too would race that and log a spurious "already running" error on
+# boot (autostart order is nondeterministic).
+Autostart = false
 Restart = "OnFailure"
 RestartSec = 2
 # mousemaster loads ./mousemaster.properties relative to its working directory,
@@ -18,6 +22,35 @@ WorkingDirectory = "$USERPROFILE/.config/mousemaster"
 # kanata today).
 [Service.ExecStart]
 Executable = "$USERPROFILE/.config/mousemaster/mousemaster.exe"
+# --ignore-injected-events=false: process kanata's injected CAP `->F13 (SendInput =
+#   injected) so it can activate mousemaster. Requires the forked build
+#   (petoncle/mousemaster#66); upstream v88 ignores this flag. Revert once it ships upstream.
+# --log-level=info: emit mousemaster's "Installed keyboard hook successfully" INFO line for
+#   the healthcheck below, without its DEBUG logger writing every keystroke to the log file.
+# --pause-on-error=false: exit on a startup error instead of hanging on "Press Enter" (a hung
+#   instance holds mousemaster's single-instance lock and makes wpm's start-retries cascade).
+Arguments = [
+    "--ignore-injected-events=false",
+    "--log-level=info",
+    "--pause-on-error=false",
+]
+# Spawn mousemaster once; if a start attempt fails, don't respawn (a respawn hits the prior
+# instance's single-instance lock and cascades). Readiness polling is the healthcheck's job.
+RetryLimit = 1
 
-[Service.Healthcheck.Process]
-DelaySec = 1
+# Report healthy only once mousemaster's low-level keyboard hook is installed (the script
+# greps the log for the INFO line emitted by --log-level=info above). kanata's unit sets
+# Requires = ["mousemaster"], so kanata (re)starts only after this passes -> kanata's hook
+# is installed last -> called first -> it eats the physical backtick before mousemaster
+# sees it. This enforces the otherwise nondeterministic WH_KEYBOARD_LL hook order, which
+# Windows won't let any process query. mousemaster installs its hook ~3s after start, so
+# poll for up to ~15s.
+[Service.Healthcheck.Command]
+Executable = "pwsh"
+Arguments = [
+    "-NoProfile",
+    "-File",
+    "$USERPROFILE/.config/wpm/mousemaster-hook-ready.ps1",
+]
+DelaySec = 2
+RetryLimit = 10

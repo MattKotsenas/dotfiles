@@ -1,6 +1,12 @@
 [Unit]
 Name = "kanata"
 Description = "software keyboard remapper"
+# kanata and mousemaster both install WH_KEYBOARD_LL hooks; whichever is installed last is
+# called first. Requiring mousemaster makes wpm start kanata only after mousemaster is
+# healthy (its keyboard hook is up, per mousemaster's Healthcheck), so kanata's hook is the
+# newest -> called first -> kanata translates the physical backtick into F13 before
+# mousemaster sees it. Without this the hook order is nondeterministic and activation flaky.
+Requires = ["mousemaster"]
 
 [Service]
 Kind = "Simple"

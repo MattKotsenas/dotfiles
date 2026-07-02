@@ -11,15 +11,21 @@ internal static class ProductionKeymap
 {
     public static Keymap Build() => new KeymapBuilder()
         .Reserve(
-            // wm-base globals after Phase 3 reorg: only tab + / remain.
-            // r/p/x/y moved into the wm-admin (CAP a) sub-mode.
-            global: ["tab", "/"],
+            // wm-base globals: tab + / remain, plus grv (backtick) which macros
+            // F13 to activate mousemaster (see WmBase).
+            global: ["tab", "/", "grv"],
             // Sub-mode entries: s = stack (now also covers assemble), d = move,
             // f = focus, e = resize, w = workspace, a = admin.
             subModeEntries: ["a", "s", "d", "f", "e", "w"])
         .WmBase(b => b
             .Intent("tab", "wm.focus.last-workspace")
             .Intent("/", "system.cheatsheet")
+            // CAP ` (backtick) taps F13 to activate mousemaster. mousemaster only
+            // sees it because the wpm unit runs --ignore-injected-events=false
+            // (kanata emits via SendInput = injected; upstream v88 drops those -
+            // fork petoncle/mousemaster#66). One-shot: F13 fires then we fall back
+            // to typing so mousemaster's own keys (hjkl, esc, ...) work.
+            .Macro("grv", "f13")
             // Arrow passthrough: arrows always do "their thing" even in WM mode
             // (Teams meeting nav, list nav, etc.). KanataLiteral emits the key
             // as itself; the compiler propagates wm-base into every wm-* layer,

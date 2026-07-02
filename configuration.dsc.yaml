@@ -501,7 +501,14 @@ properties:
         # the exe lands next to it in ~/.config/mousemaster so mousemaster finds
         # the config. Test = "exe present" keeps it idempotent (pinned version,
         # so no re-download on every winget configure).
-        description: Download mousemaster.exe (pinned release; 122MB, gitignored not committed)
+        #
+        # TEMPORARY: pointed at the MattKotsenas fork build, which adds the
+        # --ignore-injected-events flag (petoncle/mousemaster#66) so kanata's CAP `
+        # -> F13 can drive mousemaster. Revert to petoncle's release once that flag
+        # ships upstream. NOTE: TestScript only checks existence, so to swap an
+        # already-installed exe you must delete it first (the script's idempotency
+        # gaps are tracked to be fixed holistically, not piecemeal).
+        description: Download mousemaster.exe (MattKotsenas fork build w/ --ignore-injected-events; 122MB, gitignored)
         allowPrerelease: true
       settings:
         GetScript: |
@@ -513,7 +520,7 @@ properties:
         SetScript: |
           $dir = Join-Path $env:USERPROFILE '.config\mousemaster'
           New-Item -ItemType Directory -Force -Path $dir | Out-Null
-          $url = 'https://github.com/petoncle/mousemaster/releases/download/88/mousemaster.exe'
+          $url = 'https://github.com/MattKotsenas/mousemaster/releases/download/88-ignore-injected-events/mousemaster.exe'
           $exe = Join-Path $dir 'mousemaster.exe'
           Invoke-WebRequest -Uri $url -OutFile $exe -UseBasicParsing
           if (-not (Test-Path -LiteralPath $exe)) { throw 'mousemaster.exe download failed' }
