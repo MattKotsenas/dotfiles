@@ -16,12 +16,12 @@ Always available inside WM mode regardless of overlay or sub-mode.
 | Key | Action |
 |---|---|
 | `CAP /` | intent `system.cheatsheet` |
-| `CAP down` | raw kanata: `down` |
-| `CAP grv` | macro `f13` |
-| `CAP left` | raw kanata: `left` |
-| `CAP right` | raw kanata: `right` |
+| `CAP down` | arrow passthrough: raw kanata: `down` |
+| `CAP grv` | activate mousemaster: macro `f13` |
+| `CAP left` | arrow passthrough: raw kanata: `left` |
+| `CAP right` | arrow passthrough: raw kanata: `right` |
 | `CAP tab` | intent `wm.focus.last-workspace` |
-| `CAP up` | raw kanata: `up` |
+| `CAP up` | arrow passthrough: raw kanata: `up` |
 
 ### Sub-mode entries
 

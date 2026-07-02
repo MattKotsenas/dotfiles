@@ -25,16 +25,16 @@ internal static class ProductionKeymap
             // (kanata emits via SendInput = injected; upstream v88 drops those -
             // fork petoncle/mousemaster#66). One-shot: F13 fires then we fall back
             // to typing so mousemaster's own keys (hjkl, esc, ...) work.
-            .Macro("grv", "f13")
+            .Macro("grv", "f13").Describe("activate mousemaster")
             // Arrow passthrough: arrows always do "their thing" even in WM mode
             // (Teams meeting nav, list nav, etc.). KanataLiteral emits the key
             // as itself; the compiler propagates wm-base into every wm-* layer,
             // so this works inside overlays + toggle modes too. One-shot sub-modes
             // intentionally don't merge wm-base, so arrows deadkey there.
-            .KanataLiteral("up", "up")
-            .KanataLiteral("down", "down")
-            .KanataLiteral("left", "left")
-            .KanataLiteral("right", "right"))
+            .KanataLiteral("up", "up").Describe("arrow passthrough")
+            .KanataLiteral("down", "down").Describe("arrow passthrough")
+            .KanataLiteral("left", "left").Describe("arrow passthrough")
+            .KanataLiteral("right", "right").Describe("arrow passthrough"))
         .SubMode("workspace", "w", b => b
             .Workspaces("wm.workspace.focus.{0}", 0, 7))
         .SubMode("focus", "f", b => b
