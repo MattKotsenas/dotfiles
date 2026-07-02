@@ -279,14 +279,15 @@ properties:
         - install-rustup
       directives:
         # psmux from MattKotsenas/psmux (fork) instead of marlocarlo.psmux (winget)
-        # to pick up a copy/paste fix being upstreamed. master is the integration
-        # branch with all in-flight fixes already merged. cargo install is a no-op
-        # when the git rev hasn't moved, so re-running on every winget configure
-        # is cheap. When the fix lands upstream, revert to:
+        # to pick up copy/paste and warm-pane fixes being upstreamed. The fork's
+        # `integration` branch carries all in-flight fixes merged on top of upstream
+        # master (which the fork mirrors). cargo install is a no-op when the git rev
+        # hasn't moved, so re-running on every winget configure is cheap. When the
+        # fixes land upstream, revert to:
         #   - resource: Microsoft.WinGet.DSC/WinGetPackage
         #       id: install-psmux
         #       settings: { id: marlocarlo.psmux, source: winget }
-        description: Install psmux from fork (master = all in-flight fixes merged)
+        description: Install psmux from fork (integration branch = in-flight fixes)
         allowPrerelease: true
       settings:
         GetScript: |
@@ -297,7 +298,7 @@ properties:
           $false
         SetScript: |
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-          cargo install --git https://github.com/MattKotsenas/psmux.git psmux 2>&1 | Out-Host
+          cargo install --git https://github.com/MattKotsenas/psmux.git --branch integration psmux 2>&1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "cargo install --git psmux failed with exit code $LASTEXITCODE" }
     - resource: PSDscResources/Script
       dependsOn:
