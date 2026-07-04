@@ -1,7 +1,11 @@
 ---
-description: Globl insructions that apply to every session. Always read.
+description: Global instructions that apply to every session. Always read.
 applyTo: '**'
 ---
+# Feedback Signals
+
+A user message that begins with `FLAG` is telemetry, not a task. It labels a rule violation in your immediately preceding turn. The rule may be named (`FLAG brevity - this recap is 3x too long`) or left off; a bare `FLAG` is valid. When you receive one, acknowledge in five words or fewer ("Flagged."), then carry on. Do not rework, defend, explain, or change course unless explicitly asked; the flag is fire-and-forget so it never derails the work in progress. Both the flag and the turn it marks are already persisted, and they are harvested later as labeled adherence data: it is how the hard-to-lint rules (brevity, sycophancy, load-bearing claims) get measured.
+
 # Behavioral
 
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
