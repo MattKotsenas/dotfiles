@@ -24,36 +24,19 @@ Before implementing:
 - Search the codebase for relevant context. Consult skills or tools. Prefer gathered knowledge over pre-trained knowledge.
 - For significant design decisions, justify against idiomatic patterns and reference official documentation. Separate planning from implementation - do not implement until explicitly told to start.
 
-## 2. Simplicity First
+## 2. Necessary and Sufficient
 
-**Minimum code that solves the problem. Nothing speculative.**
+**A change should be necessary and sufficient: everything the task needs, nothing it doesn't.**
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
+Sufficient means finishing the job: remove the import your change orphaned, delete the helper it stranded, leave
+nothing your edit made dead. Necessary means stopping there: don't reformat a nearby block, refactor a function
+that isn't broken, or improve code the task didn't ask you to touch. Match the surrounding style even where you'd
+write it differently, and treat pre-existing dead code you notice as worth a mention, not a silent deletion.
+Finish your own work completely, then stop at the edge of the task.
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+Apply the same standard when reviewing code: an unnecessary line is scope creep, a missing cleanup an unfinished job.
 
-## 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: every changed line traces to the user's request or to something
-that breaks without it.
-
-## 4. Goal-Driven Execution
+## 3. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
 
@@ -95,16 +78,6 @@ Before removing, replacing, or refactoring existing code, understand why it exis
 something was done a certain way, ask - don't assume it's wrong. The burden of proof is on the person
 proposing the change, not on the existing code.
 
-## No Bespoke Company Frameworks
-
-Do not build wrapper abstractions around well-known libraries or SDKs. Extend existing types rather than
-wrapping them. Every new abstraction layer is a new thing the team must learn instead of using the tools
-they already know. If you find yourself creating `IFooRunner` around a library's native API, stop and
-reconsider.
-
-Reference: Stannard, "When DRY Goes Bad: The Bespoke Company Framework"
-(https://aaronstannard.com/dry-gone-bad-bespoke-company-framework/).
-
 # Verified Behavioral Patterns
 
 The following instructions are derived from repeated corrections across real sessions.
@@ -128,12 +101,6 @@ When planning changes that touch public APIs, persistence formats, or wire proto
 "Is this shipped? Do we need backward compatibility here?" For unshipped code, do not add legacy
 compatibility - it's premature complexity. For shipped code, treat backward compatibility as a hard
 constraint and design for it proactively.
-
-## Names Must Match Semantics
-
-When a refactor changes the semantics of a component, proactively rename it to match the new behavior.
-Do not keep names whose meaning has drifted (e.g., "HumanCommand" when machines also send it). Flag
-naming inconsistencies rather than waiting for the user to notice.
 
 ## Commit Incrementally
 
