@@ -146,41 +146,6 @@ Note to the user that you've done so in case they want to clean up history
 Before any git operation (commit, push, rebase, merge, conflict resolution, branch delete), invoke the
 `git-good` skill for safety guardrails.
 
-## Writing High-Value Tests
-
-**Test real behavior, not wiring.** Don't test that constructors set properties, that DI resolves, or that mocks were called. Test observable outcomes: given this input, does the system produce the correct output? Given the feature is disabled, does nothing happen?
-
-**Assert preconditions to prove the test works.** When a test verifies a state transition, assert the opposite state before the action. When a test uses boundary data (values below a minimum, above a maximum), assert the relationship between the test data and the boundary. This prevents tests from passing vacuously if setup changes or constants shift.
-
-```csharp
-// State transition: assert before and after
-context.Outcome.Should().BeOfType<SessionOutcome.Retry>("precondition: default is Retry");
-context.Complete();
-context.Outcome.Should().BeOfType<SessionOutcome.Completed>();
-
-// Boundary data: prove the test input is in the expected range
-var input = TimeSpan.FromSeconds(10);
-input.Should().BeLessThan(MinTimeout, "precondition: test input must be below minimum");
-```
-
-**Use real infrastructure, not mocks of the thing under test.** Prefer Docker containers, emulators, and in-memory databases over mocking the system under test. Mocks are fine for *collecting* output (in-memory exporters, recorded activity lists) - not for replacing the thing you're testing.
-
-**Use realistic test data.** Copy real log messages, real query strings, real wire formats. Don't invent minimal synthetic strings that skip the hard parts.
-
-**Test edge cases at boundaries.** For any limit or parser: test valid input, exact boundary, one past the boundary, malformed input, empty/null. Test alternative formats (IPv6, HTTPS vs HTTP, different URI schemes).
-
-**Test the negative path.** Every feature needs at least one test verifying behavior when the feature is off, input is invalid, or the operation fails.
-
-**Use parameterized tests to document behavior.** `[Theory]` with `[InlineData]` or `[MemberData]` serves as both coverage and living documentation. Add comments for non-obvious cases. When a `[Fact]` passes a single hardcoded value to data-driven code, convert to `[Theory]` with multiple inputs to prevent the simplest-possible implementation from anticipating a single literal.
-
-**Use snapshot testing for complex outputs.** When a test produces multi-property results (activities with tags, serialized objects), use Verify instead of dozens of individual assertions. Use custom scrubbers for non-deterministic values.
-
-**Test the API surface consumers actually use.** Test through the same DI extension methods, builder patterns, and configuration a consumer would write in `Program.cs`.
-
-**Test at multiple layers.** Fast unit tests for parsing/logic (milliseconds). Integration tests for real infrastructure (Docker). Don't collapse everything into one layer.
-
-**Keep test helpers minimal.** No elaborate test base classes. Small, focused helpers with clear names.
-
 ## Be Honest About Limitations
 
 If you are losing context, drifting, or uncertain, say so. Execute one plan fully before starting the
