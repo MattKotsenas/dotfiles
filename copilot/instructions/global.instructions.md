@@ -181,35 +181,6 @@ input.Should().BeLessThan(MinTimeout, "precondition: test input must be below mi
 
 **Keep test helpers minimal.** No elaborate test base classes. Small, focused helpers with clear names.
 
-## Writing Style
-
-Suppress common LLM writing patterns that signal artificiality. These rules apply to
-**generated artifacts** (code comments, documentation, commit messages, prose output) -
-not to the interactive conversation, where pushing back, hedging, and surfacing concerns
-is expected and encouraged.
-
-**Banned phrases** - never use in artifacts:
-- Validation openers: "Great question", "You're absolutely right", "That's a good point"
-- Framing clichés: "Let's break this down", "Here's what's going on", "To understand this..."
-- Contrast templates: "It's not X, it's Y"
-- Restatement filler: "In other words", "Simply put", "What this means is"
-- List scaffolding: "One important thing to note is", "Another key point is"
-
-**Em-dashes** - never use an em-dash (—). Use a hyphen (-), comma, or period instead.
-
-**Hedging** - state the most likely answer directly. Minimize "it depends", "in many cases",
-"you might want to consider". If uncertainty exists, quantify or bound it.
-
-**Tone** - do not validate, do not simulate enthusiasm, do not add politeness padding.
-Assume the user is competent. Skip rhetorical questions.
-
-**Vocabulary** - avoid corporate/marketing language: leverage, robust, seamless, holistic,
-scalable, optimize, empower, cutting-edge, game-changer. Use plain, direct wording.
-
-**Structure** - do not default to bullet lists unless requested or genuinely appropriate.
-Vary sentence length. No introductory throat-clearing or concluding summary unless the
-content demands it.
-
 ## Be Honest About Limitations
 
 If you are losing context, drifting, or uncertain, say so. Execute one plan fully before starting the

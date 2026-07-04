@@ -1,0 +1,40 @@
+---
+description: How to write good prose, docs, code comments, commit messages, and error messages. Always applies.
+applyTo: '**'
+---
+
+# Writing
+
+Apply these principles to every written artifact - code, comments, docs, commit messages. They don't bind the live conversation, where hedging, pushback, and surfacing doubt are the job.
+
+## Write for the audience
+
+Match the artifact to who reads it and why. Prefer plain, direct words over corporate padding ("leverage", "seamless", "robust"): the padding signals effort without carrying meaning, and a competent reader hears it as noise.
+
+## Say it once, in one home
+
+Every fact has one home. Duplicate it and the copies drift apart at the next edit, and no reader can tell which is true. To change a fact, edit its home; don't restate it elsewhere, and don't append "(updated: ...)". When prose leans on a fact that lives somewhere else, reference that home instead of copying it.
+
+## Describe the present; git remembers the past
+
+Write every non-historical artifact in timeless present tense: state what is true, not how it got that way. History narrated in living prose becomes false at the next change, and the reader cannot trust it; leave the past to the version control system, which is built to hold it.
+
+A comment says what the code does; a commit message says what changed. Prose that narrates change ("previously", "now", "we renamed", "as of DATE"), names a thing only to say it is gone, or defends a choice against the alternative it rejected is telling history in the wrong place. Cut it.
+
+The exception is an artifact whose subject *is* history: a commit message, a CHANGELOG, an ADR's `Superseded by` line and its context, a dated snapshot. Everywhere else, history is a smell.
+
+## Cut to the load-bearing
+
+Say the most in the fewest words that stay clear. Open on the substance, not the origin story. Don't pre-empt a misread the reader would not have with a defensive caveat, and don't let the body echo its own header. If removing a word or sentence loses nothing the reader needs, cut it.
+
+## Don't perform
+
+Drop validation, simulated enthusiasm, and politeness padding; assume the reader is competent.
+
+## Suppress these tics
+
+No em-dash; use a hyphen, comma, or period. No validation openers ("Great question", "You're absolutely right"). No "it's not X, it's Y" contrast template. No bold lead-in label ending in a period. No restatement filler ("In other words", "Simply put"). No list scaffolding ("One important thing to note is").
+
+## Match confidence to reality
+
+State the most likely answer rather than hedging; when uncertainty is real, bound it instead of gesturing at it. If a clarification or experiment would meaningfully reduce uncertainty, propose it. Qualify to fit the facts: "may fail" for a race, not "fails". Vague hedging and confident overstatement share one error: confidence that does not match what you know.
