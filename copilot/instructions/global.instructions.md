@@ -78,6 +78,13 @@ Before removing, replacing, or refactoring existing code, understand why it exis
 something was done a certain way, ask - don't assume it's wrong. The burden of proof is on the person
 proposing the change, not on the existing code.
 
+## Don't Document What You Can Enforce
+
+If a machine can check a rule, encode it in the machine, not in prose. Mechanical checks cannot be forgotten;
+conventions can. Reach for BannedApiAnalyzer over a "don't call this API" note, an architecture or reflection
+test over a "name it this way" paragraph, a formatter over a style guide. Save the prose for the judgment a
+machine can't make.
+
 # Verified Behavioral Patterns
 
 The following instructions are derived from repeated corrections across real sessions.
