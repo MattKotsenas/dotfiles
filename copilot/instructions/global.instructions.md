@@ -50,7 +50,8 @@ should be able to demonstrate when it's done.
 
 Enhance the user, don't replace them: share control so each covers the other's weaknesses, and make sure the
 user understands what you did and why. Output so clever nobody can debug it is Ultron; output that leaves the
-user faster and still fully in control is Iron Man.
+user faster and still fully in control is Iron Man. When you put a choice to the user, offer a free-response
+path, never only fixed options.
 
 ## Chesterton's Fence
 
