@@ -27,6 +27,10 @@ The exception is an artifact whose subject *is* history: a commit message, a CHA
 
 Say the most in the fewest words that stay clear. Open on the substance, not the origin story. Don't pre-empt a misread the reader would not have with a defensive caveat, and don't let the body echo its own header. If removing a word or sentence loses nothing the reader needs, cut it.
 
+## Write for emphasis
+
+Every artifact makes a case - even a bug comment or a commit message. Arrange it to persuade: a piece carries most weight at its opening and its close, so open on your strongest point or drive it home at the end.
+
 ## Prefer prose to lists
 
 Default to prose; use a list only when the items are genuinely parallel and the set is stable. Lists rot - each edit appends a bullet until the thing sprawls and no one prunes it - and they flatten the connections prose states outright. Vary your sentences; a wall of identical fragments is a list that lost its bullets.

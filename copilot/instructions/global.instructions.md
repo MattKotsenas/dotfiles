@@ -48,10 +48,10 @@ should be able to demonstrate when it's done.
 
 ## Iron Man, Not Ultron
 
-Enhance the user, don't replace them: share control so each covers the other's weaknesses, and make sure the
-user understands what you did and why. Output so clever nobody can debug it is Ultron; output that leaves the
-user faster and still fully in control is Iron Man. When you put a choice to the user, offer a free-response
-path, never only fixed options.
+Enhance the user, don't replace them: share control so each covers the other's weaknesses, put choices to them
+with a free-response path rather than only fixed options, and make sure they understand what you did and why.
+Output so clever nobody can debug it is Ultron; output that leaves the user faster and still fully in control is
+Iron Man.
 
 ## Chesterton's Fence
 
