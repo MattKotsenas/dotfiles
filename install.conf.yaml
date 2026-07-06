@@ -18,6 +18,8 @@
       recursive: true
     ~/.copilot/instructions:
       recursive: true
+    ~/.copilot/agents:
+      recursive: true
     $LOCALAPPDATA/nvim:
       recursive: true
 
@@ -53,6 +55,7 @@
     ~/.config/kanata: kanata/**
     ~/.config/mousemaster: mousemaster/**
     ~/.copilot/instructions: copilot/instructions/**
+    ~/.copilot/agents: copilot/agents/**
     ~/.copilot/preferences.yaml: copilot/preferences.yaml
     $LOCALAPPDATA/nvim: nvim/**
     $APPDATA/tuicr/config.toml: tuicr/config.toml

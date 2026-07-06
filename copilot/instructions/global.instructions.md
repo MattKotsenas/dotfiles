@@ -127,6 +127,7 @@ next. Do not produce increasingly unreliable output rather than admitting you ne
 
 ## Self-Review Before Completion
 
-For multi-step tasks with >50 lines of changes, run `/rubber-duck` before presenting
-the work as complete. If the review surfaces Critical or High findings, address them before stopping.
-Treat the review output like a failing test - it's part of the "loop until verified" pattern.
+For any task with output the user will see, run both the `rubber-duck` (correctness) and `iron-shrike`
+(taste and craft) reviewers before presenting the work as complete. If either surfaces Critical or High findings,
+address them before stopping. Treat the review output like a failing test - it's part of the "loop until
+verified" pattern.
