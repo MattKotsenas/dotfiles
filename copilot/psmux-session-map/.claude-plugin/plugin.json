@@ -1,0 +1,18 @@
+{
+  "name": "psmux-session-map",
+  "version": "1.0.0",
+  "description": "Records each Copilot CLI session id keyed by its process id so psmux-resurrect can save copilot panes as `clod --resume=<id>` and restore them intact.",
+  "author": {
+    "name": "Matt Kotsenas",
+    "url": "https://github.com/MattKotsenas"
+  },
+  "repository": "https://github.com/MattKotsenas/dotfiles",
+  "license": "MIT",
+  "keywords": [
+    "psmux",
+    "resurrect",
+    "copilot",
+    "session",
+    "hooks"
+  ]
+}

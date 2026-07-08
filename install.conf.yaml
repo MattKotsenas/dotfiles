@@ -88,7 +88,8 @@
       copilot plugin install tuicr@agent-plugins;
       copilot plugin install measure-twice@agent-plugins;
       copilot plugin install grove@grove;
-      copilot plugin install richlander/dotnet-inspect"
+      copilot plugin install richlander/dotnet-inspect;
+      copilot plugin install MattKotsenas/dotfiles:copilot/psmux-session-map"
     description: Installing Copilot plugins
     stdout: true
     stderr: true

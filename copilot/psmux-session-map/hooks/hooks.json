@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "powershell": "& \"${CLAUDE_PLUGIN_ROOT}/scripts/psmux-session-map.ps1\" start"
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "powershell": "& \"${CLAUDE_PLUGIN_ROOT}/scripts/psmux-session-map.ps1\" end"
+      }
+    ]
+  }
+}
