@@ -1,0 +1,4 @@
+{
+  "defaultMode": "on",
+  "prompt": "A review gate is active. If this turn produced anything you're handing to the user - code, a document, a PR description, a review comment - use the Task tool to launch the rubber-duck and iron-shrike review agents now, and fix every Critical or High finding before you finish. If the turn was pure investigation with nothing to hand over, skip the review, but in both cases you must still output the token below to release the gate."
+}

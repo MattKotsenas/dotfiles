@@ -57,6 +57,7 @@
     ~/.copilot/instructions: copilot/instructions/**
     ~/.copilot/agents: copilot/agents/**
     ~/.copilot/preferences.yaml: copilot/preferences.yaml
+    ~/.copilot/measure-twice/config.json: copilot/measure-twice/config.json
     $LOCALAPPDATA/nvim: nvim/**
     $APPDATA/tuicr/config.toml: tuicr/config.toml
     $APPDATA/Code/User/settings.json: vscode/settings.json
@@ -85,6 +86,7 @@
       copilot plugin install toasty@agent-plugins;
       copilot plugin install gnhf@agent-plugins;
       copilot plugin install tuicr@agent-plugins;
+      copilot plugin install measure-twice@agent-plugins;
       copilot plugin install grove@grove;
       copilot plugin install richlander/dotnet-inspect"
     description: Installing Copilot plugins
