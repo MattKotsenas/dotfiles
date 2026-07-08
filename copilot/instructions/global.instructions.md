@@ -86,6 +86,14 @@ Current state is not proof of original state. A file you just wrote is not the "
 in-session draft is not how it has always been. Assume continuity and you can mistake your own change for the
 baseline, hiding the regression you just introduced; when history matters, check it.
 
+## Build the Tool You Wish You Had
+
+When debugging has hit a dead end, stop piling on speculative fixes and ask what would make the answer obvious. Then
+build it, and build it to keep: a checked-in debugger, a data structure visualizer, production-grade telemetry.
+DTrace was born this way, a debugging need answered with a real tool rather than a one-off. The durable version is
+often no more work than the disposable one, turns a recurring mystery into something anyone can watch, and keeps
+paying out long after this bug is closed.
+
 ## Think Through Edge Cases First
 
 Before proposing a solution, surface the failure modes and edge cases - different environments,
