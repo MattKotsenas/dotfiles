@@ -135,16 +135,16 @@ Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused 
 | `CAP ,` | macro `C-spc` → `,` |
 | `CAP -` | macro `C-spc` → `-` |
 | `CAP .` | macro `C-spc` → `.` |
-| `CAP 0` | macro `C-spc` → type `0` |
-| `CAP 1` | macro `C-spc` → type `1` |
-| `CAP 2` | macro `C-spc` → type `2` |
-| `CAP 3` | macro `C-spc` → type `3` |
-| `CAP 4` | macro `C-spc` → type `4` |
-| `CAP 5` | macro `C-spc` → type `5` |
-| `CAP 6` | macro `C-spc` → type `6` |
-| `CAP 7` | macro `C-spc` → type `7` |
-| `CAP 8` | macro `C-spc` → type `8` |
-| `CAP 9` | macro `C-spc` → type `9` |
+| `CAP 0` | macro `C-spc` → `0` |
+| `CAP 1` | macro `C-spc` → `1` |
+| `CAP 2` | macro `C-spc` → `2` |
+| `CAP 3` | macro `C-spc` → `3` |
+| `CAP 4` | macro `C-spc` → `4` |
+| `CAP 5` | macro `C-spc` → `5` |
+| `CAP 6` | macro `C-spc` → `6` |
+| `CAP 7` | macro `C-spc` → `7` |
+| `CAP 8` | macro `C-spc` → `8` |
+| `CAP 9` | macro `C-spc` → `9` |
 | `CAP ;` | macro `C-spc` → `;` |
 | `CAP [` | macro `C-spc` → `[` |
 | `CAP \` | macro `C-spc` → `\` |

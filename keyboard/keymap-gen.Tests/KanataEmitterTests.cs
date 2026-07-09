@@ -112,7 +112,7 @@ public class KanataEmitterTests
     }
 
     [Fact]
-    public void PrefixAll_Digits_EmittedAsUnicodeMacroStep()
+    public void PrefixAll_Digits_EmittedAsUnmodKeyMacroStep()
     {
         var keymap = new KeymapBuilder()
             .Reserve()
@@ -122,11 +122,12 @@ public class KanataEmitterTests
 
         var output = KanataEmitter.Emit(keymap);
 
-        // Bare integer would be parsed by kanata as a ms delay (0 is invalid).
-        // PrefixAll must route digits through (unicode "N") instead.
-        Assert.Contains("1 (macro (unmod lctl spc) (unicode \"1\"))", output);
-        Assert.Contains("2 (macro (unmod lctl spc) (unicode \"2\"))", output);
-        Assert.Contains("0 (macro (unmod lctl spc) (unicode \"0\"))", output);
+        // A bare integer step would be parsed by kanata as a ms delay, so digits are
+        // wrapped in (unmod N), which forces a real key event.
+        Assert.Contains("1 (macro (unmod lctl spc) (unmod 1))", output);
+        Assert.Contains("2 (macro (unmod lctl spc) (unmod 2))", output);
+        Assert.Contains("0 (macro (unmod lctl spc) (unmod 0))", output);
+        // Never a bare digit, which kanata would read as a delay.
         Assert.DoesNotContain("1 (macro (unmod lctl spc) 1)", output);
     }
 
@@ -149,21 +150,17 @@ public class KanataEmitterTests
         Assert.Contains("[ (macro (unmod lctl spc) [)", output);
         Assert.Contains("] (macro (unmod lctl spc) ])", output);
         Assert.Contains("; (macro (unmod lctl spc) ;)", output);
-        // Digits emit via unicode.
-        Assert.Contains("1 (macro (unmod lctl spc) (unicode \"1\"))", output);
-        Assert.Contains("9 (macro (unmod lctl spc) (unicode \"9\"))", output);
+        // Digits emit as (unmod N) real key events.
+        Assert.Contains("1 (macro (unmod lctl spc) (unmod 1))", output);
+        Assert.Contains("9 (macro (unmod lctl spc) (unmod 9))", output);
         // wm-base global "/" is reserved -- never bound by overlay.
         Assert.DoesNotContain("/ (macro (unmod lctl spc) /)", output);
     }
 
     [Fact]
-    public void MacroUnicode_RejectsUnsafeContent()
+    public void MacroUnmodKey_FormatsAsUnmod()
     {
-        Assert.Throws<ArgumentException>(() =>
-            ActionFormatter.Format(new MacroAction([new MacroUnicode("\"")])));
-        Assert.Throws<ArgumentException>(() =>
-            ActionFormatter.Format(new MacroAction([new MacroUnicode("\\")])));
-        Assert.Throws<ArgumentException>(() =>
-            ActionFormatter.Format(new MacroAction([new MacroUnicode("ab")])));
+        Assert.Equal("(macro (unmod 8))",
+            ActionFormatter.Format(new MacroAction([new MacroUnmodKey("8")])));
     }
 }

@@ -40,7 +40,7 @@ digits, and common symbols to `(macro C-spc <key>)`. So inside the terminal:
 - `CAP h` enters `wm-terminal` (one-shot) and fires `Ctrl+Space h` — psmux
   pane-left.
 - `CAP 1` fires `Ctrl+Space 1` — psmux select-window 1 (digits route through
-  a Unicode macro step to dodge kanata's macro-grammar quirk where a bare
+  an `unmod` macro step to dodge kanata's macro-grammar quirk where a bare
   integer means "delay in milliseconds").
 - `CAP \` fires `Ctrl+Space \` — psmux split-vertical (from pain-control).
 - `CAP CAP h` enters `wm-terminal-toggle` (sticky) and fires the same macro.
@@ -50,7 +50,7 @@ digits, and common symbols to `(macro C-spc <key>)`. So inside the terminal:
 Default prefixed key set:
 
 - Letters: `b c g h i j k l m n o t u v x y z`
-- Digits: `0 1 2 3 4 5 6 7 8 9` (emitted via `(unicode "N")`)
+- Digits: `0 1 2 3 4 5 6 7 8 9` (emitted via `(unmod N)`)
 - Symbols: `, . \ - [ ] ;`
 
 Authored via `LayerBuilder.PrefixAll(prefix, keys...)`. Reserved wm-base

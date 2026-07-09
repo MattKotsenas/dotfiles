@@ -138,7 +138,7 @@ internal static class KeymapMdEmitter
             MacroDelay d => $"{d.Ms}ms",
             MacroIntent i => $"intent `{i.Name}`",
             MacroLiteral l => $"`{l.Lisp}`",
-            MacroUnicode u => $"type `{u.Char}`",
+            MacroUnmodKey k => $"`{k.Key}`",
             _ => "?",
         });
         return string.Join(" → ", parts);

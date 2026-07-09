@@ -161,9 +161,8 @@ public sealed class LayerBuilder(string name)
     /// Intended for overlays where one external app prefix (e.g., <c>C-spc</c> for psmux)
     /// should be sent before the user's key.
     /// <para>
-    /// Digit keys (<c>0</c>-<c>9</c>) emit <c>(unicode "&lt;digit&gt;")</c> as the second
-    /// macro step instead of a bare key, because kanata's macro grammar interprets a
-    /// standalone integer as a delay-in-ms.
+    /// Digit keys (<c>0</c>-<c>9</c>) route through <see cref="MacroUnmodKey"/> instead
+    /// of a bare key, since kanata reads a bare integer macro step as a ms-delay.
     /// </para>
     /// <para>
     /// <paramref name="keys"/> defaults to printable letters/digits/symbols that are not
@@ -177,7 +176,7 @@ public sealed class LayerBuilder(string name)
         {
             if (key.Length == 1 && char.IsDigit(key[0]))
             {
-                var steps = new MacroStep[] { new MacroChord(prefix), new MacroUnicode(key) };
+                var steps = new MacroStep[] { new MacroChord(prefix), new MacroUnmodKey(key) };
                 _bindings.Add(new Binding(key, new MacroAction(steps)));
             }
             else
@@ -194,8 +193,7 @@ public sealed class LayerBuilder(string name)
         // Includes r and p which used to be wm-base globals but moved into the
         // wm-admin (CAP a) sub-mode in Phase 3 reorg — they're available again.
         "b", "c", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "t", "u", "v", "x", "y", "z",
-        // Digits — emitted as (unicode "N") since kanata's macro grammar reads bare
-        // integers as ms-delays.
+        // Digits route through MacroUnmodKey (see its doc).
         "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
         // Common psmux / pain-control symbol bindings that are not wm-base reserved.
         // Excludes "/" (wm-base global cheatsheet) and "tab" (wm-base global).
