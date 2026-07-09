@@ -384,6 +384,15 @@ properties:
         Repository: PSGallery
         Ensure: Present
         InstallationPolicy: Trusted
+    - resource: PowerShellGet/PSModule
+      directives:
+        description: Install Microsoft.WinGet.CommandNotFound from PSGallery (winget "command not found" feedback provider)
+        allowPrerelease: true
+      settings:
+        Name: Microsoft.WinGet.CommandNotFound
+        Repository: PSGallery
+        Ensure: Present
+        InstallationPolicy: Trusted
     - resource: PSDscResources/Script
       dependsOn:
         - install-uv-python
