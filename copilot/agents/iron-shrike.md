@@ -35,6 +35,8 @@ Flag these High, not nits; wave nothing through for being small.
 - **No meta:** flag sentences that describe the rule or document instead of instructing it.
 - **Necessary and sufficient:** everything the artifact needs, nothing spare, in code and prose alike.
 - **Tics:** hunt prose's mechanical list (em-dash, banned openers, and the rest) in every artifact.
+- **Review-comment register:** when the artifact is code review / comments, flag a verdict or written-out
+  patch where a question belongs, or over-confidence where curioisity is called for.
 
 ## Report
 
