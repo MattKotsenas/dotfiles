@@ -34,10 +34,14 @@ $notcopExe  = Join-Path $binDir 'notcop.exe';  Copy-Item $cmdExe $notcopExe
 
 $spawned = [System.Collections.Generic.List[int]]::new()
 
-function Spawn-Under-Pane($childExe) {
+function Spawn-Under-Pane($childExe, $childArgs = '') {
     # A "pane" process (cmd) that runs $childExe, which blocks on pause; returns
     # @{ Pane = <pid>; Child = <pid> }. The child is a descendant of the pane.
-    $pane = Start-Process $cmdExe -ArgumentList '/d','/c',"`"$childExe`" /d /c pause" -PassThru -WindowStyle Hidden
+    # $childArgs is appended to the child's command line -- used to plant a
+    # --resume=<id> argument for the command-line fallback tests.
+    $inner = "`"$childExe`" /d /c pause"
+    if ($childArgs) { $inner = "$inner $childArgs" }
+    $pane = Start-Process $cmdExe -ArgumentList '/d','/c',$inner -PassThru -WindowStyle Hidden
     $script:spawned.Add($pane.Id)
     $child = 0
     for ($i = 0; $i -lt 20 -and $child -eq 0; $i++) {
@@ -88,6 +92,43 @@ try {
     Seed $i.Child 'not-a-valid-guid'
     Check "non-guid mapping is rejected -> bare 'clod'" ((Run-Strategy 'clod' $i.Pane) -eq 'clod') "got: [$(Run-Strategy 'clod' $i.Pane)]"
     Kill-Tree $i
+
+    # 6. copilot descendant, NO mapping, but --resume=<id> on its command line ->
+    #    fallback reads the argument (covers a just-restored pane before its
+    #    sessionStart hook has fired).
+    $fg = [guid]::NewGuid().ToString()
+    $i = Spawn-Under-Pane $copilotExe "--resume=$fg"
+    Check "copilot pane, no mapping, --resume arg -> fallback 'clod --resume=<id>'" `
+        ((Run-Strategy 'clod' $i.Pane) -eq "clod --resume=$fg") "got: [$(Run-Strategy 'clod' $i.Pane)]"
+    Kill-Tree $i
+
+    # 7. mapping (current) beats a stale --resume argument.
+    $current = [guid]::NewGuid().ToString(); $stale = [guid]::NewGuid().ToString()
+    $i = Spawn-Under-Pane $copilotExe "--resume=$stale"
+    Seed $i.Child $current
+    Check "mapping (current) wins over a stale --resume arg" `
+        ((Run-Strategy 'clod' $i.Pane) -eq "clod --resume=$current") "got: [$(Run-Strategy 'clod' $i.Pane)]"
+    Kill-Tree $i
+
+    # 8. a mapping written before the copilot process started (a stale file left
+    #    on a reused pid) is ignored; the --resume argument wins.
+    $staleMap = [guid]::NewGuid().ToString(); $freshArg = [guid]::NewGuid().ToString()
+    $i = Spawn-Under-Pane $copilotExe "--resume=$freshArg"
+    Seed $i.Child $staleMap
+    $created = (Get-CimInstance Win32_Process -Filter "ProcessId=$($i.Child)" -EA SilentlyContinue).CreationDate
+    (Get-Item (Join-Path $sess "$($i.Child)")).LastWriteTime = $created.AddMinutes(-5)
+    Check "mapping older than the process is ignored -> --resume fallback wins" `
+        ((Run-Strategy 'clod' $i.Pane) -eq "clod --resume=$freshArg") "got: [$(Run-Strategy 'clod' $i.Pane)]"
+    Kill-Tree $i
+
+    # 9. no psmux-sessions directory at all -> the command-line fallback still works.
+    Remove-Item $sess -Recurse -Force -ErrorAction SilentlyContinue
+    $noDirArg = [guid]::NewGuid().ToString()
+    $i = Spawn-Under-Pane $copilotExe "--resume=$noDirArg"
+    Check "no psmux-sessions dir -> --resume fallback still works" `
+        ((Run-Strategy 'clod' $i.Pane) -eq "clod --resume=$noDirArg") "got: [$(Run-Strategy 'clod' $i.Pane)]"
+    Kill-Tree $i
+    New-Item -ItemType Directory -Force -Path $sess | Out-Null
 }
 finally {
     foreach ($p in $script:spawned) { Stop-Process -Id $p -Force -EA SilentlyContinue }

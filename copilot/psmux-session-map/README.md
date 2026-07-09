@@ -7,17 +7,23 @@ session after a reboot -- instead of launching a fresh `clod`.
 
 ## How it works
 
-Copilot exposes two env vars to hooks: `COPILOT_LOADER_PID` (the copilot.exe
-pid) and `COPILOT_AGENT_SESSION_ID` (the session guid). This plugin's hook:
+Copilot delivers each hook's payload as JSON on stdin (`{ "sessionId": ... }`);
+the `COPILOT_*` env vars are empty at hook time. This plugin's hook keys the
+mapping by the nearest `copilot` process above it -- the loader pid the save
+strategy matches on:
 
-- **sessionStart** -> writes `~/.copilot/psmux-sessions/<COPILOT_LOADER_PID>` =
+- **sessionStart** -> writes `~/.copilot/psmux-sessions/<copilot-pid>` =
   `<session-id>`, then prunes any mapping whose pid is no longer alive.
+  sessionStart fires on every session transition, so the mapping always names the
+  *current* session, not the one the pane launched with.
 - **sessionEnd** -> deletes this session's own mapping.
 
 The psmux-resurrect `copilot` save-command strategy
 (`~/.psmux/strategies/save_command_strategies/copilot.ps1`) walks a pane's
-process descendants at save time, finds the copilot pid, reads its mapping, and
-persists `clod --resume=<id>`.
+process descendants at save time, finds the copilot pid, and persists
+`clod --resume=<id>` -- resolving the id from the mapping (primary) or, for a
+just-restored pane whose sessionStart has not fired yet, the process's own
+`--resume=<id>` argument (fallback).
 
 Crash safety: a non-graceful exit never fires `sessionEnd`, so its file lingers
 until the next session's start prunes it (its pid is dead). PID reuse is
