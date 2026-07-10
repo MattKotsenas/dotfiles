@@ -102,8 +102,8 @@ public class KanataEmitterTests
         // Letters that ARE in the default set
         Assert.Contains("c (macro (unmod lctl spc) c)", output);
         Assert.Contains("h (macro (unmod lctl spc) h)", output);
-        // r and p are now in the default set (no longer reserved globals);
-        // they reach the terminal overlay as Ctrl+Space + r / + p macros.
+        // r and p are in the default prefixed set, so they expand to
+        // prefix + r / + p macros.
         Assert.Contains("r (macro (unmod lctl spc) r)", output);
         Assert.Contains("p (macro (unmod lctl spc) p)", output);
         // Reserved sub-mode entry letters are still NOT in the prefixed set

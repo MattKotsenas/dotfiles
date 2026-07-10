@@ -42,12 +42,12 @@ internal static class ActionFormatter
     };
 
     /// <summary>
-    /// Render a chord like <c>C-spc</c> as <c>(unmod lctl spc)</c> so any modifiers
+    /// Render a chord like <c>C-b</c> as <c>(unmod lctl b)</c> so any modifiers
     /// the user is physically holding (e.g. Shift while typing <c>:</c>) are
     /// released before the chord fires, then restored after. Without this, the
     /// physical Shift bleeds into the macro and turns the psmux prefix
-    /// Ctrl+Space into Ctrl+Shift+Space (the Windows Terminal command palette
-    /// trigger). The unmod wrapper also covers Alt/Ctrl/Win held during the chord.
+    /// Ctrl+b into Ctrl+Shift+b, which psmux does not recognise as the prefix.
+    /// The unmod wrapper also covers Alt/Ctrl/Win held during the chord.
     /// </summary>
     private static string FormatChord(MacroChord c)
     {

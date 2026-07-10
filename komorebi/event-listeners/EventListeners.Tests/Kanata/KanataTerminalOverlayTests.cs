@@ -6,7 +6,7 @@ namespace EventListeners.Tests.Kanata;
 /// When the terminal overlay is active (kanata layer = base-terminal), CAP is
 /// asymmetric:
 /// <list type="bullet">
-///   <item><b>Single tap</b> emits the psmux prefix (Ctrl+Space). Subsequent
+///   <item><b>Single tap</b> emits the psmux prefix (Ctrl+b). Subsequent
 ///     keys go to psmux. base-terminal does not enter WM mode.</item>
 ///   <item><b>Double tap</b> enters the sticky WM layer (wm-terminal-toggle)
 ///     where HJKL emit prefix+direction macros and WM ops fire normally.</item>
@@ -31,10 +31,10 @@ public class KanataTerminalOverlayTests
                 .Tap("h")
                 .Settle());
 
-        // The (macro C-spc) override produces LCtrl down, Space down, Space up, LCtrl up.
+        // The (macro C-b) override produces LCtrl down, B down, B up, LCtrl up.
         Assert.Contains(new KeyEvent("↓", "LCtrl"), output.KeyEvents);
-        Assert.Contains(new KeyEvent("↓", "Space"), output.KeyEvents);
-        Assert.Contains(new KeyEvent("↑", "Space"), output.KeyEvents);
+        Assert.Contains(new KeyEvent("↓", "B"), output.KeyEvents);
+        Assert.Contains(new KeyEvent("↑", "B"), output.KeyEvents);
         Assert.Contains(new KeyEvent("↑", "LCtrl"), output.KeyEvents);
         // 'h' is the literal key, not a macro -- psmux interprets it.
         Assert.Contains(output.KeyEvents, e => e.Direction == "↓" && e.Key.Equals("H", StringComparison.OrdinalIgnoreCase));
@@ -78,11 +78,11 @@ public class KanataTerminalOverlayTests
                 .Tap(direction)
                 .Settle());
 
-        // Macro emits LCtrl down, Space down, Space up, LCtrl up, <dir> down, <dir> up
+        // Macro emits LCtrl down, B down, B up, LCtrl up, <dir> down, <dir> up
         var keys = output.KeyEvents;
         Assert.Contains(new KeyEvent("↓", "LCtrl"), keys);
-        Assert.Contains(new KeyEvent("↓", "Space"), keys);
-        Assert.Contains(new KeyEvent("↑", "Space"), keys);
+        Assert.Contains(new KeyEvent("↓", "B"), keys);
+        Assert.Contains(new KeyEvent("↑", "B"), keys);
         Assert.Contains(new KeyEvent("↑", "LCtrl"), keys);
         Assert.Contains(keys, e => e.Direction == "↓" && e.Key.Equals(direction, StringComparison.OrdinalIgnoreCase));
         Assert.Contains(keys, e => e.Direction == "↑" && e.Key.Equals(direction, StringComparison.OrdinalIgnoreCase));
@@ -144,24 +144,24 @@ public class KanataTerminalOverlayTests
         // ESC from any wm-* layer should exit to the appropriate base. For
         // overlay-context sticky (wm-terminal-toggle), that's base-terminal.
         // Verified by checking 'h' subsequently passes through as the psmux
-        // C-spc h macro (base-terminal's behavior), not as a deadkey.
+        // C-b h macro (base-terminal's behavior), not as a deadkey.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
             new SimInput()
                 .Layer("base-terminal")
                 .Tap("caps").Tap("caps")  // sticky wm-terminal-toggle
                 .Tap("esc")                // exit
-                .Tap("caps").Tap("h")      // back in base-terminal, CAP h fires C-spc h
+                .Tap("caps").Tap("h")      // back in base-terminal, CAP h fires C-b h
                 .Settle());
 
         // Single-tap CAP h in base-terminal fires the psmux prefix macro:
-        // Ctrl down, Space down, Space up, Ctrl up, H. If ESC had failed and
+        // Ctrl down, B down, B up, Ctrl up, H. If ESC had failed and
         // we were still in wm-terminal-toggle, the second `caps` would have
         // exited (since CAPS is the toggle's exit) and CAP h wouldn't fire
         // the macro the same way.
         var keys = output.KeyEvents;
         Assert.Contains(new KeyEvent("↓", "LCtrl"), keys);
-        Assert.Contains(new KeyEvent("↓", "Space"), keys);
+        Assert.Contains(new KeyEvent("↓", "B"), keys);
         Assert.Contains(keys, e => e.Direction == "↓" && e.Key.Equals("H", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -173,9 +173,9 @@ public class KanataTerminalOverlayTests
         // The user's psmux command prompt is bound to ':' (Shift+';'). For this
         // to work:
         //   (a) the wm-terminal one-shot must not be consumed by the Shift press,
-        //   (b) the Ctrl+Space prefix must be emitted WITHOUT Shift held (otherwise
-        //       Windows Terminal interprets Ctrl+Shift+Space as the command palette
-        //       shortcut and steals the keystroke before psmux sees it),
+        //   (b) the Ctrl+b prefix must be emitted WITHOUT Shift held (otherwise
+        //       it becomes Ctrl+Shift+b, which psmux does not recognize as the
+        //       prefix),
         //   (c) Shift must be held when SColon fires so the OS interprets it as ':'.
         var output = await KanataSimulator.RunAsync(
             TestPaths.ProductionConfig,
@@ -189,17 +189,17 @@ public class KanataTerminalOverlayTests
 
         var events = output.KeyEvents.ToList();
 
-        // Psmux prefix fires: Ctrl+Space.
-        var spaceDownIdx = events.FindIndex(e => e.Direction == "↓" && e.Key == "Space");
+        // Psmux prefix fires: Ctrl+b.
+        var prefixDownIdx = events.FindIndex(e => e.Direction == "↓" && e.Key == "B");
         var scolonDownIdx = events.FindIndex(e => e.Direction == "↓" && e.Key == "SColon");
-        Assert.True(spaceDownIdx >= 0, "Ctrl+Space prefix must fire");
-        Assert.True(scolonDownIdx > spaceDownIdx, "SColon must follow the prefix");
+        Assert.True(prefixDownIdx >= 0, "Ctrl+b prefix must fire");
+        Assert.True(scolonDownIdx > prefixDownIdx, "SColon must follow the prefix");
 
-        // (b) At the moment Space is pressed, LShift must NOT be in 'down' state.
-        // Otherwise Windows sees Ctrl+Shift+Space and the command palette opens.
-        Assert.False(IsKeyDownAt(events, "LShift", spaceDownIdx),
-            "LShift must be released when Space is pressed so Windows Terminal " +
-            "doesn't interpret it as Ctrl+Shift+Space (command palette).");
+        // (b) At the moment the prefix key is pressed, LShift must NOT be in 'down'
+        // state. Otherwise the chord becomes Ctrl+Shift+b, not the psmux prefix.
+        Assert.False(IsKeyDownAt(events, "LShift", prefixDownIdx),
+            "LShift must be released when the prefix key is pressed so the chord " +
+            "stays Ctrl+b and psmux recognizes it as the prefix.");
 
         // (c) At the moment SColon is pressed, LShift MUST be down so the OS
         // interprets the keystroke as ':'.
@@ -235,6 +235,6 @@ public class KanataTerminalOverlayTests
             new SimInput().Tap("caps").Tap("h").Settle());
 
         Assert.Empty(output.Intents);
-        Assert.DoesNotContain(output.KeyEvents, e => e.Key == "Space");
+        Assert.DoesNotContain(output.KeyEvents, e => e.Key == "B");
     }
 }

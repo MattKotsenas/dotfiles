@@ -128,47 +128,47 @@ Active when the bridge's `AppLayerRouter` routes the focused app to this layer.
 
 ### wm-terminal
 
-Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused terminal. See `psmux/.psmux.conf` for what each key does in psmux (or hit `CAP ?` inside psmux to list binds).
+Every key here forwards `Ctrl+b` (psmux prefix) then the key to the focused terminal. See `psmux/.psmux.conf` for what each key does in psmux (or hit `CAP ?` inside psmux to list binds).
 
 | Key | Action |
 |---|---|
-| `CAP ,` | macro `C-spc` → `,` |
-| `CAP -` | macro `C-spc` → `-` |
-| `CAP .` | macro `C-spc` → `.` |
-| `CAP 0` | macro `C-spc` → `0` |
-| `CAP 1` | macro `C-spc` → `1` |
-| `CAP 2` | macro `C-spc` → `2` |
-| `CAP 3` | macro `C-spc` → `3` |
-| `CAP 4` | macro `C-spc` → `4` |
-| `CAP 5` | macro `C-spc` → `5` |
-| `CAP 6` | macro `C-spc` → `6` |
-| `CAP 7` | macro `C-spc` → `7` |
-| `CAP 8` | macro `C-spc` → `8` |
-| `CAP 9` | macro `C-spc` → `9` |
-| `CAP ;` | macro `C-spc` → `;` |
-| `CAP [` | macro `C-spc` → `[` |
-| `CAP \` | macro `C-spc` → `\` |
-| `CAP ]` | macro `C-spc` → `]` |
-| `CAP b` | macro `C-spc` → `b` |
-| `CAP c` | macro `C-spc` → `c` |
-| `CAP g` | macro `C-spc` → `g` |
-| `CAP h` | macro `C-spc` → `h` |
-| `CAP i` | macro `C-spc` → `i` |
-| `CAP j` | macro `C-spc` → `j` |
-| `CAP k` | macro `C-spc` → `k` |
-| `CAP l` | macro `C-spc` → `l` |
-| `CAP m` | macro `C-spc` → `m` |
-| `CAP n` | macro `C-spc` → `n` |
-| `CAP o` | macro `C-spc` → `o` |
-| `CAP p` | macro `C-spc` → `p` |
-| `CAP q` | macro `C-spc` → `q` |
-| `CAP r` | macro `C-spc` → `r` |
-| `CAP t` | macro `C-spc` → `t` |
-| `CAP u` | macro `C-spc` → `u` |
-| `CAP v` | macro `C-spc` → `v` |
-| `CAP x` | macro `C-spc` → `x` |
-| `CAP y` | macro `C-spc` → `y` |
-| `CAP z` | macro `C-spc` → `z` |
+| `CAP ,` | macro `C-b` → `,` |
+| `CAP -` | macro `C-b` → `-` |
+| `CAP .` | macro `C-b` → `.` |
+| `CAP 0` | macro `C-b` → `0` |
+| `CAP 1` | macro `C-b` → `1` |
+| `CAP 2` | macro `C-b` → `2` |
+| `CAP 3` | macro `C-b` → `3` |
+| `CAP 4` | macro `C-b` → `4` |
+| `CAP 5` | macro `C-b` → `5` |
+| `CAP 6` | macro `C-b` → `6` |
+| `CAP 7` | macro `C-b` → `7` |
+| `CAP 8` | macro `C-b` → `8` |
+| `CAP 9` | macro `C-b` → `9` |
+| `CAP ;` | macro `C-b` → `;` |
+| `CAP [` | macro `C-b` → `[` |
+| `CAP \` | macro `C-b` → `\` |
+| `CAP ]` | macro `C-b` → `]` |
+| `CAP b` | macro `C-b` → `b` |
+| `CAP c` | macro `C-b` → `c` |
+| `CAP g` | macro `C-b` → `g` |
+| `CAP h` | macro `C-b` → `h` |
+| `CAP i` | macro `C-b` → `i` |
+| `CAP j` | macro `C-b` → `j` |
+| `CAP k` | macro `C-b` → `k` |
+| `CAP l` | macro `C-b` → `l` |
+| `CAP m` | macro `C-b` → `m` |
+| `CAP n` | macro `C-b` → `n` |
+| `CAP o` | macro `C-b` → `o` |
+| `CAP p` | macro `C-b` → `p` |
+| `CAP q` | macro `C-b` → `q` |
+| `CAP r` | macro `C-b` → `r` |
+| `CAP t` | macro `C-b` → `t` |
+| `CAP u` | macro `C-b` → `u` |
+| `CAP v` | macro `C-b` → `v` |
+| `CAP x` | macro `C-b` → `x` |
+| `CAP y` | macro `C-b` → `y` |
+| `CAP z` | macro `C-b` → `z` |
 
 ### wm-edge
 

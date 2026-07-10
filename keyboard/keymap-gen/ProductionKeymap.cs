@@ -85,16 +85,16 @@ internal static class ProductionKeymap
         // App overlays. Routing rules live in event-listeners/AppLayerRouter.cs
         // -------------------------------------------------------------------
         .Overlay("terminal", b => b
-            // psmux command access: every non-WM key here sends Ctrl+Space (the
+            // psmux command access: every non-WM key here sends Ctrl+b (the
             // psmux prefix) then the key, so psmux config is the single source
             // of truth for what each key does (pane nav h/j/k/l, new window c,
             // command prompt ;, search /, kill x, etc.). wm-base reserved keys
             // (a/s/d/f/e/w sub-modes; tab/ globals; arrows) still do
             // their WM thing. Active via a single CAP (one-shot wm-terminal) or
             // a second CAP (sticky wm-terminal-toggle) in Windows Terminal.
-            .Describe("Every key here forwards `Ctrl+Space` (psmux prefix) then the key to the focused terminal. " +
+            .Describe("Every key here forwards `Ctrl+b` (psmux prefix) then the key to the focused terminal. " +
                       "See `psmux/.psmux.conf` for what each key does in psmux (or hit `CAP ?` inside psmux to list binds).")
-            .PrefixAll("C-spc"))
+            .PrefixAll("C-b"))
         .Overlay("edge", b => b
             .Describe("Browser shortcuts forwarded through the WM layer. wm-base reserved keys still do their WM thing.")
             .Macro("t", "C-t").Describe("new tab")

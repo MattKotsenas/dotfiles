@@ -158,7 +158,7 @@ public sealed class LayerBuilder(string name)
 
     /// <summary>
     /// Bind every key in <paramref name="keys"/> to <c>(macro &lt;prefix&gt; &lt;key&gt;)</c>.
-    /// Intended for overlays where one external app prefix (e.g., <c>C-spc</c> for psmux)
+    /// Intended for overlays where one external app prefix (e.g., <c>C-b</c> for psmux)
     /// should be sent before the user's key.
     /// <para>
     /// Digit keys (<c>0</c>-<c>9</c>) route through <see cref="MacroUnmodKey"/> instead
