@@ -51,6 +51,9 @@
     ~/.psmux/strategies:
       path: psmux/strategies
       glob: false
+    ~/.psmux/scripts:
+      path: psmux/scripts
+      glob: false
     ~/.config/wpm: wpm/**
     ~/.config/kanata: kanata/**
     ~/.config/mousemaster: mousemaster/**
