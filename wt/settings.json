@@ -131,6 +131,7 @@
             },
             {
                 "adjustIndistinguishableColors": "indexed",
+                "background": "#0C0C0C",
                 "backgroundImage": null,
                 "colorScheme": "Catppuccin Mocha",
                 "commandline": "psmux new-session -A -s main",
@@ -145,6 +146,7 @@
             },
             {
                 "adjustIndistinguishableColors": "indexed",
+                "background": "#0C0C0C",
                 "backgroundImage": null,
                 "colorScheme": "Catppuccin Mocha",
                 "font": 
