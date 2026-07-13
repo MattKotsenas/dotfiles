@@ -99,6 +99,49 @@ public class KanataBehaviorTests
     }
 
     // ============================================================
+    // One-shot peer switching: inside a one-shot sub-mode, the sub-mode
+    // entry keys (a/s/d/f/e/w) hop to a peer sub-mode. The hop stays
+    // one-shot -- the next action fires and returns to typing. This is what
+    // a single CAP shares with a double CAP; the difference is only auto-exit
+    // vs sticky.
+    //
+    // "Switched, not ignored" proof: probe key h fires the DESTINATION
+    // sub-mode's intent and NOT the origin sub-mode's intent for h.
+    // ============================================================
+
+    [Theory]
+    [InlineData("f", "s", "wm.stack.left", "wm.focus.left")]   // focus -> stack
+    [InlineData("s", "d", "wm.move.left", "wm.stack.left")]    // stack -> move
+    [InlineData("d", "e", "wm.resize.horizontal-decrease", "wm.move.left")] // move -> resize
+    [InlineData("e", "f", "wm.focus.left", "wm.resize.horizontal-decrease")] // resize -> focus
+    public async Task OneShot_PeerSwitch_HopsSubModeThenFires(
+        string enter, string hop, string expectedIntent, string originIntent)
+    {
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput().Tap("caps").Tap(enter).Tap(hop).Tap("h").Settle());
+
+        Assert.Contains(expectedIntent, output.Intents);
+        // If the hop key deadkeyed, h would still fire the origin sub-mode's
+        // intent -- so its absence proves the hop actually switched sub-modes.
+        Assert.DoesNotContain(originIntent, output.Intents);
+    }
+
+    [Fact]
+    public async Task OneShot_PeerSwitch_StaysOneShot_NotSticky()
+    {
+        // caps -> s (stack) -> d (hop to move, one-shot) -> h fires move.left
+        // and returns to typing. The trailing l then types literally, so
+        // move.right must NOT fire. (Contrast: the sticky path would fire both.)
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput().Tap("caps").Tap("s").Tap("d").Tap("h").Tap("l").Settle());
+
+        Assert.Contains("wm.move.left", output.Intents);
+        Assert.DoesNotContain("wm.move.right", output.Intents);
+    }
+
+    // ============================================================
     // Workspaces (1-8 behind w sub-mode after Phase 2)
     // ============================================================
 

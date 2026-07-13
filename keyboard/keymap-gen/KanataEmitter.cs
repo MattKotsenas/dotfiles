@@ -11,7 +11,7 @@ namespace KeymapGen;
 ///   <item>base - typing layer; CAP enters one-shot wm (CAP again locks to wm-toggle)</item>
 ///   <item>wm — one-shot WM mode (default context)</item>
 ///   <item>wm-toggle — sticky WM mode (default context)</item>
-///   <item>wm-X (one per sub-mode) — one-shot sub-mode (auto-exits)</item>
+///   <item>wm-X (one per sub-mode) — one-shot sub-mode (peer-switchable; auto-exits)</item>
 ///   <item>wm-X-toggle — sticky sub-mode (CAPS exits, peer sub-modes switchable)</item>
 /// </list>
 ///
@@ -228,8 +228,16 @@ internal static class KanataEmitter
     {
         foreach (var sm in k.SubModes)
         {
-            sb.AppendLine(CultureInfo.InvariantCulture, $";; wm-{sm.Name}: one-shot sub-mode (each action returns to typing)");
+            sb.AppendLine(CultureInfo.InvariantCulture, $";; wm-{sm.Name}: one-shot sub-mode (each action returns to typing; peer sub-modes switchable)");
             sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm-{sm.Name})");
+            // Peer sub-mode entries switch to the peer's ONE-SHOT layer, so a
+            // wrong-mode press hops between sub-modes while keeping one-shot
+            // semantics: the next action still fires and returns to typing.
+            foreach (var peer in k.SubModes)
+            {
+                sb.AppendLine(CultureInfo.InvariantCulture,
+                    $"  {peer.EntryKey} (layer-switch wm-{peer.Name})");
+            }
             foreach (var b in sm.Bindings)
             {
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {FormatWithExit(b.Action, "base-default")}");

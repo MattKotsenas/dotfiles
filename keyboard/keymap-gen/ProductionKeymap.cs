@@ -28,9 +28,8 @@ internal static class ProductionKeymap
             .Macro("grv", "f13").Describe("activate mousemaster")
             // Arrow passthrough: arrows always do "their thing" even in WM mode
             // (Teams meeting nav, list nav, etc.). KanataLiteral emits the key
-            // as itself; the compiler propagates wm-base into every wm-* layer,
-            // so this works inside overlays + toggle modes too. One-shot sub-modes
-            // intentionally don't merge wm-base, so arrows deadkey there.
+            // as itself; the compiler merges wm-base into every WM layer except
+            // the one-shot sub-modes.
             .KanataLiteral("up", "up").Describe("arrow passthrough")
             .KanataLiteral("down", "down").Describe("arrow passthrough")
             .KanataLiteral("left", "left").Describe("arrow passthrough")
