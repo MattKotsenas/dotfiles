@@ -24,7 +24,7 @@
     "single_border": "Sapphire",
     "bar_accent": "Mauve"
   },
-  "mouse_follows_focus": false,
+  "mouse_follows_focus": true,
   "stackbar": {
     "mode": "Never"
   },
