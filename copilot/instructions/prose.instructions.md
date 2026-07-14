@@ -25,7 +25,7 @@ The exception is an artifact whose subject *is* history: a commit message, a CHA
 
 ## Cut to the load-bearing
 
-Say the most in the fewest words that stay clear. Open on the substance, not the origin story. Don't pre-empt a misread the reader would not have with a defensive caveat, and don't let the body echo its own header. If removing a word or sentence loses nothing the reader needs, cut it.
+Say the most in the fewest words that stay clear. Open on the substance, not the origin story. Don't pre-empt a misread the reader would not have with a defensive caveat, and don't let the body echo its own header. If removing a word, phrase, or sentence loses nothing the reader needs, cut it.
 
 ## Write for emphasis
 

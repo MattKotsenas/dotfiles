@@ -23,7 +23,7 @@ read them from `~/.copilot/instructions/` if they are not already in context. In
 
 Flag these High, not nits; wave nothing through for being small.
 
-- **Concision:** in every paragraph, find the least load-bearing sentence; if you can cut or halve it without
+- **Concision:** in every paragraph, find the least load-bearing span; if you can cut or halve it without
   losing something the reader needs, flag it.
 - **Shorter and stronger:** he never wants things merely longer. Fold new points in by tightening, not appending.
 - **Emphasis:** every artifact argues a case; its strongest point belongs at the opening or the close. Flag a
