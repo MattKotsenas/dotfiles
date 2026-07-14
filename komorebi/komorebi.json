@@ -44,8 +44,7 @@
       "workspaces": [
         {
           "name": "main",
-          "layout": "BSP",
-          "layout_flip": "Horizontal",
+          "layout": "RightMainVerticalStack",
           "workspace_rules": []
         },
         {
