@@ -67,33 +67,16 @@
     $APPDATA/Code/User/keybindings.json: vscode/keybindings.json
 
 - shell:
-  - command: winget configure configuration.dsc.yaml
+  # --module-path points winget at the repo-local dsc/ dir (via %CD%, the repo
+  # root dotbot runs from) so it loads the custom CargoGit resource; winget
+  # requires an absolute path here, and it's quoted in case the path has spaces.
+  - command: winget configure --module-path "%CD%\dsc" configuration.dsc.yaml
     description: Running winget configure
     stdin: true
     stdout: true
     stderr: true
   - command: pwsh -NoProfile -Command "[Environment]::SetEnvironmentVariable('EDITOR', 'nvim', 'User')"
     description: Setting EDITOR=nvim (User scope)
-    stdout: true
-    stderr: true
-  - command: >-
-      pwsh -NoProfile -Command "
-      $env:PATH = [Environment]::GetEnvironmentVariable('PATH','Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH','User');
-      copilot plugin marketplace add aaronontheweb/dotnet-skills;
-      copilot plugin marketplace add mattkotsenas/agent-plugins;
-      copilot plugin marketplace add MattKotsenas/grove;
-      copilot plugin install dotnet-skills@dotnet-skills;
-      copilot plugin install delve@agent-plugins;
-      copilot plugin install git-good@agent-plugins;
-      copilot plugin install prune@agent-plugins;
-      copilot plugin install toasty@agent-plugins;
-      copilot plugin install gnhf@agent-plugins;
-      copilot plugin install tuicr@agent-plugins;
-      copilot plugin install measure-twice@agent-plugins;
-      copilot plugin install grove@grove;
-      copilot plugin install richlander/dotnet-inspect;
-      copilot plugin install MattKotsenas/dotfiles:copilot/psmux-session-map"
-    description: Installing Copilot plugins
     stdout: true
     stderr: true
   - command: pwsh -NoProfile -File edge/extensions.ps1

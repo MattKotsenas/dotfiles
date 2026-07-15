@@ -44,56 +44,64 @@ properties:
           Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)}"
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install PowerShell 7
+        description: Install PowerShell 7 (cross-platform shell)
       settings:
         id: Microsoft.PowerShell
         source: winget
+        version: '7.6.3.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install Volta (Node toolchain manager)
       settings:
         id: Volta.Volta
         source: winget
+        version: '2.0.2'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install Neovim
+        description: Install Neovim (hyperextensible text editor)
       settings:
         id: Neovim.Neovim
         source: winget
+        version: '0.12.4'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install Glow (Markdown renderer)
       settings:
         id: charmbracelet.glow
         source: winget
+        version: '2.1.2'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install PowerToys x64
+        description: Install PowerToys (Windows power-user utilities)
         allowPrerelease: true
       settings:
         id: Microsoft.PowerToys
         source: winget
+        version: '0.100.2'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install vswhere
+        description: Install vswhere (Visual Studio locator)
         allowPrerelease: true
       settings:
         id: Microsoft.VisualStudio.Locator
         source: winget
+        version: '3.1.7'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install Oh My Posh
+        description: Install Oh My Posh (prompt theme engine)
         allowPrerelease: true
       settings:
         id: JanDeDobbeleer.OhMyPosh
         source: winget
+        version: '29.27.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install Git
+        description: Install Git (version control)
         allowPrerelease: true
       settings:
         id: Git.Git
         source: winget
+        version: '2.55.0.2'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install GitHub CLI
@@ -101,28 +109,32 @@ properties:
       settings:
         id: GitHub.cli
         source: winget
+        version: '2.96.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: install-copilot
       directives:
         description: Install GitHub Copilot CLI
         allowPrerelease: true
       settings:
         id: GitHub.Copilot
         source: winget
+        version: 'v1.0.69'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-jq
       directives:
-        description: Install jq
+        description: Install jq (command-line JSON processor)
         allowPrerelease: true
       settings:
         id: jqlang.jq
         source: winget
+        version: '1.8.2'
     - resource: PSDscResources/Script
       dependsOn:
         - install-jq
       directives:
         # Deep-merge the repo's copilot/settings.json into ~/.copilot/settings.json
         # so existing on-disk settings (e.g., per-machine tweaks) are preserved.
-        # Test returns false so the merge runs every winget configure — cheap,
+        # Test returns false so the merge runs every winget configure. It's cheap,
         # and the source can change between runs.
         description: Merge Copilot user settings into ~/.copilot/settings.json
         allowPrerelease: true
@@ -166,68 +178,77 @@ properties:
           $merged | Set-Content -LiteralPath $t
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install Microsoft Visual Studio Code (User)
+        description: Install Visual Studio Code (code editor)
         allowPrerelease: true
       settings:
         id: Microsoft.VisualStudioCode
         source: winget
+        version: '1.126.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install delta
+        description: Install delta (syntax-highlighting git pager)
         allowPrerelease: true
       settings:
         id: dandavison.delta
         source: winget
+        version: '0.19.2'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install less
+        description: Install less (terminal pager)
         allowPrerelease: true
       settings:
         id: jftuga.less
         source: winget
+        version: '704'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install lazygit
+        description: Install lazygit (terminal UI for git)
         allowPrerelease: true
       settings:
         id: JesseDuffield.lazygit
         source: winget
+        version: '0.63.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install zoxide
+        description: Install zoxide (smarter cd)
         allowPrerelease: true
       settings:
         id: ajeetdsouza.zoxide
         source: winget
+        version: '0.10.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install fzf
+        description: Install fzf (command-line fuzzy finder)
         allowPrerelease: true
       settings:
         id: junegunn.fzf
         source: winget
+        version: '0.74.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install eza
+        description: Install eza (modern ls replacement)
         allowPrerelease: true
       settings:
         id: eza-community.eza
         source: winget
+        version: '0.23.5'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install fd
+        description: Install fd (fast find alternative)
         allowPrerelease: true
       settings:
         id: sharkdp.fd
         source: winget
+        version: '10.4.2'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-bat
       directives:
-        description: Install bat
+        description: Install bat (cat clone with syntax highlighting)
         allowPrerelease: true
       settings:
         id: sharkdp.bat
         source: winget
+        version: '0.26.1'
     - resource: PSDscResources/Script
       dependsOn:
         - install-bat
@@ -253,14 +274,17 @@ properties:
           $null = New-Item -ItemType File -Force -Path $sentinel
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install yt-dlp
+        description: Install yt-dlp (media downloader)
         allowPrerelease: true
       settings:
         id: yt-dlp.yt-dlp
         source: winget
+        version: '2026.07.04'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install DevToys
+        # DevToys is a Microsoft Store app; winget reports its version as
+        # "Unknown" and can't pin or compare it.
+        description: Install DevToys (developer utility toolbox)
         allowPrerelease: true
       settings:
         id: '9PGCV4V3BK4W'
@@ -268,47 +292,65 @@ properties:
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-komorebi
       directives:
-        description: Install komorebi
+        description: Install komorebi (tiling window manager)
         allowPrerelease: true
       settings:
         id: LGUG2Z.komorebi
         source: winget
-    - resource: PSDscResources/Script
+        version: '0.1.41'
+    - resource: CargoGit/CargoGitInstall
       id: install-psmux
       dependsOn:
         - install-rustup
       directives:
-        # psmux from MattKotsenas/psmux (fork) instead of marlocarlo.psmux (winget)
-        # to pick up copy/paste and warm-pane fixes being upstreamed. The fork's
-        # `integration` branch carries all in-flight fixes merged on top of upstream
-        # master (which the fork mirrors). cargo install is a no-op when the git rev
-        # hasn't moved, so re-running on every winget configure is cheap. When the
-        # fixes land upstream, revert to:
-        #   - resource: Microsoft.WinGet.DSC/WinGetPackage
-        #       id: install-psmux
-        #       settings: { id: marlocarlo.psmux, source: winget }
-        description: Install psmux from fork (integration branch = in-flight fixes)
+        # MattKotsenas fork (integration branch) for in-flight copy/paste and
+        # warm-pane fixes; revert to winget marlocarlo.psmux once upstreamed.
+        description: Install psmux (tmux clone; fork, pinned rev)
         allowPrerelease: true
       settings:
-        GetScript: |
-          $cargoBin = if ($env:CARGO_HOME) { Join-Path $env:CARGO_HOME 'bin' } else { Join-Path $env:USERPROFILE '.cargo\bin' }
-          $bin = Join-Path $cargoBin 'psmux.exe'
-          @{ Result = if (Test-Path -LiteralPath $bin) { 'present' } else { 'absent' } }
-        TestScript: |
-          $false
-        SetScript: |
-          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-          cargo install --git https://github.com/MattKotsenas/psmux.git --branch integration psmux 2>&1 | Out-Host
-          if ($LASTEXITCODE -ne 0) { throw "cargo install --git psmux failed with exit code $LASTEXITCODE" }
+        Url: https://github.com/MattKotsenas/psmux.git
+        Rev: fbaf0f2a9555dc47a2706383bd85e6f87a98a706
+        Crates:
+          - psmux
+    - resource: CargoGit/CargoGitInstall
+      dependsOn:
+        - install-rustup
+      directives:
+        # wpm has no crates.io publish or GitHub release, so git is the only source.
+        description: Install wpm (Windows user process manager; pinned rev)
+        allowPrerelease: true
+      settings:
+        Url: https://github.com/LGUG2Z/wpm.git
+        Rev: c4c4940146163e03a4cb1872c31cdae701fd2df5
+        Crates:
+          - wpmctl
+          - wpmd
+    - resource: CargoGit/CargoGitInstall
+      dependsOn:
+        - install-rustup
+      directives:
+        # MattKotsenas fork (main) for in-flight fixes; revert to crates.io grove
+        # once upstreamed.
+        description: Install grove (git worktree manager; fork, pinned rev)
+        allowPrerelease: true
+      settings:
+        Url: https://github.com/MattKotsenas/grove.git
+        Rev: a4d39c4de78d7feff3385b01ec99e528e9ca8ef6
+        Crates:
+          - grove
     - resource: PSDscResources/Script
       dependsOn:
         - install-psmux
       directives:
-        # Bootstrap PPM (psmux's plugin manager) by cloning the fork and copying
-        # its ppm/ subdir to ~/.psmux/plugins/ppm. install_plugins.ps1 then reads
-        # ~/.psmux.conf and installs the @plugin entries declared there.
-        # Test dot-sources ppm.ps1 to reuse PPM's own spec parser, so subsequent
-        # runs report "in desired state" once every declared plugin is on disk.
+        # Bootstrap PPM (psmux's plugin manager) by fetching a pinned commit of
+        # the fork (bump $ppmRev in TestScript and SetScript to update PPM) and
+        # copying its ppm/ subdir to ~/.psmux/plugins/ppm. install_plugins.ps1
+        # then reads ~/.psmux.conf and installs the @plugin entries declared
+        # there; those @plugin specs stay unpinned by design (branch-pinned
+        # 3-segment specs break psmux's native @plugin auto-source).
+        # Test dot-sources ppm.ps1 to reuse PPM's own spec parser and checks a
+        # .ppm-rev marker, so it re-bootstraps when $ppmRev moves and reports
+        # "in desired state" once PPM is at that rev and every plugin is on disk.
         # Soft dependency on Get-DeclaredPlugins/Resolve-PluginSpec function
         # names in the fork's ppm.ps1; revisit if PPM is restructured upstream.
         description: Bootstrap PPM and install psmux plugins from .psmux.conf
@@ -318,8 +360,11 @@ properties:
           $ppm = Join-Path $env:USERPROFILE '.psmux\plugins\ppm\ppm.ps1'
           @{ Result = if (Test-Path -LiteralPath $ppm) { 'present' } else { 'absent' } }
         TestScript: |
+          $ppmRev = '0f46ccca5a9b748fd03851db00b85fd784f42791'
           $ppm = Join-Path $env:USERPROFILE '.psmux\plugins\ppm\ppm.ps1'
           if (-not (Test-Path -LiteralPath $ppm)) { return $false }
+          $marker = Join-Path $env:USERPROFILE '.psmux\plugins\ppm\.ppm-rev'
+          if (-not (Test-Path -LiteralPath $marker) -or ((Get-Content -LiteralPath $marker -Raw).Trim() -ne $ppmRev)) { return $false }
           . $ppm
           $declared = Get-DeclaredPlugins
           foreach ($spec in $declared) {
@@ -329,12 +374,19 @@ properties:
           return $true
         SetScript: |
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          $ppmRev  = '0f46ccca5a9b748fd03851db00b85fd784f42791'
           $ppmDest = Join-Path $env:USERPROFILE '.psmux\plugins\ppm'
           $tmpDir  = Join-Path $env:TEMP 'psmux-plugins'
           if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
-          git clone --depth 1 https://github.com/MattKotsenas/psmux-plugins.git $tmpDir 2>&1 | Out-Host
+          git init -q $tmpDir 2>&1 | Out-Host
+          git -C $tmpDir remote add origin https://github.com/MattKotsenas/psmux-plugins.git 2>&1 | Out-Host
+          git -C $tmpDir fetch -q --depth 1 origin $ppmRev 2>&1 | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "git fetch of psmux-plugins $ppmRev failed with exit code $LASTEXITCODE" }
+          git -C $tmpDir checkout -q FETCH_HEAD 2>&1 | Out-Host
+          if ($LASTEXITCODE -ne 0) { throw "git checkout of psmux-plugins $ppmRev failed with exit code $LASTEXITCODE" }
           $null = New-Item $ppmDest -ItemType Directory -Force
-          Copy-Item (Join-Path $tmpDir 'ppm\*') $ppmDest -Recurse -Force
+          Copy-Item (Join-Path $tmpDir 'ppm\*') $ppmDest -Recurse -Force -ErrorAction Stop
+          Set-Content -LiteralPath (Join-Path $ppmDest '.ppm-rev') -Value $ppmRev
           Remove-Item $tmpDir -Recurse -Force
           & (Join-Path $ppmDest 'scripts\install_plugins.ps1') 2>&1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "install_plugins.ps1 failed with exit code $LASTEXITCODE" }
@@ -346,6 +398,7 @@ properties:
       settings:
         id: astral-sh.uv
         source: winget
+        version: '0.11.28'
     - resource: PSDscResources/Script
       id: install-uv-python
       dependsOn:
@@ -364,7 +417,7 @@ properties:
           Test-Path -LiteralPath $py
         SetScript: |
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-          uv python install --default --preview-features python-install-default 3.13 2>&1 | Out-Host
+          uv python install --default --preview-features python-install-default 3.13.13 2>&1 | Out-Host
           if ($LASTEXITCODE -ne 0) { throw "uv python install failed with exit code $LASTEXITCODE" }
     - resource: PowerShellGet/PSModule
       directives:
@@ -372,6 +425,7 @@ properties:
         allowPrerelease: true
       settings:
         Name: posh-git
+        RequiredVersion: '1.1.0'
         Repository: PSGallery
         Ensure: Present
         InstallationPolicy: Trusted
@@ -381,6 +435,7 @@ properties:
         allowPrerelease: true
       settings:
         Name: PSFzf
+        RequiredVersion: '2.7.12'
         Repository: PSGallery
         Ensure: Present
         InstallationPolicy: Trusted
@@ -390,6 +445,7 @@ properties:
         allowPrerelease: true
       settings:
         Name: Microsoft.WinGet.CommandNotFound
+        RequiredVersion: '1.0.6.0'
         Repository: PSGallery
         Ensure: Present
         InstallationPolicy: Trusted
@@ -434,106 +490,143 @@ properties:
       settings:
         id: Rustlang.Rustup
         source: winget
+        version: '1.29.0'
     - resource: RustDsc/CargoToolInstall
       dependsOn:
         - install-rustup
       directives:
-        description: Install pay-respects
+        description: Install pay-respects (command-line correction tool)
         allowPrerelease: true
       settings:
         CrateName: pay-respects
+        Version: '0.8.8'
     - resource: RustDsc/CargoToolInstall
       dependsOn:
         - install-rustup
       directives:
-        description: Install pay-respects-module-runtime-rules
+        description: Install pay-respects runtime rules
         allowPrerelease: true
       settings:
         CrateName: pay-respects-module-runtime-rules
+        Version: '0.1.14'
     - resource: RustDsc/CargoToolInstall
       dependsOn:
         - install-rustup
       directives:
-        description: Install tuicr
+        description: Install tuicr (code-review TUI)
         allowPrerelease: true
       settings:
         CrateName: tuicr
-    - resource: PSDscResources/Script
-      dependsOn:
-        - install-rustup
-      directives:
-        # wpm has no crates.io publish and no GitHub releases (its license also
-        # forbids third-party packaging), so cargo install --git is the only
-        # supported path. RustDsc/CargoToolInstall doesn't yet support --git,
-        # so this stays a Script. Test always returns $false to keep the
-        # dogfood-HEAD intent — cargo itself is a no-op when the git rev hasn't
-        # moved, so re-running on every winget configure is cheap.
-        description: Install wpm from git master (dogfood HEAD; crates.io lags behind)
-        allowPrerelease: true
-      settings:
-        GetScript: |
-          $cargoBin = if ($env:CARGO_HOME) { Join-Path $env:CARGO_HOME 'bin' } else { Join-Path $env:USERPROFILE '.cargo\bin' }
-          $bin = Join-Path $cargoBin 'wpmctl.exe'
-          @{ Result = if (Test-Path -LiteralPath $bin) { 'present' } else { 'absent' } }
-        TestScript: |
-          $false
-        SetScript: |
-          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-          cargo install --git https://github.com/LGUG2Z/wpm.git wpmctl wpmd 2>&1 | Out-Host
-          if ($LASTEXITCODE -ne 0) { throw "cargo install --git wpm failed with exit code $LASTEXITCODE" }
-    - resource: PSDscResources/Script
-      dependsOn:
-        - install-rustup
-      directives:
-        # grove from MattKotsenas/grove (fork) instead of captainsafia/grove
-        # (upstream). main is the integration branch with all in-flight fixes
-        # merged. cargo install lands grove.exe in ~/.cargo/bin. It's a no-op
-        # when the git rev hasn't moved, so re-running on every winget configure
-        # is cheap.
-        description: Install grove from fork (main = all in-flight fixes merged)
-        allowPrerelease: true
-      settings:
-        GetScript: |
-          $cargoBin = if ($env:CARGO_HOME) { Join-Path $env:CARGO_HOME 'bin' } else { Join-Path $env:USERPROFILE '.cargo\bin' }
-          $bin = Join-Path $cargoBin 'grove.exe'
-          @{ Result = if (Test-Path -LiteralPath $bin) { 'present' } else { 'absent' } }
-        TestScript: |
-          $false
-        SetScript: |
-          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-          cargo install --git https://github.com/MattKotsenas/grove.git grove 2>&1 | Out-Host
-          if ($LASTEXITCODE -ne 0) { throw "cargo install --git grove failed with exit code $LASTEXITCODE" }
+        Version: '0.19.1'
     - resource: PSDscResources/Script
       directives:
         # mousemaster.exe is a ~122MB GraalVM native image, so it's fetched here
         # (pinned to a release tag) rather than committed to the repo. The
         # mousemaster.properties config is symlinked from the repo by dotbot;
         # the exe lands next to it in ~/.config/mousemaster so mousemaster finds
-        # the config. Test = "exe present" keeps it idempotent (pinned version,
-        # so no re-download on every winget configure).
+        # the config. Test verifies the exe's SHA-256 against $sha, so it
+        # re-downloads when you bump the release ($tag and $sha below) or if the
+        # binary is missing or corrupt.
         #
         # TEMPORARY: pointed at the MattKotsenas fork build, which adds the
         # --ignore-injected-events flag (petoncle/mousemaster#66) so kanata's CAP `
         # -> F13 can drive mousemaster. Revert to petoncle's release once that flag
-        # ships upstream. NOTE: TestScript only checks existence, so to swap an
-        # already-installed exe you must delete it first (the script's idempotency
-        # gaps are tracked to be fixed holistically, not piecemeal).
+        # ships upstream.
         description: Download mousemaster.exe (MattKotsenas fork build w/ --ignore-injected-events; 122MB, gitignored)
         allowPrerelease: true
       settings:
         GetScript: |
           $exe = Join-Path $env:USERPROFILE '.config\mousemaster\mousemaster.exe'
-          @{ Result = if (Test-Path -LiteralPath $exe) { 'present' } else { 'absent' } }
+          @{ Result = if (Test-Path -LiteralPath $exe) { (Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash } else { 'absent' } }
         TestScript: |
+          $sha = '9412DB6AABCC2ABFE42B4BE72EFEB3595C9EF4FB3E4D3296A297E6E608479265'
           $exe = Join-Path $env:USERPROFILE '.config\mousemaster\mousemaster.exe'
-          Test-Path -LiteralPath $exe
+          (Test-Path -LiteralPath $exe) -and ((Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash -eq $sha)
         SetScript: |
+          $tag = '88-ignore-injected-events'
+          $sha = '9412DB6AABCC2ABFE42B4BE72EFEB3595C9EF4FB3E4D3296A297E6E608479265'
           $dir = Join-Path $env:USERPROFILE '.config\mousemaster'
           New-Item -ItemType Directory -Force -Path $dir | Out-Null
-          $url = 'https://github.com/MattKotsenas/mousemaster/releases/download/88-ignore-injected-events/mousemaster.exe'
+          $url = "https://github.com/MattKotsenas/mousemaster/releases/download/$tag/mousemaster.exe"
           $exe = Join-Path $dir 'mousemaster.exe'
           Invoke-WebRequest -Uri $url -OutFile $exe -UseBasicParsing
           if (-not (Test-Path -LiteralPath $exe)) { throw 'mousemaster.exe download failed' }
+          $got = (Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash
+          if ($got -ne $sha) { throw "mousemaster.exe SHA-256 mismatch: expected $sha, got $got" }
+    - resource: PSDscResources/Script
+      id: copilot-marketplaces
+      dependsOn:
+        - install-copilot
+      directives:
+        # Copilot plugins install from marketplaces (GitHub repos with a
+        # marketplace.json). `marketplace add` errors on re-run, so Set adds a
+        # marketplace only if it isn't registered, else refreshes its catalog so
+        # newly published versions are visible. Keys are the names the CLI lists;
+        # values are the `add` arguments.
+        description: Register Copilot plugin marketplaces
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          @{ Result = (copilot plugin marketplace list 2>&1 | Out-String) }
+        TestScript: |
+          $false
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          $sources = [ordered]@{
+            'dotnet-skills' = 'aaronontheweb/dotnet-skills'
+            'agent-plugins' = 'mattkotsenas/agent-plugins'
+            'grove'         = 'MattKotsenas/grove'
+          }
+          $have = @(copilot plugin marketplace list 2>&1 | ForEach-Object { if ($_ -match '^\s*\S+\s+([\w.\-]+)\s+\(GitHub:') { $matches[1] } })
+          foreach ($name in $sources.Keys) {
+            if ($name -in $have) {
+              copilot plugin marketplace update $name
+              if ($LASTEXITCODE -ne 0) { throw "marketplace update $name failed (exit $LASTEXITCODE)" }
+            } else {
+              copilot plugin marketplace add $sources[$name]
+              if ($LASTEXITCODE -ne 0) { throw "marketplace add $($sources[$name]) failed (exit $LASTEXITCODE)" }
+            }
+          }
+    - resource: PSDscResources/Script
+      dependsOn:
+        - copilot-marketplaces
+      directives:
+        # Copilot plugins can't be version-pinned (no --ref flag; the CLI clones
+        # the default branch), so Set installs any that aren't present and updates
+        # the rest to latest, so no plugin stays frozen at the version that first
+        # installed. Same key/value convention as the marketplaces resource above.
+        description: Install Copilot plugins
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          @{ Result = (copilot plugin list 2>&1 | Out-String) }
+        TestScript: |
+          $false
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          $plugins = [ordered]@{
+            'dotnet-skills@dotnet-skills' = 'dotnet-skills@dotnet-skills'
+            'delve@agent-plugins'         = 'delve@agent-plugins'
+            'git-good@agent-plugins'      = 'git-good@agent-plugins'
+            'prune@agent-plugins'         = 'prune@agent-plugins'
+            'toasty@agent-plugins'        = 'toasty@agent-plugins'
+            'gnhf@agent-plugins'          = 'gnhf@agent-plugins'
+            'tuicr@agent-plugins'         = 'tuicr@agent-plugins'
+            'measure-twice@agent-plugins' = 'measure-twice@agent-plugins'
+            'grove@grove'                 = 'grove@grove'
+            'dotnet-inspect'              = 'richlander/dotnet-inspect'
+            'psmux-session-map'           = 'MattKotsenas/dotfiles:copilot/psmux-session-map'
+          }
+          $have = @(copilot plugin list 2>&1 | ForEach-Object { if ($_ -match '^\s*\S+\s+(\S+)\s+\(v') { $matches[1] } })
+          foreach ($name in $plugins.Keys) {
+            if ($name -in $have) {
+              copilot plugin update $name
+              if ($LASTEXITCODE -ne 0) { throw "plugin update $name failed (exit $LASTEXITCODE)" }
+            } else {
+              copilot plugin install $plugins[$name]
+              if ($LASTEXITCODE -ne 0) { throw "plugin install $($plugins[$name]) failed (exit $LASTEXITCODE)" }
+            }
+          }
     - resource: PSDscResources/Registry
       directives:
         description: Enable UTF-8 for worldwide language support (Beta)
