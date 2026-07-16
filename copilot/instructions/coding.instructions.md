@@ -1,5 +1,5 @@
 ---
-description: How to change code without bloating it - write the least code that works, extend libraries instead of wrapping them, and keep names honest. Read before editing source.
+description: How to change code without bloating it - write the least code that works and keep names honest. Read before editing source.
 applyTo: '**'
 ---
 
@@ -19,15 +19,6 @@ Over-building for a future that may not arrive is the expensive mistake, and bel
 common form. When a problem is already handled, a second guard for the same concern is another mechanism every
 reader has to reconcile with the first, rarely sure which one matters. Keep one check per concern, unless a
 second guards a real trust boundary.
-
-## Extend what exists; don't wrap it
-
-Don't build a bespoke abstraction around a well-known library or SDK. Extend its own types instead. A wrapper
-is a second API the team has to learn on top of the one they already know, and it hides the tool's real
-behavior behind your guess at it. When you catch yourself writing `IFooRunner` around a library's native API,
-stop and use the API.
-
-See Stannard, ["When DRY Goes Bad: The Bespoke Company Framework"](https://aaronstannard.com/dry-gone-bad-bespoke-company-framework/).
 
 ## Rename when the meaning drifts
 
