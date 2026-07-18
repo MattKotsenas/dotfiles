@@ -20,11 +20,7 @@ internal static class ProductionKeymap
         .WmBase(b => b
             .Intent("tab", "wm.focus.last-workspace")
             .Intent("/", "system.cheatsheet")
-            // CAP ` (backtick) taps F13 to activate mousemaster. mousemaster only
-            // sees it because the wpm unit runs --ignore-injected-events=false
-            // (kanata emits via SendInput = injected; upstream v88 drops those -
-            // fork petoncle/mousemaster#66). One-shot: F13 fires then we fall back
-            // to typing so mousemaster's own keys (hjkl, esc, ...) work.
+            // One-shot returns to typing after F13 so mousemaster's own keys work.
             .Macro("grv", "f13").Describe("activate mousemaster")
             // Arrow passthrough: arrows always do "their thing" even in WM mode
             // (Teams meeting nav, list nav, etc.). KanataLiteral emits the key

@@ -527,24 +527,20 @@ properties:
         # the config. Test verifies the exe's SHA-256 against $sha, so it
         # re-downloads when you bump the release ($tag and $sha below) or if the
         # binary is missing or corrupt.
-        #
-        # TEMPORARY: pointed at the MattKotsenas fork build, which adds the
-        # --ignore-injected-events flag (petoncle/mousemaster#66) so kanata's CAP `
-        # -> F13 can drive mousemaster. Revert to petoncle's release once that flag
-        # ships upstream.
-        description: Download mousemaster.exe (MattKotsenas fork build w/ --ignore-injected-events; 122MB, gitignored)
+        # The fork adds the marker consumed by wpm/mousemaster-hook-ready.ps1.
+        description: Download mousemaster.exe
         allowPrerelease: true
       settings:
         GetScript: |
           $exe = Join-Path $env:USERPROFILE '.config\mousemaster\mousemaster.exe'
           @{ Result = if (Test-Path -LiteralPath $exe) { (Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash } else { 'absent' } }
         TestScript: |
-          $sha = '9412DB6AABCC2ABFE42B4BE72EFEB3595C9EF4FB3E4D3296A297E6E608479265'
+          $sha = '343D76E3814A3E9CCF072644FE97C615F052C57E38E39E4E64C2193152D36B68'
           $exe = Join-Path $env:USERPROFILE '.config\mousemaster\mousemaster.exe'
           (Test-Path -LiteralPath $exe) -and ((Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash -eq $sha)
         SetScript: |
-          $tag = '88-ignore-injected-events'
-          $sha = '9412DB6AABCC2ABFE42B4BE72EFEB3595C9EF4FB3E4D3296A297E6E608479265'
+          $tag = '89-hook-ready-log'
+          $sha = '343D76E3814A3E9CCF072644FE97C615F052C57E38E39E4E64C2193152D36B68'
           $dir = Join-Path $env:USERPROFILE '.config\mousemaster'
           New-Item -ItemType Directory -Force -Path $dir | Out-Null
           $url = "https://github.com/MattKotsenas/mousemaster/releases/download/$tag/mousemaster.exe"
