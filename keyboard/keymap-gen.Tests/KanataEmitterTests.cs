@@ -80,6 +80,21 @@ public class KanataEmitterTests
     }
 
     [Fact]
+    public void PrefixAll_CommandMatchingPrefixKey_EmitsUnmodKeyStep()
+    {
+        var keymap = new KeymapBuilder()
+            .Reserve()
+            .WmBase(b => b.Intent("r", "wm.layout.retile"))
+            .Overlay("term", b => b.PrefixAll("C-b", "b", "n"))
+            .Build();
+
+        var output = KanataEmitter.Emit(keymap);
+
+        Assert.Contains("b (macro (unmod lctl b) (unmod b))", output);
+        Assert.Contains("n (macro (unmod lctl b) n)", output);
+    }
+
+    [Fact]
     public void PrefixAll_DefaultKeys_ExcludesReservedAndArrows()
     {
         var keymap = new KeymapBuilder()

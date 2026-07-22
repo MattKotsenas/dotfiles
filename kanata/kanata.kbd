@@ -80,7 +80,7 @@
   down (multi down (layer-switch base-terminal))
   left (multi left (layer-switch base-terminal))
   right (multi right (layer-switch base-terminal))
-  b (multi (macro (unmod lctl b) b) (layer-switch base-terminal))
+  b (multi (macro (unmod lctl b) (unmod b)) (layer-switch base-terminal))
   c (multi (macro (unmod lctl b) c) (layer-switch base-terminal))
   g (multi (macro (unmod lctl b) g) (layer-switch base-terminal))
   h (multi (macro (unmod lctl b) h) (layer-switch base-terminal))
@@ -140,7 +140,7 @@
   down down
   left left
   right right
-  b (macro (unmod lctl b) b)
+  b (macro (unmod lctl b) (unmod b))
   c (macro (unmod lctl b) c)
   g (macro (unmod lctl b) g)
   h (macro (unmod lctl b) h)

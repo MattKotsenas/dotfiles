@@ -163,6 +163,8 @@ public sealed class LayerBuilder(string name)
     /// <para>
     /// Digit keys (<c>0</c>-<c>9</c>) route through <see cref="MacroUnmodKey"/> instead
     /// of a bare key, since kanata reads a bare integer macro step as a ms-delay.
+    /// A command key matching the prefix key also uses <see cref="MacroUnmodKey"/> so
+    /// kanata emits a second, standalone tap instead of absorbing it into the chord.
     /// </para>
     /// <para>
     /// <paramref name="keys"/> defaults to printable letters/digits/symbols that are not
@@ -172,18 +174,23 @@ public sealed class LayerBuilder(string name)
     public LayerBuilder PrefixAll(string prefix, params string[] keys)
     {
         var actual = keys.Length > 0 ? keys : DefaultPrefixKeys;
+        var prefixKey = prefix[(prefix.LastIndexOf('-') + 1)..];
+
         foreach (var key in actual)
         {
-            if (key.Length == 1 && char.IsDigit(key[0]))
-            {
-                var steps = new MacroStep[] { new MacroChord(prefix), new MacroUnmodKey(key) };
-                _bindings.Add(new Binding(key, new MacroAction(steps)));
-            }
-            else
-            {
-                Macro(key, prefix, key);
-            }
+            var requiresExplicitTap =
+                key.Length == 1 && char.IsDigit(key[0]) ||
+                key.Equals(prefixKey, StringComparison.OrdinalIgnoreCase);
+
+            MacroStep commandKey = requiresExplicitTap
+                ? new MacroUnmodKey(key)
+                : new MacroKey(key);
+
+            _bindings.Add(new Binding(
+                key,
+                new MacroAction([new MacroChord(prefix), commandKey])));
         }
+
         return this;
     }
 

@@ -37,8 +37,8 @@ public sealed record MacroLiteral(string Lisp) : MacroStep;
 /// A single key tap with all modifiers released, rendered as <c>(unmod key)</c>.
 /// Digits inside a macro need this wrapper: kanata parses a bare integer step as a
 /// millisecond delay, so a standalone <c>8</c> is a delay, not a key. <c>unmod</c>
-/// forces key interpretation and delivers a real key event, like every other prefixed
-/// key. Releasing modifiers (as the prefix chord does) also keeps a physically-held
-/// Shift from turning the tap into a symbol.
+/// forces key interpretation and delivers a real key event. Releasing modifiers
+/// (as the prefix chord does) keeps a physically-held Shift from turning the tap
+/// into a symbol.
 /// </summary>
 public sealed record MacroUnmodKey(string Key) : MacroStep;

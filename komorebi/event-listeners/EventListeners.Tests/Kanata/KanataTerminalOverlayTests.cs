@@ -31,7 +31,7 @@ public class KanataTerminalOverlayTests
                 .Tap("h")
                 .Settle());
 
-        // The (macro C-b) override produces LCtrl down, B down, B up, LCtrl up.
+        // The macro override emits the Ctrl+b prefix chord.
         Assert.Contains(new KeyEvent("↓", "LCtrl"), output.KeyEvents);
         Assert.Contains(new KeyEvent("↓", "B"), output.KeyEvents);
         Assert.Contains(new KeyEvent("↑", "B"), output.KeyEvents);
@@ -61,6 +61,20 @@ public class KanataTerminalOverlayTests
         Assert.DoesNotContain("wm.focus.right", output.Intents);
     }
 
+    [Fact]
+    public async Task TerminalOverlay_SingleCap_B_EmitsPrefixThenStandaloneB()
+    {
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-terminal")
+                .Tap("caps")
+                .Tap("b")
+                .Settle());
+
+        AssertPrefixThenStandaloneB(output);
+    }
+
     // ---------------- Double-tap CAP = sticky WM (wm-terminal-toggle) ----------------
 
     [Theory]
@@ -78,7 +92,7 @@ public class KanataTerminalOverlayTests
                 .Tap(direction)
                 .Settle());
 
-        // Macro emits LCtrl down, B down, B up, LCtrl up, <dir> down, <dir> up
+        // The macro emits the Ctrl+b prefix followed by the direction tap.
         var keys = output.KeyEvents;
         Assert.Contains(new KeyEvent("↓", "LCtrl"), keys);
         Assert.Contains(new KeyEvent("↓", "B"), keys);
@@ -86,6 +100,20 @@ public class KanataTerminalOverlayTests
         Assert.Contains(new KeyEvent("↑", "LCtrl"), keys);
         Assert.Contains(keys, e => e.Direction == "↓" && e.Key.Equals(direction, StringComparison.OrdinalIgnoreCase));
         Assert.Contains(keys, e => e.Direction == "↑" && e.Key.Equals(direction, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task TerminalOverlay_DoubleCap_B_EmitsPrefixThenStandaloneB()
+    {
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-terminal")
+                .Tap("caps").Tap("caps")
+                .Tap("b")
+                .Settle());
+
+        AssertPrefixThenStandaloneB(output);
     }
 
     [Fact]
@@ -155,7 +183,7 @@ public class KanataTerminalOverlayTests
                 .Settle());
 
         // Single-tap CAP h in base-terminal fires the psmux prefix macro:
-        // Ctrl down, B down, B up, Ctrl up, H. If ESC had failed and
+        // Ctrl+b followed by H. If ESC had failed and
         // we were still in wm-terminal-toggle, the second `caps` would have
         // exited (since CAPS is the toggle's exit) and CAP h wouldn't fire
         // the macro the same way.
@@ -205,6 +233,25 @@ public class KanataTerminalOverlayTests
         // interprets the keystroke as ':'.
         Assert.True(IsKeyDownAt(events, "LShift", scolonDownIdx),
             "LShift must be held when SColon is pressed so the OS produces ':'.");
+    }
+
+    private static void AssertPrefixThenStandaloneB(SimOutput output)
+    {
+        var prefixAndCommand = output.KeyEvents
+            .Where(keyEvent => keyEvent.Key is "LCtrl" or "B")
+            .ToList();
+
+        KeyEvent[] expected =
+        [
+            new KeyEvent("↓", "LCtrl"),
+            new KeyEvent("↓", "B"),
+            new KeyEvent("↑", "LCtrl"),
+            new KeyEvent("↑", "B"),
+            new KeyEvent("↓", "B"),
+            new KeyEvent("↑", "B"),
+        ];
+
+        Assert.Equal(expected, prefixAndCommand);
     }
 
     /// <summary>
