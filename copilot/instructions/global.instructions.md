@@ -121,10 +121,10 @@ blocked.
 ## Self-Review Before Completion
 
 Run the `mallard` (correctness) and `iron-shrike` (taste and craft) reviewers on any work product you'll
-commit or hand back as a deliverable, before calling it complete. Escalate mallard to `gpt-5.6-sol` for a deep
-review or a large diff, or when the change touches a migration or persistence schema, a public or wire API, an
-auth or trust boundary, concurrency, a dependency or runtime upgrade, or the build-release pipeline. Size
-doesn't gate this - a one-line change can be the one that trips a reviewer, like a tenth condition bolted onto
-an `if`. What stays ephemeral is
-exempt: ordinary conversation, session scratch, and uncommitted planning notes. If either reviewer surfaces Critical
-or High findings, address them before stopping, like a failing test in the loop-until-verified pattern.
+commit or hand back as a deliverable, before calling it complete. Escalate mallard to `reasoning_effort: max`
+for a deep review or a large diff, or when the change touches a migration or persistence schema, a public or
+wire API, an auth or trust boundary, concurrency, a dependency or runtime upgrade, or the build-release
+pipeline. Size doesn't gate this - a one-line change can be the one that trips a reviewer, like a tenth
+condition bolted onto an `if`. What stays ephemeral is exempt: ordinary conversation, session scratch, and
+uncommitted planning notes. If either reviewer surfaces Critical or High findings, address them before
+stopping, like a failing test in the loop-until-verified pattern.
