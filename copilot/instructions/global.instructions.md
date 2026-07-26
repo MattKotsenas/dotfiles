@@ -73,6 +73,8 @@ machine can't make.
 
 When a claim is checkable, check it - run the real tool, read the actual file, inspect the runtime state -
 instead of guessing a plausible answer. If you can't verify, say so; never present invention as fact.
+Check the exit status of every command whose outcome you rely on, and keep its diagnostics when it
+fails; silence is not success.
 
 ## Name the Provenance of Load-Bearing Claims
 
@@ -128,3 +130,7 @@ pipeline. Size doesn't gate this - a one-line change can be the one that trips a
 condition bolted onto an `if`. What stays ephemeral is exempt: ordinary conversation, session scratch, and
 uncommitted planning notes. If either reviewer surfaces Critical or High findings, address them before
 stopping, like a failing test in the loop-until-verified pattern.
+
+Name the claim the work rests on and ask them to falsify it rather than confirm it: not "does this look
+right" but "here is what I am asserting, prove it wrong." A claim gating something irreversible earns
+that treatment most, and earns it before you act, not after.

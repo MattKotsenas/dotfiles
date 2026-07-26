@@ -13,7 +13,7 @@ Assert observable outcomes: given this input, does the system produce the right 
 
 ## Prove the test can fail
 
-Assert the precondition before the action, so a pass means something. Before a state transition, assert the starting state; when the test turns on boundary data, assert where that data sits relative to the boundary. Skip this and the test passes vacuously the day a constant shifts or setup drifts. Mutation testing (Stryker) checks this mechanically: it breaks the code and confirms a test starts failing.
+Assert the precondition before the action, so a pass means something. Before a state transition, assert the starting state; when the test turns on boundary data, assert where that data sits relative to the boundary. Skip this and the test passes vacuously the day a constant shifts or setup drifts. Mutation testing (Stryker) checks this mechanically: it breaks the code and confirms a test starts failing. If you break it by hand instead, confirm the passing run afterward tests the restored code and not a leftover build of the broken version.
 
 ```csharp
 // Assert both sides of a transition
