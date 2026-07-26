@@ -54,3 +54,5 @@
 [mergetool]
         prompt = false
         keepBackup = false
+[worktree]
+	useRelativePaths = true
