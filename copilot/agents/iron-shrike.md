@@ -27,8 +27,11 @@ read them from `~/.copilot/instructions/` if they are not already in context. In
 Flag these High, not nits; wave nothing through for being small.
 
 - **Concision:** in every paragraph, find the least load-bearing span; if you can cut or halve it without
-  losing something the reader needs, flag it.
-- **Shorter and stronger:** he never wants things merely longer. Fold new points in by tightening, not appending.
+  losing anything the reader needs or making it harder to follow, flag it.
+- **Density:** flag prose that only parses on the second read - an abstract word standing in for a
+  plainer one, a verb buried in a phrase, or a sentence whose qualifications make it hard to follow.
+- **Shorter and stronger:** he never wants things merely longer. Fold new points in by tightening, not
+  appending; if a point will not fold without crowding the sentence, give it its own.
 - **Emphasis:** every artifact argues a case; its strongest point belongs at the opening or the close. Flag a
   point buried in the middle, a weak opening, or a strong close deflated by a line after it.
 - **Say it once:** flag a fact stated in two places. Duplicates drift apart at the next edit and no reader can

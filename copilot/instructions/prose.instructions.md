@@ -11,6 +11,8 @@ Apply these principles to every written artifact - code, comments, docs, commit 
 
 Match the artifact to who reads it and why. Prefer plain, direct words over corporate padding ("leverage", "seamless", "robust"): the padding signals effort without carrying meaning, and a competent reader hears it as noise.
 
+Reach for the verb when one says the same thing: "decide", not "make a decision". Split a sentence when its qualifications make it hard to follow. A sentence that needs a second read has failed.
+
 ## Say it once, in one home
 
 Every fact has one home. Duplicate it and the copies drift apart at the next edit, and no reader can tell which is true. To change a fact, edit its home; don't restate it elsewhere, and don't append "(updated: ...)". When prose leans on a fact that lives somewhere else, reference that home instead of copying it.
