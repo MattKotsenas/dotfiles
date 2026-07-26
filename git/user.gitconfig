@@ -1,6 +1,5 @@
 [include]
         path = ./delta/delta.gitconfig
-        path = ./git-worktrees/git-worktrees.gitconfig
         path = ./lazygit/lazygit.gitconfig
 
 [diff]
