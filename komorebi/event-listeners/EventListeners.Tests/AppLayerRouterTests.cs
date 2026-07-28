@@ -315,4 +315,7 @@ internal sealed class RecordingKanataClient : IKanataClient
         ChangeLayerCalls.Add(layerName);
         return Task.CompletedTask;
     }
+
+    public Task TapVirtualKeyAsync(string virtualKeyName, CancellationToken cancellationToken = default) =>
+        Task.CompletedTask;
 }

@@ -40,14 +40,34 @@ public sealed class KanataEventListenerService : ReconnectingBackgroundService, 
 
     public async Task SendChangeLayerAsync(string layerName, CancellationToken cancellationToken = default)
     {
+        var json = string.Format(
+            CultureInfo.InvariantCulture,
+            "{{\"ChangeLayer\":{{\"new\":\"{0}\"}}}}\n",
+            layerName);
+        await SendAsync(json, $"ChangeLayer({layerName})", cancellationToken);
+    }
+
+    public async Task TapVirtualKeyAsync(string virtualKeyName, CancellationToken cancellationToken = default)
+    {
+        var json = string.Format(
+            CultureInfo.InvariantCulture,
+            "{{\"ActOnFakeKey\":{{\"name\":\"{0}\",\"action\":\"Tap\"}}}}\n",
+            virtualKeyName);
+        await SendAsync(json, $"ActOnFakeKey({virtualKeyName})", cancellationToken);
+    }
+
+    private async Task SendAsync(
+        string json,
+        string description,
+        CancellationToken cancellationToken)
+    {
         var stream = _stream;
         if (stream is null)
         {
-            _logger.LogWarning("Cannot send ChangeLayer({Layer}): kanata not connected yet", layerName);
+            _logger.LogWarning("Cannot send {Request}: kanata not connected yet", description);
             return;
         }
 
-        var json = string.Format(CultureInfo.InvariantCulture, "{{\"ChangeLayer\":{{\"new\":\"{0}\"}}}}\n", layerName);
         var bytes = Encoding.UTF8.GetBytes(json);
 
         await _writeLock.WaitAsync(cancellationToken);
@@ -55,11 +75,11 @@ public sealed class KanataEventListenerService : ReconnectingBackgroundService, 
         {
             await stream.WriteAsync(bytes, cancellationToken);
             await stream.FlushAsync(cancellationToken);
-            _logger.LogDebug("Sent ChangeLayer({Layer})", layerName);
+            _logger.LogDebug("Sent {Request}", description);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to send ChangeLayer({Layer})", layerName);
+            _logger.LogWarning(ex, "Failed to send {Request}", description);
             // Stream will be re-established by the listener loop on reconnect
         }
         finally

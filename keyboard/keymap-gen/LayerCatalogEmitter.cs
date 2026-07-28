@@ -62,6 +62,20 @@ internal static class LayerCatalogEmitter
             sb.AppendLine(CultureInfo.InvariantCulture, $"    public const string Wm{pascal}Toggle = \"wm-{sm.Name}-toggle\";");
         }
 
+        if (k.VirtualKeys.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("    // Virtual keys the bridge taps over TCP with ActOnFakeKey.");
+            foreach (var vk in k.VirtualKeys)
+            {
+                var pascal = string.Concat(
+                    vk.Name.Split('-').Select(Pascalize));
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"    public const string VirtualKey{pascal} = \"{vk.Name}\";");
+            }
+        }
+
         sb.AppendLine("}");
         return sb.ToString();
     }

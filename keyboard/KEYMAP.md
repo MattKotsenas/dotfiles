@@ -116,6 +116,7 @@ Entered via `CAP a`.
 
 | Key | Action |
 |---|---|
+| `CAP a j` | join the focused Teams meeting, else the meeting-started toast: intent `teams.meeting.join` |
 | `CAP a m` | intent `wm.window.manage` |
 | `CAP a p` | intent `wm.layout.toggle-pause` |
 | `CAP a r` | intent `wm.window.reacquire` |

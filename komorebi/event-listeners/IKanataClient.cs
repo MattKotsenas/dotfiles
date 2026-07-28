@@ -5,4 +5,10 @@ public interface IKanataClient
 {
     /// <summary>Asks kanata to make <paramref name="layerName"/> its default layer.</summary>
     Task SendChangeLayerAsync(string layerName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Asks kanata to tap the named virtual key, so kanata emits the keystrokes
+    /// with its own modifier handling.
+    /// </summary>
+    Task TapVirtualKeyAsync(string virtualKeyName, CancellationToken cancellationToken = default);
 }

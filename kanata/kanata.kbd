@@ -9,6 +9,11 @@
   caps lsft rsft esc tab / grv up down left right 1 2 3 4 5 6 7 8 h j k l g q t m n p u r x y b c i o v z 0 9 , . \ - [ ] ;
 )
 
+(defvirtualkeys
+  teams-join-focused (macro (unmod lctl j))
+  teams-join-toast (macro (unmod lctl lsft j))
+)
+
 ;; base-default: typing layer (default focus context). CAP enters one-shot WM mode.
 (deflayermap (base-default)
   caps (layer-switch wm)
@@ -507,6 +512,7 @@
   e (layer-switch wm-resize)
   a (layer-switch wm-admin)
   r (multi (push-msg "wm.window.reacquire") (layer-switch base-default))
+  j (multi (push-msg "teams.meeting.join") (layer-switch base-default))
   m (multi (push-msg "wm.window.manage") (layer-switch base-default))
   p (multi (push-msg "wm.layout.toggle-pause") (layer-switch base-default))
   x (multi (push-msg "wm.layout.flip-horizontal") (layer-switch base-default))
@@ -664,6 +670,7 @@
   e (layer-switch wm-resize-toggle)
   a (layer-switch wm-admin-toggle)
   r (push-msg "wm.window.reacquire")
+  j (push-msg "teams.meeting.join")
   m (push-msg "wm.window.manage")
   p (push-msg "wm.layout.toggle-pause")
   x (push-msg "wm.layout.flip-horizontal")

@@ -43,4 +43,8 @@ public static class LayerCatalog
     public const string WmResizeToggle = "wm-resize-toggle";
     public const string WmAdmin = "wm-admin";
     public const string WmAdminToggle = "wm-admin-toggle";
+
+    // Virtual keys the bridge taps over TCP with ActOnFakeKey.
+    public const string VirtualKeyTeamsJoinFocused = "teams-join-focused";
+    public const string VirtualKeyTeamsJoinToast = "teams-join-toast";
 }

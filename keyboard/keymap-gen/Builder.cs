@@ -10,6 +10,7 @@ public sealed class KeymapBuilder
     private LayerBuilder? _wmBase;
     private readonly List<SubMode> _subModes = [];
     private readonly List<Overlay> _overlays = [];
+    private readonly List<VirtualKey> _virtualKeys = [];
 
     public KeymapBuilder Reserve(string[]? global = null, string[]? subModeEntries = null)
     {
@@ -41,6 +42,18 @@ public sealed class KeymapBuilder
         return this;
     }
 
+    /// <summary>
+    /// Declares a virtual key the bridge triggers over TCP. <paramref name="elements"/>
+    /// uses the same chord/key shorthand as <see cref="LayerBuilder.Macro"/>.
+    /// </summary>
+    public KeymapBuilder VirtualKey(string name, params string[] elements)
+    {
+        var builder = new LayerBuilder($"vkey-{name}");
+        builder.Macro(name, elements);
+        _virtualKeys.Add(new VirtualKey(name, builder.ToList()[0].Action));
+        return this;
+    }
+
     public Keymap Build()
     {
         if (_reserved is null) throw new InvalidOperationException("Reserve() must be called.");
@@ -50,7 +63,8 @@ public sealed class KeymapBuilder
             _reserved,
             new Layer("wm-base", _wmBase.ToList(), _wmBase.LayerNote),
             _subModes,
-            _overlays);
+            _overlays,
+            _virtualKeys);
 
         Validator.Validate(keymap);
         return keymap;

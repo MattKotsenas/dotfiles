@@ -10,6 +10,10 @@ namespace KeymapGen;
 internal static class ProductionKeymap
 {
     public static Keymap Build() => new KeymapBuilder()
+        // Teams join chords live in kanata so its unmod handling owns modifier
+        // state; the bridge only chooses which one to trigger.
+        .VirtualKey("teams-join-focused", "C-j")
+        .VirtualKey("teams-join-toast", "C-S-j")
         .Reserve(
             // wm-base globals: tab + / remain, plus grv (backtick) which macros
             // F13 to activate mousemaster (see WmBase).
@@ -68,10 +72,11 @@ internal static class ProductionKeymap
             .Intent("j", "wm.resize.vertical-decrease")
             .Intent("k", "wm.resize.vertical-increase")
             .Intent("l", "wm.resize.horizontal-increase"))
+        // Rare workspace/system ops. Bumped from wm-base globals so the
+        // global keyspace stays minimal (only tab + / now).
         .SubMode("admin", "a", b => b
-            // Rare workspace/system ops. Bumped from wm-base globals so the
-            // global keyspace stays minimal (only tab + / now).
             .Intent("r", "wm.window.reacquire")
+            .Intent("j", "teams.meeting.join").Describe("join the focused Teams meeting, else the meeting-started toast")
             .Intent("m", "wm.window.manage")
             .Intent("p", "wm.layout.toggle-pause")
             .Intent("x", "wm.layout.flip-horizontal")

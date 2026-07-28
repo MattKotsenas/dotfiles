@@ -12,7 +12,7 @@ public class IntentDispatchRuleTests
     {
         runner = new RecordingCommandRunner();
         sweeper = new FakeWindowSweeper();
-        return new IntentDispatchRule(NullLogger<IntentDispatchRule>.Instance, runner, sweeper);
+        return new IntentDispatchRule(NullLogger<IntentDispatchRule>.Instance, runner, sweeper, new FakeTeamsMeetingJoin());
     }
 
     [Theory]
@@ -163,4 +163,29 @@ public class IntentDispatchRuleTests
 
         Assert.Empty(runner.Commands);
     }
+
+    [Fact]
+    public void TeamsJoinIntent_InvokesJoin_WithoutRunningCommand()
+    {
+        var runner = new RecordingCommandRunner();
+        var teamsJoin = new FakeTeamsMeetingJoin();
+        var rule = new IntentDispatchRule(
+            NullLogger<IntentDispatchRule>.Instance,
+            runner,
+            new FakeWindowSweeper(),
+            teamsJoin);
+        Assert.Equal(0, teamsJoin.JoinCount);
+
+        rule.ProcessEvent(new KanataMessageEvent("teams.meeting.join"));
+
+        Assert.Equal(1, teamsJoin.JoinCount);
+        Assert.Empty(runner.Commands);
+    }
+}
+
+internal sealed class FakeTeamsMeetingJoin : ITeamsMeetingJoin
+{
+    public int JoinCount { get; private set; }
+
+    public void Join() => JoinCount++;
 }

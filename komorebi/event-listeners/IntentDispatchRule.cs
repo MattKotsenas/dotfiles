@@ -21,6 +21,7 @@ public sealed class IntentDispatchRule : IEventRule
     private readonly ILogger<IntentDispatchRule> _logger;
     private readonly ICommandRunner _runner;
     private readonly IWindowSweeper _sweeper;
+    private readonly ITeamsMeetingJoin _teamsJoin;
     private readonly Dictionary<string, Func<Command>> _commandMap;
 
     // Resolved lazily via `komorebic configuration`; see KomorebiConfigPath.
@@ -31,11 +32,13 @@ public sealed class IntentDispatchRule : IEventRule
     public IntentDispatchRule(
         ILogger<IntentDispatchRule> logger,
         ICommandRunner runner,
-        IWindowSweeper sweeper)
+        IWindowSweeper sweeper,
+        ITeamsMeetingJoin teamsJoin)
     {
         _logger = logger;
         _runner = runner;
         _sweeper = sweeper;
+        _teamsJoin = teamsJoin;
         _commandMap = BuildCommandMap();
     }
 
@@ -48,6 +51,13 @@ public sealed class IntentDispatchRule : IEventRule
         if (intent == "wm.window.reacquire")
         {
             _ = _sweeper.SweepAsync();
+            return;
+        }
+
+        // Joining is a keystroke chosen from the foreground window, not a command.
+        if (intent == "teams.meeting.join")
+        {
+            _teamsJoin.Join();
             return;
         }
 

@@ -20,7 +20,15 @@ public sealed record Keymap(
     ReservedKeys Reserved,
     Layer WmBase,
     IReadOnlyList<SubMode> SubModes,
-    IReadOnlyList<Overlay> Overlays);
+    IReadOnlyList<Overlay> Overlays,
+    IReadOnlyList<VirtualKey> VirtualKeys);
+
+/// <summary>
+/// A kanata virtual key the bridge triggers over TCP with <c>ActOnFakeKey</c>.
+/// Chords defined here keep kanata's modifier handling instead of being
+/// injected by the bridge.
+/// </summary>
+public sealed record VirtualKey(string Name, KAction Action);
 
 /// <summary>A named layer with explicit bindings. Unmapped keys are deadkeyed (___ XX) at the kanata level.</summary>
 public sealed record Layer(string Name, IReadOnlyList<Binding> Bindings, string? Note = null);
