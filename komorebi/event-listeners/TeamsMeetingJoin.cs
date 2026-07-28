@@ -12,6 +12,9 @@ public interface ITeamsMeetingJoin
     void Join();
 }
 
+/// <summary>The identity of the foreground window, as far as joining cares.</summary>
+internal sealed record ForegroundWindow(string? ProcessName, string? WindowClass, string? Title);
+
 /// <summary>
 /// Joins a Teams meeting with the chord that suits the foreground window.
 ///
@@ -19,49 +22,59 @@ public interface ITeamsMeetingJoin
 /// the selected event. Otherwise the global <c>Ctrl+Shift+J</c> toast shortcut
 /// runs.
 ///
-/// Both chords are kanata virtual keys triggered over TCP, so kanata's own
-/// <c>unmod</c> handling isolates them from physically-held modifiers.
+/// Both chords are kanata virtual keys, defined by keymap-gen; this only picks
+/// which one to tap.
 ///
 /// TODO: gate the toast chord on an actual meeting-started toast.
 /// </summary>
-internal sealed partial class TeamsMeetingJoin(
-    ILogger<TeamsMeetingJoin> logger,
-    Lazy<IKanataClient> kanata) : ITeamsMeetingJoin
+internal sealed partial class TeamsMeetingJoin : ITeamsMeetingJoin
 {
     private const string TeamsProcessName = "ms-teams";
     private const string TeamsWindowClass = "TeamsWebView";
     private const string CalendarTitlePrefix = "Calendar |";
 
-    public void Join()
+    private readonly ILogger<TeamsMeetingJoin> _logger;
+    private readonly Lazy<IKanataClient> _kanata;
+    private readonly Func<ForegroundWindow> _readForeground;
+
+    public TeamsMeetingJoin(ILogger<TeamsMeetingJoin> logger, Lazy<IKanataClient> kanata)
+        : this(logger, kanata, ReadForeground)
     {
-        var virtualKey = SelectVirtualKey();
-        logger.LogInformation("Joining Teams meeting via {VirtualKey}", virtualKey);
-        _ = kanata.Value.TapVirtualKeyAsync(virtualKey);
     }
 
-    internal static string SelectVirtualKey(
-        string? processName,
-        string? windowClass,
-        string? windowTitle) =>
-        processName is TeamsProcessName
-        && windowClass is TeamsWindowClass
-        && windowTitle?.StartsWith(CalendarTitlePrefix, StringComparison.Ordinal) is true
+    internal TeamsMeetingJoin(
+        ILogger<TeamsMeetingJoin> logger,
+        Lazy<IKanataClient> kanata,
+        Func<ForegroundWindow> readForeground)
+    {
+        _logger = logger;
+        _kanata = kanata;
+        _readForeground = readForeground;
+    }
+
+    public void Join()
+    {
+        var virtualKey = SelectVirtualKey(_readForeground());
+        _logger.LogInformation("Joining Teams meeting via {VirtualKey}", virtualKey);
+        _ = _kanata.Value.TapVirtualKeyAsync(virtualKey);
+    }
+
+    internal static string SelectVirtualKey(ForegroundWindow window) =>
+        window.ProcessName is TeamsProcessName
+        && window.WindowClass is TeamsWindowClass
+        && window.Title?.StartsWith(CalendarTitlePrefix, StringComparison.Ordinal) is true
             ? LayerCatalog.VirtualKeyTeamsJoinFocused
             : LayerCatalog.VirtualKeyTeamsJoinToast;
 
-    private static string SelectVirtualKey()
-    {
-        var hwnd = NativeWindows.GetForeground();
-        if (hwnd == nint.Zero)
-        {
-            return LayerCatalog.VirtualKeyTeamsJoinToast;
-        }
+    internal static ForegroundWindow Describe(nint hwnd) =>
+        hwnd == nint.Zero
+            ? new ForegroundWindow(null, null, null)
+            : new ForegroundWindow(
+                GetProcessName(hwnd),
+                ReadWindowText(hwnd, GetClassNameW),
+                ReadWindowText(hwnd, GetWindowTextW));
 
-        return SelectVirtualKey(
-            GetProcessName(hwnd),
-            ReadWindowText(hwnd, GetClassNameW),
-            ReadWindowText(hwnd, GetWindowTextW));
-    }
+    private static ForegroundWindow ReadForeground() => Describe(NativeWindows.GetForeground());
 
     private static string? GetProcessName(nint hwnd)
     {

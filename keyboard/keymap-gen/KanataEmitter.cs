@@ -44,11 +44,7 @@ internal static class KanataEmitter
         return sb.ToString();
     }
 
-    /// <summary>
-    /// Emits the virtual keys the bridge triggers over TCP with
-    /// <c>ActOnFakeKey</c>. Chords live here so kanata applies its own
-    /// <c>unmod</c> handling and physically-held modifiers cannot alter them.
-    /// </summary>
+    /// <summary>Emits the <see cref="VirtualKey"/> definitions as a defvirtualkeys block.</summary>
     private static void EmitVirtualKeys(StringBuilder sb, Keymap k)
     {
         if (k.VirtualKeys.Count == 0) return;

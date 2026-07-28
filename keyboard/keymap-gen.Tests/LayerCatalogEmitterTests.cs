@@ -24,6 +24,12 @@ public class LayerCatalogEmitterTests
         Assert.Contains("public const string WmFocus = \"wm-focus\";", output);
         Assert.Contains("public const string WmFocusToggle = \"wm-focus-toggle\";", output);
         Assert.Contains("public const string WmWorkspace = \"wm-workspace\";", output);
+
+        // Virtual keys the bridge taps by name
+        Assert.Contains(
+            "public const string VirtualKeyTeamsJoinFocused = \"teams-join-focused\";", output);
+        Assert.Contains(
+            "public const string VirtualKeyTeamsJoinToast = \"teams-join-toast\";", output);
     }
 
     [Fact]

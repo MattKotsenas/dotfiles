@@ -25,8 +25,9 @@ public sealed record Keymap(
 
 /// <summary>
 /// A kanata virtual key the bridge triggers over TCP with <c>ActOnFakeKey</c>.
-/// Chords defined here keep kanata's modifier handling instead of being
-/// injected by the bridge.
+/// A chord defined here is emitted by kanata, which applies its own
+/// <c>unmod</c> handling, so modifiers the user is physically holding cannot
+/// alter it. A chord the bridge injected itself would race those modifiers.
 /// </summary>
 public sealed record VirtualKey(string Name, KAction Action);
 

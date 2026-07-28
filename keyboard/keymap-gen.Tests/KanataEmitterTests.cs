@@ -23,6 +23,31 @@ public class KanataEmitterTests
     }
 
     [Fact]
+    public void ProductionKeymap_EmitsTeamsJoinChordsAsVirtualKeys()
+    {
+        var keymap = ProductionKeymap.Build();
+        var output = KanataEmitter.Emit(keymap);
+
+        // The bridge taps these by name over TCP; renaming one silently breaks
+        // the join, so the shipped block and chords are asserted verbatim.
+        Assert.Contains("(defvirtualkeys", output);
+        Assert.Contains("teams-join-focused (macro (unmod lctl j))", output);
+        Assert.Contains("teams-join-toast (macro (unmod lctl lsft j))", output);
+    }
+
+    [Theory]
+    // CAP a j in one-shot admin mode, which returns to typing afterwards.
+    [InlineData("j (multi (push-msg \"teams.meeting.join\") (layer-switch base-default))")]
+    // The same key in the sticky variant, which stays in admin mode.
+    [InlineData("j (push-msg \"teams.meeting.join\")")]
+    public void ProductionKeymap_BindsTeamsJoinUnderAdmin(string binding)
+    {
+        var output = KanataEmitter.Emit(ProductionKeymap.Build());
+
+        Assert.Contains(binding, output);
+    }
+
+    [Fact]
     public void IntentAction_FormatsAsPushMsg()
     {
         Assert.Equal("(push-msg \"wm.focus.left\")",

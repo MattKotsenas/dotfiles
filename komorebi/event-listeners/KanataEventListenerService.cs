@@ -38,23 +38,31 @@ public sealed class KanataEventListenerService : ReconnectingBackgroundService, 
 
     protected override string ConnectionDescription => "Kanata TCP";
 
-    public async Task SendChangeLayerAsync(string layerName, CancellationToken cancellationToken = default)
-    {
-        var json = string.Format(
+    public async Task SendChangeLayerAsync(string layerName, CancellationToken cancellationToken = default) =>
+        await SendAsync(
+            ChangeLayerRequest(layerName),
+            $"ChangeLayer({layerName})",
+            cancellationToken);
+
+    /// <summary>Kanata's wire request for switching the default layer.</summary>
+    internal static string ChangeLayerRequest(string layerName) =>
+        string.Format(
             CultureInfo.InvariantCulture,
             "{{\"ChangeLayer\":{{\"new\":\"{0}\"}}}}\n",
             layerName);
-        await SendAsync(json, $"ChangeLayer({layerName})", cancellationToken);
-    }
 
-    public async Task TapVirtualKeyAsync(string virtualKeyName, CancellationToken cancellationToken = default)
-    {
-        var json = string.Format(
+    public async Task TapVirtualKeyAsync(string virtualKeyName, CancellationToken cancellationToken = default) =>
+        await SendAsync(
+            ActOnFakeKeyRequest(virtualKeyName),
+            $"ActOnFakeKey({virtualKeyName})",
+            cancellationToken);
+
+    /// <summary>Kanata's wire request for tapping a virtual key.</summary>
+    internal static string ActOnFakeKeyRequest(string virtualKeyName) =>
+        string.Format(
             CultureInfo.InvariantCulture,
             "{{\"ActOnFakeKey\":{{\"name\":\"{0}\",\"action\":\"Tap\"}}}}\n",
             virtualKeyName);
-        await SendAsync(json, $"ActOnFakeKey({virtualKeyName})", cancellationToken);
-    }
 
     private async Task SendAsync(
         string json,

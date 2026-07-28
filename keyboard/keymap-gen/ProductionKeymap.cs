@@ -10,8 +10,6 @@ namespace KeymapGen;
 internal static class ProductionKeymap
 {
     public static Keymap Build() => new KeymapBuilder()
-        // Teams join chords live in kanata so its unmod handling owns modifier
-        // state; the bridge only chooses which one to trigger.
         .VirtualKey("teams-join-focused", "C-j")
         .VirtualKey("teams-join-toast", "C-S-j")
         .Reserve(
