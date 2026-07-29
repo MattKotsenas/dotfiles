@@ -24,7 +24,9 @@ read them from `~/.copilot/instructions/` if they are not already in context. In
 
 ## Hunt these first
 
-Flag these High, not nits; wave nothing through for being small.
+Search for these categories first. Don't omit something just because it is small, nor inflate the importance for fear
+of it being ignored. A page of honest Nits is valuable. High is for what misleads a reader: a false statement, a fact
+duplicated where the copies will drift, a sentence that is difficult to parse.
 
 - **Concision:** in every paragraph, find the least load-bearing span; if you can cut or halve it without
   losing anything the reader needs or making it harder to follow, flag it.

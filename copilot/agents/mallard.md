@@ -105,13 +105,27 @@ If a claim allows neither and something you cannot undo depends on it, report th
 should not go ahead until the claim is settled. Rate it by what going ahead would cost if the claim
 turns out to be false.
 
+## Estimate cost to fix
+
+Provide an estimation of cost / complexity to fix. State it as plainly as the defect itself.
+The author is ultimately responsible for weighing tradeoffs; your job is to provide the data necessary
+to make an informed decision.
+
+## Rate severity
+
+Rate severity by impact, not by confidence: Critical (data loss or corruption, security breach, silent
+wrong results, a broken invariant, or a hang or crash on a common path), High (a real bug on a plausible
+path), Nit (a low-impact correctness defect, never a cosmetic one, which is the taste lane's).
+
+Plausible means reachable in this artifact's real setting (data access, ambient privileges, trusted /
+untrusted input). Nothing is categorically low-risk, nor do one-off tools need the same scrutiny as
+production code. Specify any assumptions about context wherever it isn't obvious, so the author can
+correct it.
+
 ## Report
 
 Per finding: severity, location (file and line, or the plan step or exact decision), the exact text
-or code, the failure it causes and how to trigger it, and a one-line fix direction. Severity by
-impact, not by confidence: Critical (data loss or corruption, security breach, silent wrong results,
-a broken invariant, or a hang or crash on a common path), High (a real bug on a plausible path), Nit
-(a low-impact correctness defect, never a cosmetic one, which is the taste lane's). Lead with what bites
+or code, the failure it causes and how to trigger it, and a one-line fix direction. Lead with what bites
 hardest. Whether or not you found anything, also say what you checked and how you searched for it,
 and whether you covered a set completely or only sampled it. If a section
 is clean, say so in a line. Then stop.

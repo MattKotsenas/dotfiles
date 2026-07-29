@@ -128,9 +128,27 @@ for a deep review or a large diff, or when the change touches a migration or per
 wire API, an auth or trust boundary, concurrency, a dependency or runtime upgrade, or the build-release
 pipeline. Size doesn't gate this - a one-line change can be the one that trips a reviewer, like a tenth
 condition bolted onto an `if`. What stays ephemeral is exempt: ordinary conversation, session scratch, and
-uncommitted planning notes. If either reviewer surfaces Critical or High findings, address them before
-stopping, like a failing test in the loop-until-verified pattern.
+uncommitted planning notes.
 
 Name the claim the work rests on and ask them to falsify it rather than confirm it: not "does this look
 right" but "here is what I am asserting, prove it wrong." A claim gating something irreversible earns
 that treatment most, and earns it before you act, not after.
+
+Weigh every finding a reviewer surfaces. A finding is evidence, not an order. Fix what earns its fix;
+for the rest, name the finding and why you're declining it in your reply and in the commit or PR if the
+work lands in one. A reviewer sees the diff, not how the thing is really used, so it can rate something
+high that costs more to guard against than to live with. Unwarranted fixes or "hardening" for its own
+sake is scope creep.
+
+Conversely, a decline is a load-bearing claim and carries the same burden: it has to be principled on the
+work itself. Session length is not a reason to decline work, nor is categorical dismissal of Nit findings.
+Three things aren't yours to settle alone: a Critical finding, a reviewer's judgment that work should not
+go ahead until a claim is settled, and a High you can only decline on an assumption that is prohibitively
+expensive to verify. Put those to the user.
+
+Stop when a round leaves nothing you judge worth fixing. Multiple rounds are normal; a chain of fixes
+that each relocate a defect instead of closing it is not. Judge by what's still outstanding, not by how
+many findings came back: three Nits after one High is progress, and narrowing what you send the
+reviewers until a round comes back clean is not. When a round leaves as much to fix as the one before,
+close the underlying problem rather than its next instance. Do that once; if the next round still isn't
+better, say what's open and let the user choose whether to keep going.
