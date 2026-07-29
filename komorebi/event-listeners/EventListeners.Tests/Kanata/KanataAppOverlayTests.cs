@@ -88,6 +88,53 @@ public class KanataAppOverlayTests
     }
 
     [Fact]
+    public async Task TeamsOverlay_LeaveCall_EmitsCtrlShiftH()
+    {
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-teams")
+                .Tap("caps")
+                .Tap("x")
+                .Settle());
+
+        // The exact chord Teams receives: both modifiers down before H, and no
+        // stray key in between. Asserted as a sequence because a missing
+        // modifier is the failure that matters here.
+        Assert.Equal(
+            [
+                new KeyEvent("↓", "LCtrl"),
+                new KeyEvent("↓", "LShift"),
+                new KeyEvent("↓", "H"),
+                new KeyEvent("↑", "LCtrl"),
+                new KeyEvent("↑", "LShift"),
+                new KeyEvent("↑", "H"),
+            ],
+            output.KeyEvents);
+
+        // Leaving is a keystroke to Teams, not a WM intent.
+        Assert.Empty(output.Intents);
+    }
+
+    [Fact]
+    public async Task TeamsOverlay_DoubleCap_LeaveCall_FiresEachTime()
+    {
+        // A second CAP locks the overlay, so the sticky variant of the binding
+        // has to exist too: two taps of x send the chord twice.
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput()
+                .Layer("base-teams")
+                .Tap("caps").Tap("caps")
+                .Tap("x").Tap("x")
+                .Settle());
+
+        Assert.Equal(
+            2,
+            output.KeyEvents.Count(e => e.Direction == "↓" && e.Key.Equals("H", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    [Fact]
     public async Task TeamsOverlay_TabJump3_EmitsCtrl3()
     {
         var output = await KanataSimulator.RunAsync(

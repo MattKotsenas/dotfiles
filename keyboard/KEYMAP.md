@@ -203,6 +203,7 @@ Microsoft Teams shortcuts. In-meeting actions are no-ops outside a meeting.
 | `CAP m` | toggle mute: macro `C-S-m` |
 | `CAP n` | join meeting from notification: macro `C-S-j` |
 | `CAP u` | raise/lower hand: macro `C-S-k` |
+| `CAP x` | leave the call: macro `C-S-h` |
 | `CAP y` | accept incoming call: macro `C-S-a` |
 
 ### wm-codeflow

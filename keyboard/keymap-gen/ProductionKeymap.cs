@@ -103,6 +103,7 @@ internal static class ProductionKeymap
             .Macro("m", "C-S-m").Describe("toggle mute")
             .Macro("c", "C-S-o").Describe("toggle camera")
             .Macro("u", "C-S-k").Describe("raise/lower hand")
+            .Macro("x", "C-S-h").Describe("leave the call")
             // Navigation
             .Macro("g", "C-e").Describe("search")
             .Macro("h", "A-left").Describe("back")
