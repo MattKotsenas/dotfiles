@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
 using EventListeners.Generated;
 using EventListeners.Win32;
 using Microsoft.Extensions.Logging;
@@ -12,101 +9,159 @@ public interface ITeamsMeetingJoin
     void Join();
 }
 
-/// <summary>The identity of the foreground window, as far as joining cares.</summary>
-internal sealed record ForegroundWindow(string? ProcessName, string? WindowClass, string? Title);
-
 /// <summary>
-/// Joins a Teams meeting with the chord that suits the foreground window.
+/// Joins the meeting the user means, preferring to invoke a control directly over
+/// sending a keyboard shortcut.
 ///
-/// Teams Calendar wins when it is foreground, because <c>Ctrl+J</c> then joins
-/// the selected event. Otherwise the global <c>Ctrl+Shift+J</c> toast shortcut
-/// runs.
+/// Invoking needs no focus, so it works from any application, and it cannot land
+/// on the wrong window. A keyboard chord is used only where the intended join
+/// control cannot be identified: several joinable calendar meetings, where Teams
+/// tracks a selection it does not expose, and the toast fallback below.
 ///
-/// Both chords are kanata virtual keys, defined by keymap-gen; this only picks
-/// which one to tap.
+/// Scans take a few hundred milliseconds, so the work runs off the kanata event
+/// loop. Requests arriving while one is in flight are dropped rather than queued:
+/// a second join is never what the user wanted, and a queued one would act on a
+/// foreground window that has since moved.
 ///
 /// TODO: gate the toast chord on an actual meeting-started toast.
 /// </summary>
-internal sealed partial class TeamsMeetingJoin : ITeamsMeetingJoin
+internal sealed class TeamsMeetingJoin : ITeamsMeetingJoin
 {
-    private const string TeamsProcessName = "ms-teams";
-    private const string TeamsWindowClass = "TeamsWebView";
-    private const string CalendarTitlePrefix = "Calendar |";
+    /// <summary>
+    /// How long to wait for Teams to actually reach the foreground. Focus arrives
+    /// asynchronously, and ForceForeground's return value is an unreliable false
+    /// negative, so the foreground window itself is the only sound signal.
+    /// </summary>
+    private static readonly TimeSpan FocusTimeout = TimeSpan.FromMilliseconds(600);
+
+    private static readonly TimeSpan FocusPollInterval = TimeSpan.FromMilliseconds(25);
 
     private readonly ILogger<TeamsMeetingJoin> _logger;
     private readonly Lazy<IKanataClient> _kanata;
-    private readonly Func<ForegroundWindow> _readForeground;
+    private readonly ITeamsSurface _teams;
+    private readonly Func<nint> _readForeground;
 
-    public TeamsMeetingJoin(ILogger<TeamsMeetingJoin> logger, Lazy<IKanataClient> kanata)
-        : this(logger, kanata, ReadForeground)
+    private int _running;
+
+    public TeamsMeetingJoin(
+        ILogger<TeamsMeetingJoin> logger,
+        Lazy<IKanataClient> kanata,
+        ITeamsSurface teams)
+        : this(logger, kanata, teams, NativeWindows.GetForeground)
     {
     }
 
     internal TeamsMeetingJoin(
         ILogger<TeamsMeetingJoin> logger,
         Lazy<IKanataClient> kanata,
-        Func<ForegroundWindow> readForeground)
+        ITeamsSurface teams,
+        Func<nint> readForeground)
     {
         _logger = logger;
         _kanata = kanata;
+        _teams = teams;
         _readForeground = readForeground;
     }
 
     public void Join()
     {
-        var virtualKey = SelectVirtualKey(_readForeground());
-        _logger.LogInformation("Joining Teams meeting via {VirtualKey}", virtualKey);
-        _ = _kanata.Value.TapVirtualKeyAsync(virtualKey);
-    }
-
-    internal static string SelectVirtualKey(ForegroundWindow window) =>
-        window.ProcessName is TeamsProcessName
-        && window.WindowClass is TeamsWindowClass
-        && window.Title?.StartsWith(CalendarTitlePrefix, StringComparison.Ordinal) is true
-            ? LayerCatalog.VirtualKeyTeamsJoinFocused
-            : LayerCatalog.VirtualKeyTeamsJoinToast;
-
-    internal static ForegroundWindow Describe(nint hwnd) =>
-        hwnd == nint.Zero
-            ? new ForegroundWindow(null, null, null)
-            : new ForegroundWindow(
-                GetProcessName(hwnd),
-                ReadWindowText(hwnd, GetClassNameW),
-                ReadWindowText(hwnd, GetWindowTextW));
-
-    private static ForegroundWindow ReadForeground() => Describe(NativeWindows.GetForeground());
-
-    private static string? GetProcessName(nint hwnd)
-    {
-        GetWindowThreadProcessId(hwnd, out var processId);
-        try
+        if (Interlocked.CompareExchange(ref _running, 1, 0) != 0)
         {
-            using var process = Process.GetProcessById((int)processId);
-            return process.ProcessName;
+            _logger.LogDebug("Ignoring a join request while one is already running");
+            return;
         }
-        catch (ArgumentException)
+
+        _ = Task.Run(async () =>
         {
-            // The owning process exited between the two calls.
-            return null;
+            try
+            {
+                await ExecuteAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Joining failed");
+            }
+            finally
+            {
+                Volatile.Write(ref _running, 0);
+            }
+        });
+    }
+
+    internal async Task ExecuteAsync()
+    {
+        var decision = JoinStrategy.Decide(_teams.Capture(), _readForeground());
+
+        switch (decision)
+        {
+            case JoinDecision.Invoke invoke:
+                _logger.LogInformation("Joining: {Because}", invoke.Because);
+                if (!_teams.InvokeById(invoke.Hwnd, invoke.AutomationId))
+                {
+                    _logger.LogWarning("The join control went away before it could be invoked");
+                }
+                break;
+
+            case JoinDecision.InvokeCalendarJoin calendar:
+                _logger.LogInformation("Joining '{Meeting}' from the calendar", calendar.MeetingName);
+                if (!_teams.InvokeCalendarJoin(calendar.Hwnd, calendar.MeetingName))
+                {
+                    _logger.LogWarning("The calendar join went away before it could be invoked");
+                }
+                break;
+
+            case JoinDecision.FocusThenChord chord:
+                await FocusThenChordAsync(chord);
+                break;
+
+            case JoinDecision.ToastChord toast:
+                _logger.LogInformation("No meeting found ({Because}); trying the toast shortcut", toast.Because);
+                await _kanata.Value.TapVirtualKeyAsync(LayerCatalog.VirtualKeyTeamsJoinToast);
+                break;
+
+            case JoinDecision.Refuse refuse:
+                _logger.LogInformation("Not joining: {Because}", refuse.Because);
+                break;
         }
     }
 
-    private static string ReadWindowText(
-        nint hwnd,
-        Func<nint, StringBuilder, int, int> read)
+    /// <summary>
+    /// Hands the choice to Teams, which knows which calendar event is selected.
+    ///
+    /// The chord is sent only once Teams is confirmed foreground. That still leaves
+    /// a race, accepted knowingly: focus can move between the confirmation and
+    /// kanata emitting the keys, and the chord would land wherever focus went.
+    /// Polling narrows the gap; it cannot close it.
+    /// </summary>
+    private async Task FocusThenChordAsync(JoinDecision.FocusThenChord chord)
     {
-        var buffer = new StringBuilder(512);
-        var length = read(hwnd, buffer, buffer.Capacity);
-        return length > 0 ? buffer.ToString() : string.Empty;
+        _logger.LogInformation(
+            "{Count} meetings are joinable ({Candidates}); letting Teams choose",
+            chord.Candidates.Count,
+            string.Join(", ", chord.Candidates));
+
+        NativeWindows.ForceForeground(chord.Hwnd);
+
+        if (!await WaitForForegroundAsync(chord.Hwnd))
+        {
+            _logger.LogWarning(
+                "Teams did not reach the foreground within {Timeout}ms, so no keys were sent",
+                FocusTimeout.TotalMilliseconds);
+            return;
+        }
+
+        await _kanata.Value.TapVirtualKeyAsync(LayerCatalog.VirtualKeyTeamsJoinFocused);
     }
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern int GetClassNameW(nint hwnd, StringBuilder buffer, int maxCount);
+    private async Task<bool> WaitForForegroundAsync(nint hwnd)
+    {
+        var deadline = DateTime.UtcNow + FocusTimeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (_readForeground() == hwnd) return true;
+            await Task.Delay(FocusPollInterval);
+        }
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern int GetWindowTextW(nint hwnd, StringBuilder buffer, int maxCount);
-
-    [LibraryImport("user32.dll")]
-    private static partial uint GetWindowThreadProcessId(nint hwnd, out uint processId);
+        return _readForeground() == hwnd;
+    }
 }
-

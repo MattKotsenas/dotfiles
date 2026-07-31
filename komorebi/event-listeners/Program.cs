@@ -18,6 +18,7 @@ public static class Program
         builder.Services.AddSingleton<ICommandRunner, CliWrapCommandRunner>();
         builder.Services.AddSingleton<IWindowSweeper, WindowSweeper>();
         builder.Services.AddSingleton<IWindowAction, WindowAction>();
+        builder.Services.AddSingleton<ITeamsSurface, TeamsUiaSurface>();
         builder.Services.AddSingleton<ITeamsMeetingJoin, TeamsMeetingJoin>();
         builder.Services.AddSingleton<WmOverlayIndicator>();
         builder.Services.AddSingleton<IWmOverlay>(sp => sp.GetRequiredService<WmOverlayIndicator>());
