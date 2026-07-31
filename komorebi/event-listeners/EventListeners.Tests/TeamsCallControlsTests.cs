@@ -115,8 +115,53 @@ public class TeamsCallControlsTests
         Assert.Equal(2, teams.Calls);
     }
 
+    [Fact]
+    public async Task AHungScan_IsNeverJoinedByASecond()
+    {
+        // A timed-out scan leaves a blocked thread behind, because the UIA call is
+        // synchronous and cannot be cancelled. Pressing the key again is exactly
+        // what a user does when nothing happens, so each press must not strand
+        // another thread.
+        var release = new SemaphoreSlim(0, 1);
+        var teams = new HangingSurface(release);
+        var controls = new TeamsCallControls(NullLogger<TeamsCallControls>.Instance, teams)
+        {
+            ScanCeiling = TimeSpan.FromMilliseconds(200),
+        };
+
+        await controls.RunAsync();
+        Assert.Equal(1, teams.Started);
+
+        await controls.RunAsync();
+        await controls.RunAsync();
+
+        Assert.Equal(1, teams.Started);
+        release.Release();
+    }
+
     private static async Task LeaveAsync(ITeamsSurface teams) =>
         await new TeamsCallControls(NullLogger<TeamsCallControls>.Instance, teams).LeaveAsync();
+
+    /// <summary>Blocks forever, the way a wedged UIA provider does.</summary>
+    private sealed class HangingSurface(SemaphoreSlim release) : ITeamsSurface
+    {
+        private int _started;
+
+        public int Started => Volatile.Read(ref _started);
+
+        public ControlSearch InvokeUniqueInAnyWindow(string automationId)
+        {
+            Interlocked.Increment(ref _started);
+            release.Wait(TimeSpan.FromSeconds(30));
+            return ControlSearch.Invoked;
+        }
+
+        public TeamsSnapshot Capture() => TeamsSnapshot.Nothing;
+
+        public bool InvokeById(nint hwnd, string automationId) => true;
+
+        public bool InvokeCalendarJoin(nint hwnd, string meetingName) => true;
+    }
 
     private sealed class CountingSurface : ITeamsSurface
     {

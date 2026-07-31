@@ -41,7 +41,11 @@ internal sealed class TeamsCallControls(
     /// </summary>
     private static readonly TimeSpan ScanTimeout = TimeSpan.FromSeconds(5);
 
+    /// <summary>Test seam: a hung scan otherwise makes the suite wait out the ceiling.</summary>
+    internal TimeSpan ScanCeiling { get; init; } = ScanTimeout;
+
     private int _running;
+    private Task<ControlSearch>? _outstandingScan;
 
     public void Leave() => _ = RunAsync();
 
@@ -109,20 +113,33 @@ internal sealed class TeamsCallControls(
     }
 
     /// <summary>
-    /// Runs one scan with a ceiling on how long it may take. A hung scan is
-    /// abandoned rather than waited on; the orphaned call may still complete later,
-    /// which is a lesser evil than never leaving a call again.
+    /// Runs one scan with a ceiling on how long it may take.
+    ///
+    /// A timed-out scan cannot be cancelled: the UIA call is synchronous, so the
+    /// thread stays blocked until the provider returns, if it ever does. Only one
+    /// such scan is ever left outstanding. Without that, pressing the key again
+    /// after nothing happened, which is exactly what a user does, would strand
+    /// another thread each time and eventually starve the bridge.
     /// </summary>
     private async Task<ControlSearch> SearchAsync()
     {
+        var previous = _outstandingScan;
+        if (previous is { IsCompleted: false })
+        {
+            logger.LogWarning("An earlier read of the Teams UI is still hung; not starting another");
+            return ControlSearch.Failed;
+        }
+
+        var scan = Task.Run(() => teams.InvokeUniqueInAnyWindow(HangUpAutomationId));
+        _outstandingScan = scan;
+
         try
         {
-            return await Task.Run(() => teams.InvokeUniqueInAnyWindow(HangUpAutomationId))
-                .WaitAsync(ScanTimeout);
+            return await scan.WaitAsync(ScanCeiling);
         }
         catch (TimeoutException)
         {
-            logger.LogWarning("Reading the Teams UI did not finish within {Timeout}s", ScanTimeout.TotalSeconds);
+            logger.LogWarning("Reading the Teams UI did not finish within {Timeout}s", ScanCeiling.TotalSeconds);
             return ControlSearch.Failed;
         }
     }
