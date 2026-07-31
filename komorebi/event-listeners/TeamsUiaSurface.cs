@@ -88,6 +88,51 @@ internal sealed class TeamsUiaSurface(ILogger<TeamsUiaSurface> logger) : ITeamsS
         }
     }
 
+    public ControlSearch InvokeUniqueInAnyWindow(string automationId)
+    {
+        try
+        {
+            var matches = new List<(IUIAutomationElement Element, string Title)>();
+            foreach (var (element, _, title) in TeamsWindows())
+            {
+                var found = element.FindFirst(
+                    TreeScope.TreeScope_Descendants, ByAutomationId(automationId));
+                if (found is not null)
+                {
+                    matches.Add((found, title));
+                }
+            }
+
+            if (matches.Count == 0)
+            {
+                return ControlSearch.NotFound;
+            }
+
+            // Teams shows a minimized call in a second, smaller call-monitor window,
+            // so two matches routinely mean one call in two windows. Both hang up the
+            // same call, so only distinct meetings are genuinely ambiguous.
+            var meetings = matches.Select(m => m.Title).Distinct(StringComparer.Ordinal).ToList();
+            if (meetings.Count > 1)
+            {
+                logger.LogInformation(
+                    "{Count} different Teams calls offer {AutomationId}: {Meetings}",
+                    meetings.Count, automationId, string.Join(", ", meetings));
+                return ControlSearch.Ambiguous;
+            }
+
+            return InvokeElement(matches[0].Element, automationId)
+                ? ControlSearch.Invoked
+                : ControlSearch.Failed;
+        }
+        catch (Exception ex)
+        {
+            // A window torn down mid-scan throws. Whether the control was there is
+            // now unknown, which is not the same as knowing it was not.
+            logger.LogWarning(ex, "Looking for {AutomationId} failed", automationId);
+            return ControlSearch.Failed;
+        }
+    }
+
     public bool InvokeCalendarJoin(nint hwnd, string meetingName)
     {
         try

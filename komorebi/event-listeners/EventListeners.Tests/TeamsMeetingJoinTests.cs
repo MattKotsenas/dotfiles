@@ -148,6 +148,9 @@ public class TeamsMeetingJoinTests
             return true;
         }
 
+        public ControlSearch InvokeUniqueInAnyWindow(string automationId) =>
+            throw new InvalidOperationException("Joining is always scoped to a window.");
+
         public bool InvokeCalendarJoin(nint hwnd, string meetingName)
         {
             CalendarInvoked.Add((hwnd, meetingName));
@@ -182,6 +185,9 @@ public class TeamsMeetingJoinTests
         }
 
         public bool InvokeById(nint hwnd, string automationId) => true;
+
+        public ControlSearch InvokeUniqueInAnyWindow(string automationId) =>
+            throw new InvalidOperationException("Joining is always scoped to a window.");
 
         public bool InvokeCalendarJoin(nint hwnd, string meetingName) => true;
     }

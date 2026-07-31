@@ -20,6 +20,7 @@ public static class Program
         builder.Services.AddSingleton<IWindowAction, WindowAction>();
         builder.Services.AddSingleton<ITeamsSurface, TeamsUiaSurface>();
         builder.Services.AddSingleton<ITeamsMeetingJoin, TeamsMeetingJoin>();
+        builder.Services.AddSingleton<ITeamsCallControls, TeamsCallControls>();
         builder.Services.AddSingleton<WmOverlayIndicator>();
         builder.Services.AddSingleton<IWmOverlay>(sp => sp.GetRequiredService<WmOverlayIndicator>());
 

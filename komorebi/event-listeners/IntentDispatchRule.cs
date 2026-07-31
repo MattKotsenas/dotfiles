@@ -22,6 +22,7 @@ public sealed class IntentDispatchRule : IEventRule
     private readonly ICommandRunner _runner;
     private readonly IWindowSweeper _sweeper;
     private readonly ITeamsMeetingJoin _teamsJoin;
+    private readonly ITeamsCallControls _teamsCall;
     private readonly Dictionary<string, Func<Command>> _commandMap;
 
     // Resolved lazily via `komorebic configuration`; see KomorebiConfigPath.
@@ -33,12 +34,14 @@ public sealed class IntentDispatchRule : IEventRule
         ILogger<IntentDispatchRule> logger,
         ICommandRunner runner,
         IWindowSweeper sweeper,
-        ITeamsMeetingJoin teamsJoin)
+        ITeamsMeetingJoin teamsJoin,
+        ITeamsCallControls teamsCall)
     {
         _logger = logger;
         _runner = runner;
         _sweeper = sweeper;
         _teamsJoin = teamsJoin;
+        _teamsCall = teamsCall;
         _commandMap = BuildCommandMap();
     }
 
@@ -58,6 +61,13 @@ public sealed class IntentDispatchRule : IEventRule
         if (intent == "teams.meeting.join")
         {
             _teamsJoin.Join();
+            return;
+        }
+
+        // Leaving presses the call's own hangup button, so it needs no focus.
+        if (intent == "teams.call.leave")
+        {
+            _teamsCall.Leave();
             return;
         }
 
