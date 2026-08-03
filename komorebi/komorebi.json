@@ -40,14 +40,7 @@
       "workspaces": [
         {
           "name": "main",
-          "layout": "RightMainVerticalStack",
-          "workspace_rules": []
-        },
-        {
-          "name": "chat",
-          "layout": "Columns",
-          "window_container_behaviour": "Create",
-          "workspace_rules": []
+          "layout": "RightMainVerticalStack"
         }
       ]
     },
@@ -56,12 +49,6 @@
         {
           "name": "main",
           "layout": "BSP",
-          "workspace_rules": []
-        },
-        {
-          "name": "chat",
-          "layout": "Columns",
-          "window_container_behaviour": "Create",
           "workspace_rules": [
             {
               "id": "outlook.exe",
