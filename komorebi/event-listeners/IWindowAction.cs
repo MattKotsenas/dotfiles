@@ -15,4 +15,21 @@ public interface IWindowAction
     /// Sends WM_CLOSE to the specified window.
     /// </summary>
     void Close(long hwnd);
+
+    /// <summary>
+    /// Moves the focused window to the given komorebi monitor index, landing on
+    /// whichever workspace that monitor last had focused. False when the move failed.
+    /// </summary>
+    Task<bool> MoveToMonitorAsync(int monitorIndex);
+
+    /// <summary>
+    /// Promotes the focused window to the largest tile of its workspace.
+    /// </summary>
+    Task PromoteAsync();
+
+    /// <summary>
+    /// The window that currently holds the foreground, which is what komorebic's
+    /// focus-relative commands will act on.
+    /// </summary>
+    long GetForegroundWindow();
 }

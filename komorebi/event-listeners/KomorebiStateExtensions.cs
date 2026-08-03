@@ -125,6 +125,59 @@ public static class KomorebiStateExtensions
         return null;
     }
 
+    /// <summary>
+    /// Bounds of every monitor komorebi lists, in index order. An entry is null when
+    /// that monitor's <c>size</c> is missing or malformed.
+    ///
+    /// <para>
+    /// komorebi reports <c>size</c> as <c>{left, top, right, bottom}</c> where
+    /// <c>right</c> and <c>bottom</c> are the width and height, not the far edges.
+    /// </para>
+    /// </summary>
+    public static IReadOnlyList<MonitorBounds?> GetMonitorBounds(this JsonElement state)
+    {
+        if (!TryGetElements(state, "monitors", out var monitors))
+        {
+            return [];
+        }
+
+        var bounds = new List<MonitorBounds?>();
+        foreach (var monitor in monitors)
+        {
+            bounds.Add(ParseBounds(monitor));
+        }
+
+        return bounds;
+    }
+
+    private static MonitorBounds? ParseBounds(JsonElement monitor)
+    {
+        if (monitor.ValueKind != JsonValueKind.Object ||
+            !monitor.TryGetProperty("size", out var size) ||
+            size.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        if (!TryGetInt(size, "left", out var left) ||
+            !TryGetInt(size, "top", out var top) ||
+            !TryGetInt(size, "right", out var width) ||
+            !TryGetInt(size, "bottom", out var height))
+        {
+            return null;
+        }
+
+        return new MonitorBounds(left, top, width, height);
+    }
+
+    private static bool TryGetInt(JsonElement parent, string propertyName, out int value)
+    {
+        value = 0;
+        return parent.TryGetProperty(propertyName, out var element)
+            && element.ValueKind == JsonValueKind.Number
+            && element.TryGetInt32(out value);
+    }
+
     private static JsonElement? GetFocusedWorkspace(JsonElement state)
     {
         if (!state.TryGetProperty("monitors", out var monitors) ||

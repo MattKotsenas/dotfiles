@@ -18,6 +18,7 @@ public static class Program
         builder.Services.AddSingleton<ICommandRunner, CliWrapCommandRunner>();
         builder.Services.AddSingleton<IWindowSweeper, WindowSweeper>();
         builder.Services.AddSingleton<IWindowAction, WindowAction>();
+        builder.Services.AddSingleton<IMonitorTopology, Win32MonitorTopology>();
         builder.Services.AddSingleton<ITeamsSurface, TeamsUiaSurface>();
         builder.Services.AddSingleton<ITeamsMeetingJoin, TeamsMeetingJoin>();
         builder.Services.AddSingleton<ITeamsCallControls, TeamsCallControls>();
@@ -40,6 +41,7 @@ public static class Program
         builder.Services.AddSingleton<IEventRule, IntentDispatchRule>();
         builder.Services.AddSingleton<IEventRule, AppLayerRouter>();
         builder.Services.AddSingleton<IEventRule, SerenaDashboardRule>();
+        builder.Services.AddSingleton<IEventRule, TeamsWindowPlacement>();
 
         // Komorebi listener is separate (different protocol, different server)
         builder.Services.AddHostedService<KomorebiEventListenerService>();

@@ -78,11 +78,6 @@
               "matching_strategy": "Equals"
             },
             {
-              "id": "ms-teams.exe",
-              "kind": "Exe",
-              "matching_strategy": "Equals"
-            },
-            {
               "id": "slack.exe",
               "kind": "Exe",
               "matching_strategy": "Equals"

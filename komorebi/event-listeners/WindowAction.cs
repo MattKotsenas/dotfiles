@@ -22,21 +22,37 @@ public sealed class WindowAction : IWindowAction
 
     public async void ToggleFloat()
     {
+        await RunKomorebicAsync("toggle-float");
+    }
+
+    public Task<bool> MoveToMonitorAsync(int monitorIndex) =>
+        RunKomorebicAsync($"move-to-monitor {monitorIndex}");
+
+    public Task PromoteAsync() => RunKomorebicAsync("promote");
+
+    public long GetForegroundWindow() => NativeMethods.GetForegroundWindow();
+
+    private async Task<bool> RunKomorebicAsync(string arguments)
+    {
         try
         {
             var result = await _runner.RunAsync(
                 Cli.Wrap("komorebic")
-                    .WithArguments("toggle-float")
+                    .WithArguments(arguments)
                     .WithValidation(CommandResultValidation.None));
 
             if (result.ExitCode != 0)
             {
-                _logger.LogWarning("komorebic toggle-float exited {ExitCode}", result.ExitCode);
+                _logger.LogWarning("komorebic {Arguments} exited {ExitCode}", arguments, result.ExitCode);
+                return false;
             }
+
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to invoke komorebic toggle-float");
+            _logger.LogWarning(ex, "Failed to invoke komorebic {Arguments}", arguments);
+            return false;
         }
     }
 

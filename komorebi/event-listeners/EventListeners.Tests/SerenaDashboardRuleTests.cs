@@ -20,7 +20,7 @@ public class SerenaDashboardRuleTests
         Assert.Empty(action.ClosedHwnds); // precondition: nothing closed yet
 
         rule.ProcessEvent(new KomorebiWindowEvent(
-            "Show", TestJson.ShowEventContent(SerenaExe, SerenaTitle, 853592), null));
+            "Show", TestJson.WindowEventContent(SerenaExe, SerenaTitle, 853592), null));
 
         Assert.Equal([853592L], action.ClosedHwnds);
     }
@@ -31,7 +31,7 @@ public class SerenaDashboardRuleTests
         var rule = CreateRule(out var action);
 
         rule.ProcessEvent(new KomorebiWindowEvent(
-            "Show", TestJson.ShowEventContent("Python.exe", SerenaTitle, 100), null));
+            "Show", TestJson.WindowEventContent("Python.exe", SerenaTitle, 100), null));
 
         Assert.Equal([100L], action.ClosedHwnds);
     }
@@ -44,7 +44,7 @@ public class SerenaDashboardRuleTests
         var rule = CreateRule(out var action);
 
         rule.ProcessEvent(new KomorebiWindowEvent(
-            "Show", TestJson.ShowEventContent("msedge.exe", SerenaTitle, 100), null));
+            "Show", TestJson.WindowEventContent("msedge.exe", SerenaTitle, 100), null));
 
         Assert.Empty(action.ClosedHwnds);
     }
@@ -55,7 +55,7 @@ public class SerenaDashboardRuleTests
         var rule = CreateRule(out var action);
 
         rule.ProcessEvent(new KomorebiWindowEvent(
-            "Show", TestJson.ShowEventContent(SerenaExe, "Some Other Tool", 100), null));
+            "Show", TestJson.WindowEventContent(SerenaExe, "Some Other Tool", 100), null));
 
         Assert.Empty(action.ClosedHwnds);
     }
@@ -68,7 +68,7 @@ public class SerenaDashboardRuleTests
         var rule = CreateRule(out var action);
 
         rule.ProcessEvent(new KomorebiWindowEvent(
-            "FocusChange", TestJson.ShowEventContent(SerenaExe, SerenaTitle, 100), null));
+            "FocusChange", TestJson.WindowEventContent(SerenaExe, SerenaTitle, 100), null));
 
         Assert.Empty(action.ClosedHwnds);
     }
@@ -101,9 +101,9 @@ public class SerenaDashboardRuleTests
         var rule = CreateRule(out var action);
 
         rule.ProcessEvent(new KomorebiWindowEvent(
-            "Show", TestJson.ShowEventContent(SerenaExe, SerenaTitle, 100), null));
+            "Show", TestJson.WindowEventContent(SerenaExe, SerenaTitle, 100), null));
         rule.ProcessEvent(new KomorebiWindowEvent(
-            "Show", TestJson.ShowEventContent(SerenaExe, SerenaTitle, 200), null));
+            "Show", TestJson.WindowEventContent(SerenaExe, SerenaTitle, 200), null));
 
         Assert.Equal([100L, 200L], action.ClosedHwnds.OrderBy(h => h).ToArray());
     }
