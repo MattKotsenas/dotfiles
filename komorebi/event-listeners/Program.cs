@@ -38,6 +38,7 @@ public static class Program
 
         // Register event rules
         builder.Services.AddSingleton<IEventRule, LayerIndicatorRule>();
+        builder.Services.AddSingleton<IEventRule, WmBorderIndicator>();
         builder.Services.AddSingleton<IEventRule, IntentDispatchRule>();
         builder.Services.AddSingleton<IEventRule, AppLayerRouter>();
         builder.Services.AddSingleton<IEventRule, SerenaDashboardRule>();

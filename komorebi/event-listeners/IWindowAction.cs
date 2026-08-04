@@ -32,4 +32,10 @@ public interface IWindowAction
     /// focus-relative commands will act on.
     /// </summary>
     long GetForegroundWindow();
+
+    /// <summary>
+    /// Sets the border colour komorebi draws for the given window arrangement.
+    /// False when the command failed.
+    /// </summary>
+    Task<bool> SetBorderColourAsync(BorderWindowKind kind, BorderColour colour);
 }

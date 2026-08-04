@@ -32,6 +32,10 @@ public sealed class WindowAction : IWindowAction
 
     public long GetForegroundWindow() => NativeMethods.GetForegroundWindow();
 
+    public Task<bool> SetBorderColourAsync(BorderWindowKind kind, BorderColour colour) =>
+        RunKomorebicAsync(
+            $"border-colour {colour.R} {colour.G} {colour.B} --window-kind {kind.ToString().ToLowerInvariant()}");
+
     private async Task<bool> RunKomorebicAsync(string arguments)
     {
         try

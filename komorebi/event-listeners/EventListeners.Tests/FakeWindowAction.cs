@@ -12,6 +12,7 @@ public sealed class FakeWindowAction : IWindowAction
     private readonly ConcurrentQueue<long> _closedHwnds = new();
     private readonly SemaphoreSlim _closeSignal = new(0);
     private readonly ConcurrentQueue<string> _actions = new();
+    private readonly ConcurrentQueue<string> _borderWrites = new();
 
     public IReadOnlyCollection<long> ClosedHwnds => _closedHwnds.ToArray();
 
@@ -50,7 +51,33 @@ public sealed class FakeWindowAction : IWindowAction
 
     public void ToggleFloat() => ToggleFloatCalls++;
 
+    /// <summary>
+    /// When set, <see cref="SetBorderColourAsync"/> waits on it, so a test can hold
+    /// a recolour in flight and drive another layer change past it.
+    /// </summary>
+    public TaskCompletionSource? BlockBorder { get; set; }
+
     public long GetForegroundWindow() => ForegroundWindow;
+
+    /// <summary>
+    /// Set false to make <see cref="SetBorderColourAsync"/> report failure.
+    /// </summary>
+    public bool BorderWriteSucceeds { get; set; } = true;
+
+    public async Task<bool> SetBorderColourAsync(BorderWindowKind kind, BorderColour colour)
+    {
+        _borderWrites.Enqueue($"{kind} {colour.R},{colour.G},{colour.B}");
+
+        if (BlockBorder is { } block)
+        {
+            await block.Task;
+        }
+
+        return BorderWriteSucceeds;
+    }
+
+    /// <summary>Border colours written, in the order they were requested.</summary>
+    public IReadOnlyList<string> BorderWrites => _borderWrites.ToArray();
 
     public async Task<bool> MoveToMonitorAsync(int monitorIndex)
     {

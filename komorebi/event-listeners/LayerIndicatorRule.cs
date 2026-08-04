@@ -59,8 +59,7 @@ public sealed class LayerIndicatorRule : IEventRule
     internal static string? LabelForLayer(string layerName)
     {
         // Non-WM layers (typing layers): no overlay
-        if (!layerName.Equals("wm", StringComparison.OrdinalIgnoreCase)
-            && !layerName.StartsWith("wm-", StringComparison.OrdinalIgnoreCase))
+        if (!WmLayer.IsWmMode(layerName))
         {
             return null;
         }
