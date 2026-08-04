@@ -152,7 +152,6 @@ public class WmBorderIndicatorTests
     [InlineData("wm-focus-toggle")]
     public async Task AWmLayer_PaintsTheWmColour(string layer)
     {
-        // Sticky modes are not distinguished here; the overlay's bullet carries that.
         var rule = CreateRule(out var action);
 
         Layer(rule, layer);

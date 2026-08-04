@@ -22,8 +22,6 @@ public static class Program
         builder.Services.AddSingleton<ITeamsSurface, TeamsUiaSurface>();
         builder.Services.AddSingleton<ITeamsMeetingJoin, TeamsMeetingJoin>();
         builder.Services.AddSingleton<ITeamsCallControls, TeamsCallControls>();
-        builder.Services.AddSingleton<WmOverlayIndicator>();
-        builder.Services.AddSingleton<IWmOverlay>(sp => sp.GetRequiredService<WmOverlayIndicator>());
 
         // KanataEventListenerService is both an IHostedService (reads events) and
         // an IKanataClient (writes requests) -- single long-lived bidirectional TCP connection.
@@ -37,7 +35,6 @@ public static class Program
         builder.Services.AddHostedService(sp => sp.GetRequiredService<KanataEventListenerService>());
 
         // Register event rules
-        builder.Services.AddSingleton<IEventRule, LayerIndicatorRule>();
         builder.Services.AddSingleton<IEventRule, WmBorderIndicator>();
         builder.Services.AddSingleton<IEventRule, IntentDispatchRule>();
         builder.Services.AddSingleton<IEventRule, AppLayerRouter>();

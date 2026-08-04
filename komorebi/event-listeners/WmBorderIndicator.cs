@@ -7,11 +7,9 @@ namespace EventListeners;
 /// Recolours the focused window's border while a WM mode is active.
 ///
 /// <para>
-/// The border is already on screen around whatever window the user is working in,
-/// on whatever monitor that is, so it carries the one thing that has to be
-/// impossible to miss: whether the keyboard is in a WM mode at all. Which mode,
-/// and whether it survives the next key, stay with the overlay label, since a
-/// colour cannot carry eleven of them legibly.
+/// The border sits around whatever window the user is working in, on whatever
+/// monitor that is, which is what makes it readable: it is already where they
+/// are looking.
 /// </para>
 /// </summary>
 public sealed class WmBorderIndicator : IEventRule
@@ -65,13 +63,17 @@ public sealed class WmBorderIndicator : IEventRule
     /// <summary>The colour an arrangement takes outside any WM mode.</summary>
     internal static BorderColour RestingColour(BorderWindowKind kind) => RestingColours[kind];
 
+    private static bool IsWmMode(string layerName) =>
+        layerName.Equals("wm", StringComparison.OrdinalIgnoreCase) ||
+        layerName.StartsWith("wm-", StringComparison.OrdinalIgnoreCase);
+
     public void ProcessEvent(IEvent evt)
     {
         if (evt is not KanataLayerChangeEvent e) return;
 
         lock (_gate)
         {
-            _wantWmColour = WmLayer.IsWmMode(e.NewLayer);
+            _wantWmColour = IsWmMode(e.NewLayer);
 
             // Layer changes land on every CAP press and most do not move the
             // border. A paint already running will pick up the latest want when

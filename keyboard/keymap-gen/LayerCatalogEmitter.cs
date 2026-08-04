@@ -36,7 +36,7 @@ internal static class LayerCatalogEmitter
         }
 
         sb.AppendLine();
-        sb.AppendLine("    // WM-mode layers (CAP single-tap state per context). UI overlay shown.");
+        sb.AppendLine("    // WM-mode layers (CAP single-tap state per context).");
         sb.AppendLine("    public const string Wm = \"wm\";");
         foreach (var ov in k.Overlays)
         {
@@ -45,7 +45,7 @@ internal static class LayerCatalogEmitter
         }
 
         sb.AppendLine();
-        sb.AppendLine("    // WM-toggle layers (sticky/locked state per context). UI overlay shown.");
+        sb.AppendLine("    // WM-toggle layers (sticky/locked state per context).");
         sb.AppendLine("    public const string WmToggle = \"wm-toggle\";");
         foreach (var ov in k.Overlays)
         {
@@ -54,7 +54,7 @@ internal static class LayerCatalogEmitter
         }
 
         sb.AppendLine();
-        sb.AppendLine("    // Sub-mode layers (one-shot + toggle variants). UI overlay shown.");
+        sb.AppendLine("    // Sub-mode layers (one-shot + toggle variants).");
         foreach (var sm in k.SubModes)
         {
             var pascal = Pascalize(sm.Name);

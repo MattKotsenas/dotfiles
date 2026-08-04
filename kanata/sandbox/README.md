@@ -59,9 +59,9 @@ push-msg: [Atom("from-base")]
 ## V3: LayerChange events fire on transitions
 
 Validated separately by connecting to running production kanata's TCP port
-and observing `{"LayerChange":{"new":"base"}}` arrive on connect. The
-existing `LayerIndicatorRule` has been consuming these events in production,
-which is independent evidence that the broadcast works.
+and observing `{"LayerChange":{"new":"base"}}` arrive on connect. The bridge
+consumes these events in production, which is independent evidence that the
+broadcast works.
 
 ## Notes for the refactor
 

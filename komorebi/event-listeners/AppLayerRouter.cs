@@ -139,7 +139,7 @@ public sealed class AppLayerRouter : IEventRule
 
             // Defer when kanata is mid-WM-mode (any non-base-* layer). Sending
             // a base ChangeLayer here would yank the user out of their active
-            // wm-focus-toggle / wm-stack-toggle / etc. and kill the • dot.
+            // wm-focus-toggle / wm-stack-toggle / etc.
             if (current is not null && !IsBaseLayer(current))
             {
                 deferred = true;

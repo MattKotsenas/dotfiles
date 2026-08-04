@@ -74,8 +74,9 @@ PrefixAll set. See `psmux/.psmux.conf`:
 `find-window` and other rarely used commands remain reachable via the
 psmux command prompt (`CAP :` then type the command).
 
-A small overlay window in the top-left corner shows the current mode label
-("WM" / "Focus" / "Term" / etc.) while WM mode is active.
+While WM mode is active, komorebi's border around the focused window turns
+green. It sits wherever you are already working, on whichever monitor, so it
+reads without looking away.
 
 
 ## System architecture
@@ -127,8 +128,8 @@ Plain C# console app, hosted as a wpm service. Three responsibilities:
 2. **`AppLayerRouter`** — subscribes to komorebi focus events, runs an
    ordered chain of C# routing rules, and sends `ChangeLayer` to kanata.
    The single rule today: `WindowsTerminal.exe → base-terminal`.
-3. **`LayerIndicatorRule`** — subscribes to kanata `LayerChange` events,
-   shows/hides the on-screen WM mode label.
+3. **`WmBorderIndicator`** — subscribes to kanata `LayerChange` events and
+   recolours komorebi's focused-window border while a WM mode is active.
 
 All three share a single long-lived bidirectional TCP connection to kanata
 (see `KanataEventListenerService`).
@@ -191,18 +192,19 @@ of focus and added complexity for an edge case.
 
 ## Layer naming convention
 
-| Pattern | Purpose | Overlay UI? |
+| Pattern | Purpose | Border |
 |---|---|---|
-| `base-*` | Focus-context typing layers (just remap CAP) | Hidden |
-| `wm` | Default one-shot WM mode | Shown ("WM") |
-| `wm-toggle` | Default sticky WM mode | Shown ("WM •") |
-| `wm-<name>` | Per-overlay one-shot WM (e.g. `wm-edge`) | Shown ("Edge") |
-| `wm-<name>-toggle` | Per-overlay sticky WM | Shown ("Edge •") |
-| `wm-<submode>` | Sub-mode one-shot (e.g. `wm-focus`) | Shown ("Focus") |
-| `wm-<submode>-toggle` | Sub-mode sticky | Shown ("Focus •") |
+| `base-*` | Focus-context typing layers (just remap CAP) | Resting |
+| `wm` | Default one-shot WM mode | Green |
+| `wm-toggle` | Default sticky WM mode | Green |
+| `wm-<name>` | Per-overlay one-shot WM (e.g. `wm-edge`) | Green |
+| `wm-<name>-toggle` | Per-overlay sticky WM | Green |
+| `wm-<submode>` | Sub-mode one-shot (e.g. `wm-focus`) | Green |
+| `wm-<submode>-toggle` | Sub-mode sticky | Green |
 
-`LayerIndicatorRule.LabelForLayer` is the single source for the layer →
-label mapping. `base-*` always returns null (no overlay).
+The border says only whether a WM mode is active, not which one: `wm` and
+`wm-*` are green, everything else rests on the colour komorebi's theme gives
+that window arrangement.
 
 ## How to ...
 

@@ -125,8 +125,7 @@ public class AppLayerRouterTests
         // User is focused on Edge, then taps CAP into wm-edge-toggle, then a
         // sub-mode like wm-focus-toggle. While there, focus moves to a
         // different-app window (e.g., focus right cross-app). The router must
-        // NOT send a base ChangeLayer mid-WM-mode; that would kill WM mode and
-        // hide the on-screen • dot.
+        // NOT send a base ChangeLayer mid-WM-mode; that would kill WM mode.
         var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
         router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
         router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
