@@ -84,9 +84,14 @@ public sealed class TeamsWindowPlacement : IEventRule
     {
         if (evt is not KomorebiWindowEvent e) return;
 
-        var window = ParseWindow(e.Content);
         SeedAlreadyOpenWindows(e.State);
 
+        // Only the three events below carry a window. komorebi sends plenty that
+        // do not, and parsing those as one turns every workspace change into a
+        // logged failure.
+        if (e.EventType is not ("Show" or "FocusChange" or "Destroy")) return;
+
+        var window = ParseWindow(e.Content);
         if (window is null) return;
 
         switch (e.EventType)

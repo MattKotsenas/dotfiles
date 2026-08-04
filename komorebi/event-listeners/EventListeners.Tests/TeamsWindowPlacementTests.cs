@@ -410,6 +410,25 @@ public class TeamsWindowPlacementTests
         Assert.Empty(action.Actions);
     }
 
+    [Theory]
+    [InlineData("FocusWorkspaceNumber", "[\"Reason\", 12]")]
+    [InlineData("MonitorPoll", "[\"Reason\", \"Timer\"]")]
+    [InlineData("ReconcileMonitors", "[\"Reason\", [1, 2]]")]
+    public void AnEventThatCarriesNoWindow_IsPassedOverQuietly(string eventType, string content)
+    {
+        // komorebi sends plenty of events whose content is not a window. Reading
+        // one as a window turns ordinary traffic into a logged failure.
+        var logger = new RecordingLogger<TeamsWindowPlacement>();
+        var action = new FakeWindowAction();
+        var rule = new TeamsWindowPlacement(
+            logger, action, new FakeTopology(Laptop, External), new FakeTimeProvider());
+
+        rule.ProcessEvent(new KomorebiWindowEvent(eventType, TestJson.Parse(content), DockedState(TeamsHwnd)));
+
+        Assert.Empty(logger.Warnings);
+        Assert.Empty(action.Actions);
+    }
+
     [Fact]
     public async Task MalformedContent_IsIgnored()
     {
