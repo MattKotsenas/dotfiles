@@ -157,8 +157,8 @@ properties:
       dependsOn:
         - install-jq
       directives:
-        # Same deep-merge pattern as the settings merge above; preserves
-        # per-machine MCP servers while applying repo-managed updates.
+        # Re-run each configure to prune stale user entries retired from this
+        # source, then preserve other per-machine servers while applying updates.
         description: Merge MCP server config into ~/.copilot/mcp-config.json
         allowPrerelease: true
       settings:
@@ -173,7 +173,7 @@ properties:
           $null = New-Item -ItemType Directory -Force -Path (Split-Path $t)
           if (-not (Test-Path -LiteralPath $t)) { '{}' | Set-Content -LiteralPath $t }
           $src = Join-Path '${WinGetConfigRoot}' 'copilot\mcp-config.json'
-          $merged = jq -s '.[0] * .[1]' $t $src
+          $merged = jq -s '(.[0] | del(.mcpServers.aspire, .mcpServers.playwright)) * .[1]' $t $src
           if ($LASTEXITCODE -ne 0) { throw "jq merge of $src into $t failed with exit code $LASTEXITCODE" }
           $merged | Set-Content -LiteralPath $t
     - resource: Microsoft.WinGet.DSC/WinGetPackage
