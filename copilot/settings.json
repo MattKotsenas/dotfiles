@@ -1,5 +1,5 @@
 {
-  "logLevel": "all",
+  "logLevel": "default",
   "banner": "never",
   "renderMarkdown": true,
   "experimental": true,
