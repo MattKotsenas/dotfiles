@@ -186,6 +186,8 @@ public class KanataBehaviorTests
     [InlineData("p", "wm.layout.toggle-pause")]
     [InlineData("x", "wm.layout.flip-horizontal")]
     [InlineData("y", "wm.layout.flip-vertical")]
+    [InlineData("h", "sound.play.hiyo")]
+    [InlineData("o", "sound.play.horns")]
     public async Task OneShot_AdminSubMod_DispatchesExpectedIntent(string key, string expectedIntent)
     {
         var output = await KanataSimulator.RunAsync(
@@ -193,6 +195,17 @@ public class KanataBehaviorTests
             new SimInput().Tap("caps").Tap("a").Tap(key).Settle());
 
         Assert.Contains(expectedIntent, output.Intents);
+    }
+
+    [Fact]
+    public async Task OneShot_AdminB_IsUnbound()
+    {
+        var output = await KanataSimulator.RunAsync(
+            TestPaths.ProductionConfig,
+            new SimInput().Tap("caps").Tap("a").Tap("b").Settle());
+
+        Assert.Empty(output.Intents);
+        Assert.Empty(output.KeyEvents);
     }
 
     // ============================================================

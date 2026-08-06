@@ -47,6 +47,25 @@ public class KanataEmitterTests
         Assert.Contains(binding, output);
     }
 
+    [Theory]
+    [InlineData("h", "sound.play.hiyo")]
+    [InlineData("o", "sound.play.horns")]
+    public void ProductionKeymap_BindsLocalSoundsUnderAdmin(string key, string intent)
+    {
+        var output = KanataEmitter.Emit(ProductionKeymap.Build());
+
+        Assert.Contains($"{key} (multi (push-msg \"{intent}\") (layer-switch base-default))", output);
+        Assert.Contains($"{key} (push-msg \"{intent}\")", output);
+    }
+
+    [Fact]
+    public void ProductionKeymap_DoesNotBindBeepToAdminB()
+    {
+        var output = KanataEmitter.Emit(ProductionKeymap.Build());
+
+        Assert.DoesNotContain("sound.play.beep", output);
+    }
+
     [Fact]
     public void IntentAction_FormatsAsPushMsg()
     {

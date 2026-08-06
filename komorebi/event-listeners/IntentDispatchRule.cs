@@ -10,7 +10,8 @@ namespace EventListeners;
 ///
 /// Most `wm.*` intents map 1:1 to komorebic commands; `wm.window.reacquire` is a
 /// multi-step sweep delegated to <see cref="IWindowSweeper"/>.
-/// `system.*` intents are misc actions (cheatsheet).
+/// `sound.*` intents play bundled audio locally; `system.*` intents are misc
+/// actions (cheatsheet).
 ///
 /// Application-specific behavior (e.g. psmux pane nav in Windows Terminal) is
 /// no longer dispatched here -- those are kanata macros emitted directly by
@@ -23,7 +24,15 @@ public sealed class IntentDispatchRule : IEventRule
     private readonly IWindowSweeper _sweeper;
     private readonly ITeamsMeetingJoin _teamsJoin;
     private readonly ITeamsCallControls _teamsCall;
+    private readonly ILocalSoundPlayer _soundPlayer;
     private readonly Dictionary<string, Func<Command>> _commandMap;
+
+    private static readonly IReadOnlyDictionary<string, LocalSound> SoundMap =
+        new Dictionary<string, LocalSound>(StringComparer.Ordinal)
+        {
+            ["sound.play.hiyo"] = LocalSound.Hiyo,
+            ["sound.play.horns"] = LocalSound.Horns,
+        };
 
     // Resolved lazily via `komorebic configuration`; see KomorebiConfigPath.
     private string? _komorebiConfigPath;
@@ -35,13 +44,15 @@ public sealed class IntentDispatchRule : IEventRule
         ICommandRunner runner,
         IWindowSweeper sweeper,
         ITeamsMeetingJoin teamsJoin,
-        ITeamsCallControls teamsCall)
+        ITeamsCallControls teamsCall,
+        ILocalSoundPlayer soundPlayer)
     {
         _logger = logger;
         _runner = runner;
         _sweeper = sweeper;
         _teamsJoin = teamsJoin;
         _teamsCall = teamsCall;
+        _soundPlayer = soundPlayer;
         _commandMap = BuildCommandMap();
     }
 
@@ -68,6 +79,15 @@ public sealed class IntentDispatchRule : IEventRule
         if (intent == "teams.call.leave")
         {
             _teamsCall.Leave();
+            return;
+        }
+
+        if (SoundMap.TryGetValue(intent, out var sound))
+        {
+            if (!_soundPlayer.Play(sound))
+            {
+                _logger.LogWarning("Failed to play local sound for intent {Intent}", intent);
+            }
             return;
         }
 

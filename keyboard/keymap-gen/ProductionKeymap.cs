@@ -70,9 +70,11 @@ internal static class ProductionKeymap
             .Intent("j", "wm.resize.vertical-decrease")
             .Intent("k", "wm.resize.vertical-increase")
             .Intent("l", "wm.resize.horizontal-increase"))
-        // Rare workspace/system ops. Bumped from wm-base globals so the
-        // global keyspace stays minimal (only tab + / now).
+        // Keep infrequent admin actions out of wm-base so its global keyspace
+        // stays minimal.
         .SubMode("admin", "a", b => b
+            .Intent("h", "sound.play.hiyo").Describe("play hiyo locally")
+            .Intent("o", "sound.play.horns").Describe("play horns locally")
             .Intent("r", "wm.window.reacquire")
             .Intent("j", "teams.meeting.join").Describe("join the focused Teams meeting, else the meeting-started toast")
             .Intent("m", "wm.window.manage")

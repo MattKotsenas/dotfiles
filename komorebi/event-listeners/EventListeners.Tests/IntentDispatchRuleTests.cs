@@ -6,13 +6,23 @@ namespace EventListeners.Tests;
 public class IntentDispatchRuleTests
 {
     private static IntentDispatchRule CreateRule(out RecordingCommandRunner runner) =>
-        CreateRule(out runner, out _);
+        CreateRule(out runner, out _, out _);
 
-    private static IntentDispatchRule CreateRule(out RecordingCommandRunner runner, out FakeWindowSweeper sweeper)
+    private static IntentDispatchRule CreateRule(
+        out RecordingCommandRunner runner,
+        out FakeWindowSweeper sweeper,
+        out FakeLocalSoundPlayer soundPlayer)
     {
         runner = new RecordingCommandRunner();
         sweeper = new FakeWindowSweeper();
-        return new IntentDispatchRule(NullLogger<IntentDispatchRule>.Instance, runner, sweeper, new FakeTeamsMeetingJoin(), new FakeTeamsCallControls());
+        soundPlayer = new FakeLocalSoundPlayer();
+        return new IntentDispatchRule(
+            NullLogger<IntentDispatchRule>.Instance,
+            runner,
+            sweeper,
+            new FakeTeamsMeetingJoin(),
+            new FakeTeamsCallControls(),
+            soundPlayer);
     }
 
     [Theory]
@@ -66,7 +76,7 @@ public class IntentDispatchRuleTests
     [Fact]
     public void ReacquireIntent_InvokesSweeper_WithoutRunningCommand()
     {
-        var rule = CreateRule(out var runner, out var sweeper);
+        var rule = CreateRule(out var runner, out var sweeper, out _);
 
         Assert.Equal(0, sweeper.SweepCount); // precondition: not yet swept
 
@@ -175,7 +185,8 @@ public class IntentDispatchRuleTests
             runner,
             new FakeWindowSweeper(),
             teamsJoin,
-            teamsCall);
+            teamsCall,
+            new FakeLocalSoundPlayer());
         Assert.Equal(0, teamsJoin.JoinCount);
 
         rule.ProcessEvent(new KanataMessageEvent("teams.meeting.join"));
@@ -196,7 +207,8 @@ public class IntentDispatchRuleTests
             runner,
             new FakeWindowSweeper(),
             teamsJoin,
-            teamsCall);
+            teamsCall,
+            new FakeLocalSoundPlayer());
         Assert.Equal(0, teamsCall.LeaveCount);
 
         rule.ProcessEvent(new KanataMessageEvent("teams.call.leave"));
@@ -205,6 +217,38 @@ public class IntentDispatchRuleTests
         // Leaving must not be confused with joining: they share a key, not a meaning.
         Assert.Equal(0, teamsJoin.JoinCount);
         Assert.Empty(runner.Commands);
+    }
+
+    [Theory]
+    [InlineData("sound.play.hiyo", LocalSound.Hiyo)]
+    [InlineData("sound.play.horns", LocalSound.Horns)]
+    public void SoundIntent_PlaysLocally_WithoutRunningCommand(string intent, LocalSound expected)
+    {
+        var rule = CreateRule(out var runner, out _, out var soundPlayer);
+        Assert.Empty(soundPlayer.Played); // precondition
+
+        rule.ProcessEvent(new KanataMessageEvent(intent));
+
+        Assert.Equal([expected], soundPlayer.Played);
+        Assert.Empty(runner.Commands);
+    }
+
+    [Fact]
+    public void FailedSoundPlayback_IsReported()
+    {
+        var logger = new RecordingLogger<IntentDispatchRule>();
+        var soundPlayer = new FakeLocalSoundPlayer { Succeeds = false };
+        var rule = new IntentDispatchRule(
+            logger,
+            new RecordingCommandRunner(),
+            new FakeWindowSweeper(),
+            new FakeTeamsMeetingJoin(),
+            new FakeTeamsCallControls(),
+            soundPlayer);
+
+        rule.ProcessEvent(new KanataMessageEvent("sound.play.hiyo"));
+
+        Assert.Contains(logger.Warnings, warning => warning.Contains("sound.play.hiyo", StringComparison.Ordinal));
     }
 }
 
@@ -220,4 +264,19 @@ internal sealed class FakeTeamsCallControls : ITeamsCallControls
     public int LeaveCount { get; private set; }
 
     public void Leave() => LeaveCount++;
+}
+
+internal sealed class FakeLocalSoundPlayer : ILocalSoundPlayer
+{
+    private readonly List<LocalSound> _played = [];
+
+    public IReadOnlyList<LocalSound> Played => _played;
+
+    public bool Succeeds { get; set; } = true;
+
+    public bool Play(LocalSound sound)
+    {
+        _played.Add(sound);
+        return Succeeds;
+    }
 }

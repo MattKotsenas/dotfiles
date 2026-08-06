@@ -25,6 +25,10 @@ public static partial class NativeMethods
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GetMonitorInfoW(nint hMonitor, ref MonitorInfo lpmi);
+
+    [LibraryImport("winmm.dll", StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool PlaySoundW(string sound, nint module, uint flags);
 }
 
 [StructLayout(LayoutKind.Sequential)]

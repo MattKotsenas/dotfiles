@@ -19,6 +19,7 @@ public static class Program
         builder.Services.AddSingleton<IWindowSweeper, WindowSweeper>();
         builder.Services.AddSingleton<IWindowAction, WindowAction>();
         builder.Services.AddSingleton<IMonitorTopology, Win32MonitorTopology>();
+        builder.Services.AddSingleton<ILocalSoundPlayer, Win32LocalSoundPlayer>();
         builder.Services.AddSingleton<ITeamsSurface, TeamsUiaSurface>();
         builder.Services.AddSingleton<ITeamsMeetingJoin, TeamsMeetingJoin>();
         builder.Services.AddSingleton<ITeamsCallControls, TeamsCallControls>();

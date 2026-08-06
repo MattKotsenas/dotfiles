@@ -1,19 +1,20 @@
 # Intent Vocabulary
 
 Kanata emits intent strings via `push-msg`. The C# dispatcher in
-event-listeners (`IntentDispatchRule`) maps each intent to a CliWrap command
-(typically `komorebic <verb>`).
+event-listeners (`IntentDispatchRule`) maps each intent to its concrete action.
 
-Intents are used only for actions that need to invoke a running program
-(komorebic, wt). App-specific keystroke emission (psmux pane nav, browser
-shortcuts, etc.) lives in overlay layers and is emitted as kanata macros --
-NOT as intents.
+Intents are used for actions that need the bridge rather than a key sequence:
+invoking a running program (komorebic, wt), playing local audio, or operating
+Teams through UI Automation. App-specific keystroke emission (psmux pane nav,
+browser shortcuts, etc.) lives in overlay layers and is emitted as kanata
+macros -- NOT as intents.
 
 ## Naming convention
 
 `<scope>.<verb>.<param>`
 
 - `wm.*` - window management (komorebi) actions
+- `sound.*` - local sound playback
 - `system.*` - misc system actions
 
 ## Current vocabulary
@@ -82,6 +83,12 @@ NOT as intents.
 | Intent | Action |
 |---|---|
 | `system.cheatsheet` | open keymap reference (wt + glow) |
+
+### Sound
+| Intent | Action |
+|---|---|
+| `sound.play.hiyo` | play `hiyo.wav` locally |
+| `sound.play.horns` | play `horns.wav` locally |
 
 ## When NOT to add an intent
 
