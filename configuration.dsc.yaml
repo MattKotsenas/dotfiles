@@ -636,3 +636,16 @@ properties:
         ValueType: String
         Force: true
         Ensure: Present
+    # IFEO CpuPriorityClass 5 is Below Normal. Leave IoPriority unset because
+    # measured disk latency is low and CPU contention is the current bottleneck.
+    - resource: PSDscResources/Registry
+      directives:
+        description: Set future GitHub Copilot CLI launches to below-normal CPU priority
+        allowPrerelease: true
+      settings:
+        Key: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\copilot.exe\PerfOptions
+        ValueName: CpuPriorityClass
+        ValueData: [5]
+        ValueType: Dword
+        Force: true
+        Ensure: Present
