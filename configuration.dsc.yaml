@@ -210,6 +210,14 @@ properties:
         version: '0.63.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
+        description: Install pstop (htop clone for Windows)
+        allowPrerelease: true
+      settings:
+        id: marlocarlo.pstop
+        source: winget
+        version: '0.5.4'
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
         description: Install zoxide (smarter cd)
         allowPrerelease: true
       settings:

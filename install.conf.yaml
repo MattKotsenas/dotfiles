@@ -63,6 +63,10 @@
     ~/.copilot/measure-twice/config.json: copilot/measure-twice/config.json
     $LOCALAPPDATA/nvim: nvim/**
     $APPDATA/tuicr/config.toml: tuicr/config.toml
+    # Replace the regular file created on machines where pstop already ran.
+    $APPDATA/pstop/pstoprc:
+      path: pstop/pstoprc
+      force: true
     $APPDATA/Code/User/settings.json: vscode/settings.json
     $APPDATA/Code/User/keybindings.json: vscode/keybindings.json
 
