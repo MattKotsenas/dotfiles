@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Globalization;
 using CliWrap;
 using CliWrap.Buffered;
 
@@ -38,6 +39,18 @@ public static class KanataSimulator
         @"^out:(?<dir>[↓↑])(?<key>\S+)",
         RegexOptions.Compiled);
 
+    private static readonly Regex MouseMovePattern = new(
+        @"^out🖰:move (?<direction>\w+),(?<distance>\d+)",
+        RegexOptions.Compiled);
+
+    private static readonly Regex MouseScrollPattern = new(
+        @"^scroll:(?<direction>\w+),(?<distance>\d+)",
+        RegexOptions.Compiled);
+
+    private static readonly Regex MouseButtonPattern = new(
+        @"^out🖰:(?<direction>[↓↑])(?<button>\w+)",
+        RegexOptions.Compiled);
+
     public static async Task<SimOutput> RunAsync(string config, SimInput input)
     {
         var binary = TestPaths.SimulatorBinary;
@@ -54,7 +67,20 @@ public static class KanataSimulator
         }
         finally
         {
-            try { File.Delete(simFile); } catch { /* best-effort */ }
+            try
+            {
+                File.Delete(simFile);
+            }
+            catch (IOException exception)
+            {
+                Console.Error.WriteLine(
+                    $"Unable to delete simulator input '{simFile}': {exception.Message}");
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                Console.Error.WriteLine(
+                    $"Unable to delete simulator input '{simFile}': {exception.Message}");
+            }
         }
     }
 
@@ -71,6 +97,9 @@ public static class KanataSimulator
         var layers = new List<string>();
         var keyOutputs = new List<string>();
         var keyEvents = new List<KeyEvent>();
+        var mouseMoves = new List<MouseMoveEvent>();
+        var mouseScrolls = new List<MouseScrollEvent>();
+        var mouseButtons = new List<MouseButtonEvent>();
 
         foreach (var line in stderr.Split('\n'))
         {
@@ -89,7 +118,8 @@ public static class KanataSimulator
 
         foreach (var line in stdout.Split('\n'))
         {
-            var keyMatch = KeyOutPattern.Match(line.Trim());
+            var trimmed = line.Trim();
+            var keyMatch = KeyOutPattern.Match(trimmed);
             if (keyMatch.Success)
             {
                 var arrow = keyMatch.Groups["dir"].Value;
@@ -98,8 +128,45 @@ public static class KanataSimulator
                 keyOutputs.Add($"{dir}:{key}");
                 keyEvents.Add(new KeyEvent(arrow, key));
             }
+
+            var moveMatch = MouseMovePattern.Match(trimmed);
+            if (moveMatch.Success)
+            {
+                mouseMoves.Add(new MouseMoveEvent(
+                    moveMatch.Groups["direction"].Value,
+                    int.Parse(
+                        moveMatch.Groups["distance"].Value,
+                        CultureInfo.InvariantCulture)));
+            }
+
+            var scrollMatch = MouseScrollPattern.Match(trimmed);
+            if (scrollMatch.Success)
+            {
+                mouseScrolls.Add(new MouseScrollEvent(
+                    scrollMatch.Groups["direction"].Value,
+                    int.Parse(
+                        scrollMatch.Groups["distance"].Value,
+                        CultureInfo.InvariantCulture)));
+            }
+
+            var buttonMatch = MouseButtonPattern.Match(trimmed);
+            if (buttonMatch.Success)
+            {
+                mouseButtons.Add(new MouseButtonEvent(
+                    buttonMatch.Groups["direction"].Value,
+                    buttonMatch.Groups["button"].Value));
+            }
         }
 
-        return new SimOutput(intents, layers, keyOutputs, keyEvents, stdout, stderr);
+        return new SimOutput(
+            intents,
+            layers,
+            keyOutputs,
+            keyEvents,
+            mouseMoves,
+            mouseScrolls,
+            mouseButtons,
+            stdout,
+            stderr);
     }
 }

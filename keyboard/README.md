@@ -119,6 +119,19 @@ keyboard. Two output paths:
    inside overlays (e.g., Ctrl+b + h in wm-terminal for psmux). No bridge
    involvement; kanata writes directly to the focused window.
 
+The selected pointer architecture assigns continuous pointer motion, wheel, and
+physical button taps to Kanata. Its native accelerated movement composes
+independent axes for diagonals and stops each axis on that key's release,
+without a second keyboard listener or a pressed-state transport.
+
+A future Mousemaster replacement owns only cursor/hint overlays, UI Automation
+target discovery, semantic activation, and point-only cursor placement. It has
+no keyboard hook and does not duplicate Kanata's continuous pointer state.
+
+Mousemaster remains the production owner until bindings and cutover are
+designed. The deterministic native-pointer contract lives in
+`EventListeners.Tests/Kanata/KanataNativePointerSimulatorTests.cs`.
+
 ### What the bridge (event-listeners) does
 
 Plain C# console app, hosted as a wpm service. Three responsibilities:

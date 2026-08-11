@@ -1,0 +1,30 @@
+(defcfg
+  process-unmapped-keys yes
+  movemouse-inherit-accel-state yes
+  movemouse-smooth-diagonals yes
+)
+
+(defsrc
+  h j k l
+  u i o p
+  n m
+  q b c g
+)
+
+(deflayer base
+  @left @down @up @right
+  @wheel-left @wheel-down @wheel-up @wheel-right
+  mltp mrtp
+  f20 f24 f23 f22
+)
+
+(defalias
+  left        (movemouse-accel-left 8 700 1 12)
+  down        (movemouse-accel-down 8 700 1 12)
+  up          (movemouse-accel-up 8 700 1 12)
+  right       (movemouse-accel-right 8 700 1 12)
+  wheel-left  (mwheel-left 50 120)
+  wheel-down  (mwheel-down 50 120)
+  wheel-up    (mwheel-up 50 120)
+  wheel-right (mwheel-right 50 120)
+)
