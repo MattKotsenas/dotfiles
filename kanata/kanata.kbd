@@ -3,15 +3,21 @@
 
 (defcfg
   process-unmapped-keys yes
+  movemouse-inherit-accel-state yes
+  movemouse-smooth-diagonals yes
 )
 
 (defsrc
-  caps lsft rsft esc tab / grv up down left right 1 2 3 4 5 6 7 8 h j k l g q t m n p u o r x y b c i v z 0 9 , . \ - [ ] ;
+  caps esc lsft rsft lctl rctl lalt ralt lmet rmet tab / grv up down left right 1 2 3 4 5 6 7 8 h j k l g q t m n p u o r x y b c i v z 0 9 , . \ - [ ] ; spc f d s '
 )
 
 (defvirtualkeys
   teams-join-focused (macro (unmod lctl j))
   teams-join-toast (macro (unmod lctl lsft j))
+  pointer-indicator-on (macro f14)
+  pointer-indicator-off (macro f15)
+  pointer-hint-ui (macro f16)
+  pointer-hint-grid (macro f17)
 )
 
 ;; base-default: typing layer (default focus context). CAP enters one-shot WM mode.
@@ -22,6 +28,7 @@
 ;; wm: one-shot WM mode (default context; first CAP). CAP again locks to sticky.
 (deflayermap (wm)
   caps (layer-switch wm-toggle)
+  spc (layer-switch pointer)
   w (layer-switch wm-workspace)
   f (layer-switch wm-focus)
   d (layer-switch wm-move)
@@ -38,6 +45,12 @@
   esc (layer-switch base-default)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -45,6 +58,7 @@
 ;; CAP returns to one-shot wm; ESC exits to base-default.
 (deflayermap (wm-toggle)
   caps (layer-switch wm)
+  spc (layer-switch pointer)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -61,6 +75,12 @@
   esc (layer-switch base-default)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -72,6 +92,7 @@
 ;; wm-terminal: one-shot WM mode (terminal context; first CAP). CAP again locks to sticky.
 (deflayermap (wm-terminal)
   caps (layer-switch wm-terminal-toggle)
+  spc (layer-switch pointer-terminal)
   w (layer-switch wm-workspace)
   f (layer-switch wm-focus)
   d (layer-switch wm-move)
@@ -125,6 +146,12 @@
   esc (layer-switch base-terminal)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -132,6 +159,7 @@
 ;; CAP returns to one-shot wm-terminal; ESC exits to base-terminal.
 (deflayermap (wm-terminal-toggle)
   caps (layer-switch wm-terminal)
+  spc (layer-switch pointer-terminal)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -185,6 +213,12 @@
   esc (layer-switch base-terminal)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -196,6 +230,7 @@
 ;; wm-edge: one-shot WM mode (edge context; first CAP). CAP again locks to sticky.
 (deflayermap (wm-edge)
   caps (layer-switch wm-edge-toggle)
+  spc (layer-switch pointer-edge)
   w (layer-switch wm-workspace)
   f (layer-switch wm-focus)
   d (layer-switch wm-move)
@@ -214,6 +249,12 @@
   esc (layer-switch base-edge)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -221,6 +262,7 @@
 ;; CAP returns to one-shot wm-edge; ESC exits to base-edge.
 (deflayermap (wm-edge-toggle)
   caps (layer-switch wm-edge)
+  spc (layer-switch pointer-edge)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -239,6 +281,12 @@
   esc (layer-switch base-edge)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -250,6 +298,7 @@
 ;; wm-teams: one-shot WM mode (teams context; first CAP). CAP again locks to sticky.
 (deflayermap (wm-teams)
   caps (layer-switch wm-teams-toggle)
+  spc (layer-switch pointer-teams)
   w (layer-switch wm-workspace)
   f (layer-switch wm-focus)
   d (layer-switch wm-move)
@@ -285,6 +334,12 @@
   esc (layer-switch base-teams)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -292,6 +347,7 @@
 ;; CAP returns to one-shot wm-teams; ESC exits to base-teams.
 (deflayermap (wm-teams-toggle)
   caps (layer-switch wm-teams)
+  spc (layer-switch pointer-teams)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -327,6 +383,12 @@
   esc (layer-switch base-teams)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -338,6 +400,7 @@
 ;; wm-codeflow: one-shot WM mode (codeflow context; first CAP). CAP again locks to sticky.
 (deflayermap (wm-codeflow)
   caps (layer-switch wm-codeflow-toggle)
+  spc (layer-switch pointer-codeflow)
   w (layer-switch wm-workspace)
   f (layer-switch wm-focus)
   d (layer-switch wm-move)
@@ -367,6 +430,12 @@
   esc (layer-switch base-codeflow)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -374,6 +443,7 @@
 ;; CAP returns to one-shot wm-codeflow; ESC exits to base-codeflow.
 (deflayermap (wm-codeflow-toggle)
   caps (layer-switch wm-codeflow)
+  spc (layer-switch pointer-codeflow)
   w (layer-switch wm-workspace-toggle)
   f (layer-switch wm-focus-toggle)
   d (layer-switch wm-move-toggle)
@@ -403,7 +473,528 @@
   esc (layer-switch base-codeflow)
   lsft lsft
   rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
+)
+
+;; pointer: persistent Kanata-native pointer mode; Caps/Escape exits through pointer-exit.
+(deflayermap (pointer)
+  h (fork (movemouse-accel-left 8 700 1 12) h (lctl rctl lalt ralt lmet rmet))
+  j (fork (movemouse-accel-down 8 700 1 12) j (lctl rctl lalt ralt lmet rmet))
+  k (fork (movemouse-accel-up 8 700 1 12) k (lctl rctl lalt ralt lmet rmet))
+  l (fork (movemouse-accel-right 8 700 1 12) l (lctl rctl lalt ralt lmet rmet))
+  d (fork (movemouse-speed 40) d (lctl rctl lalt ralt lmet rmet))
+  s (fork (movemouse-speed 10) s (lctl rctl lalt ralt lmet rmet))
+  , (fork (mwheel-up 50 120) , (lctl rctl lalt ralt lmet rmet))
+  m (fork (mwheel-down 50 120) m (lctl rctl lalt ralt lmet rmet))
+  u (fork (mwheel-left 50 120) u (lctl rctl lalt ralt lmet rmet))
+  o (fork (mwheel-right 50 120) o (lctl rctl lalt ralt lmet rmet))
+  ; (fork mltp ; (lsft rsft rctl lalt ralt lmet rmet))
+  ' (fork mrtp ' (lsft rsft rctl lalt ralt lmet rmet))
+  f (fork (fork (layer-switch pointer-hint-ui) (layer-switch pointer-hint-grid) (lsft rsft)) f (lctl rctl lalt ralt lmet rmet))
+  caps (layer-switch pointer-exit)
+  esc (layer-switch pointer-exit)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
+  grv (fork XX grv (lctl rctl lalt ralt lmet rmet))
+  1 (fork XX 1 (lctl rctl lalt ralt lmet rmet))
+  2 (fork XX 2 (lctl rctl lalt ralt lmet rmet))
+  3 (fork XX 3 (lctl rctl lalt ralt lmet rmet))
+  4 (fork XX 4 (lctl rctl lalt ralt lmet rmet))
+  5 (fork XX 5 (lctl rctl lalt ralt lmet rmet))
+  6 (fork XX 6 (lctl rctl lalt ralt lmet rmet))
+  7 (fork XX 7 (lctl rctl lalt ralt lmet rmet))
+  8 (fork XX 8 (lctl rctl lalt ralt lmet rmet))
+  9 (fork XX 9 (lctl rctl lalt ralt lmet rmet))
+  0 (fork XX 0 (lctl rctl lalt ralt lmet rmet))
+  - (fork XX - (lctl rctl lalt ralt lmet rmet))
+  = (fork XX = (lctl rctl lalt ralt lmet rmet))
+  bspc bspc
+  tab tab
+  q (fork XX q (lctl rctl lalt ralt lmet rmet))
+  w (fork XX w (lctl rctl lalt ralt lmet rmet))
+  e (fork XX e (lctl rctl lalt ralt lmet rmet))
+  r (fork XX r (lctl rctl lalt ralt lmet rmet))
+  t (fork XX t (lctl rctl lalt ralt lmet rmet))
+  y (fork XX y (lctl rctl lalt ralt lmet rmet))
+  i (fork XX i (lctl rctl lalt ralt lmet rmet))
+  p (fork XX p (lctl rctl lalt ralt lmet rmet))
+  [ (fork XX [ (lctl rctl lalt ralt lmet rmet))
+  ] (fork XX ] (lctl rctl lalt ralt lmet rmet))
+  \ (fork XX \ (lctl rctl lalt ralt lmet rmet))
+  a (fork XX a (lctl rctl lalt ralt lmet rmet))
+  g (fork XX g (lctl rctl lalt ralt lmet rmet))
+  ret ret
+  z (fork XX z (lctl rctl lalt ralt lmet rmet))
+  x (fork XX x (lctl rctl lalt ralt lmet rmet))
+  c (fork XX c (lctl rctl lalt ralt lmet rmet))
+  v (fork XX v (lctl rctl lalt ralt lmet rmet))
+  b (fork XX b (lctl rctl lalt ralt lmet rmet))
+  n (fork XX n (lctl rctl lalt ralt lmet rmet))
+  . (fork XX . (lctl rctl lalt ralt lmet rmet))
+  / (fork XX / (lctl rctl lalt ralt lmet rmet))
+  spc (fork XX spc (lctl rctl lalt ralt lmet rmet))
+  up up
+  down down
+  left left
+  right right
+  home home
+  end end
+  pgup pgup
+  pgdn pgdn
+  ins ins
+  del del
+  f1 f1
+  f2 f2
+  f3 f3
+  f4 f4
+  f5 f5
+  f6 f6
+  f7 f7
+  f8 f8
+  f9 f9
+  f10 f10
+  f11 f11
+  f12 f12
+  ___ XX
+)
+
+;; pointer-exit: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-exit)
+  caps (layer-switch wm)
+)
+
+;; pointer-hint-ui: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-ui)
+  caps (layer-switch wm)
+)
+
+;; pointer-hint-grid: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-grid)
+  caps (layer-switch wm)
+)
+
+;; pointer-terminal: persistent Kanata-native pointer mode; Caps/Escape exits through pointer-exit-terminal.
+(deflayermap (pointer-terminal)
+  h (fork (movemouse-accel-left 8 700 1 12) h (lctl rctl lalt ralt lmet rmet))
+  j (fork (movemouse-accel-down 8 700 1 12) j (lctl rctl lalt ralt lmet rmet))
+  k (fork (movemouse-accel-up 8 700 1 12) k (lctl rctl lalt ralt lmet rmet))
+  l (fork (movemouse-accel-right 8 700 1 12) l (lctl rctl lalt ralt lmet rmet))
+  d (fork (movemouse-speed 40) d (lctl rctl lalt ralt lmet rmet))
+  s (fork (movemouse-speed 10) s (lctl rctl lalt ralt lmet rmet))
+  , (fork (mwheel-up 50 120) , (lctl rctl lalt ralt lmet rmet))
+  m (fork (mwheel-down 50 120) m (lctl rctl lalt ralt lmet rmet))
+  u (fork (mwheel-left 50 120) u (lctl rctl lalt ralt lmet rmet))
+  o (fork (mwheel-right 50 120) o (lctl rctl lalt ralt lmet rmet))
+  ; (fork mltp ; (lsft rsft rctl lalt ralt lmet rmet))
+  ' (fork mrtp ' (lsft rsft rctl lalt ralt lmet rmet))
+  f (fork (fork (layer-switch pointer-hint-ui-terminal) (layer-switch pointer-hint-grid-terminal) (lsft rsft)) f (lctl rctl lalt ralt lmet rmet))
+  caps (layer-switch pointer-exit-terminal)
+  esc (layer-switch pointer-exit-terminal)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
+  grv (fork XX grv (lctl rctl lalt ralt lmet rmet))
+  1 (fork XX 1 (lctl rctl lalt ralt lmet rmet))
+  2 (fork XX 2 (lctl rctl lalt ralt lmet rmet))
+  3 (fork XX 3 (lctl rctl lalt ralt lmet rmet))
+  4 (fork XX 4 (lctl rctl lalt ralt lmet rmet))
+  5 (fork XX 5 (lctl rctl lalt ralt lmet rmet))
+  6 (fork XX 6 (lctl rctl lalt ralt lmet rmet))
+  7 (fork XX 7 (lctl rctl lalt ralt lmet rmet))
+  8 (fork XX 8 (lctl rctl lalt ralt lmet rmet))
+  9 (fork XX 9 (lctl rctl lalt ralt lmet rmet))
+  0 (fork XX 0 (lctl rctl lalt ralt lmet rmet))
+  - (fork XX - (lctl rctl lalt ralt lmet rmet))
+  = (fork XX = (lctl rctl lalt ralt lmet rmet))
+  bspc bspc
+  tab tab
+  q (fork XX q (lctl rctl lalt ralt lmet rmet))
+  w (fork XX w (lctl rctl lalt ralt lmet rmet))
+  e (fork XX e (lctl rctl lalt ralt lmet rmet))
+  r (fork XX r (lctl rctl lalt ralt lmet rmet))
+  t (fork XX t (lctl rctl lalt ralt lmet rmet))
+  y (fork XX y (lctl rctl lalt ralt lmet rmet))
+  i (fork XX i (lctl rctl lalt ralt lmet rmet))
+  p (fork XX p (lctl rctl lalt ralt lmet rmet))
+  [ (fork XX [ (lctl rctl lalt ralt lmet rmet))
+  ] (fork XX ] (lctl rctl lalt ralt lmet rmet))
+  \ (fork XX \ (lctl rctl lalt ralt lmet rmet))
+  a (fork XX a (lctl rctl lalt ralt lmet rmet))
+  g (fork XX g (lctl rctl lalt ralt lmet rmet))
+  ret ret
+  z (fork XX z (lctl rctl lalt ralt lmet rmet))
+  x (fork XX x (lctl rctl lalt ralt lmet rmet))
+  c (fork XX c (lctl rctl lalt ralt lmet rmet))
+  v (fork XX v (lctl rctl lalt ralt lmet rmet))
+  b (fork XX b (lctl rctl lalt ralt lmet rmet))
+  n (fork XX n (lctl rctl lalt ralt lmet rmet))
+  . (fork XX . (lctl rctl lalt ralt lmet rmet))
+  / (fork XX / (lctl rctl lalt ralt lmet rmet))
+  spc (fork XX spc (lctl rctl lalt ralt lmet rmet))
+  up up
+  down down
+  left left
+  right right
+  home home
+  end end
+  pgup pgup
+  pgdn pgdn
+  ins ins
+  del del
+  f1 f1
+  f2 f2
+  f3 f3
+  f4 f4
+  f5 f5
+  f6 f6
+  f7 f7
+  f8 f8
+  f9 f9
+  f10 f10
+  f11 f11
+  f12 f12
+  ___ XX
+)
+
+;; pointer-exit-terminal: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-exit-terminal)
+  caps (layer-switch wm-terminal)
+)
+
+;; pointer-hint-ui-terminal: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-ui-terminal)
+  caps (layer-switch wm-terminal)
+)
+
+;; pointer-hint-grid-terminal: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-grid-terminal)
+  caps (layer-switch wm-terminal)
+)
+
+;; pointer-edge: persistent Kanata-native pointer mode; Caps/Escape exits through pointer-exit-edge.
+(deflayermap (pointer-edge)
+  h (fork (movemouse-accel-left 8 700 1 12) h (lctl rctl lalt ralt lmet rmet))
+  j (fork (movemouse-accel-down 8 700 1 12) j (lctl rctl lalt ralt lmet rmet))
+  k (fork (movemouse-accel-up 8 700 1 12) k (lctl rctl lalt ralt lmet rmet))
+  l (fork (movemouse-accel-right 8 700 1 12) l (lctl rctl lalt ralt lmet rmet))
+  d (fork (movemouse-speed 40) d (lctl rctl lalt ralt lmet rmet))
+  s (fork (movemouse-speed 10) s (lctl rctl lalt ralt lmet rmet))
+  , (fork (mwheel-up 50 120) , (lctl rctl lalt ralt lmet rmet))
+  m (fork (mwheel-down 50 120) m (lctl rctl lalt ralt lmet rmet))
+  u (fork (mwheel-left 50 120) u (lctl rctl lalt ralt lmet rmet))
+  o (fork (mwheel-right 50 120) o (lctl rctl lalt ralt lmet rmet))
+  ; (fork mltp ; (lsft rsft rctl lalt ralt lmet rmet))
+  ' (fork mrtp ' (lsft rsft rctl lalt ralt lmet rmet))
+  f (fork (fork (layer-switch pointer-hint-ui-edge) (layer-switch pointer-hint-grid-edge) (lsft rsft)) f (lctl rctl lalt ralt lmet rmet))
+  caps (layer-switch pointer-exit-edge)
+  esc (layer-switch pointer-exit-edge)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
+  grv (fork XX grv (lctl rctl lalt ralt lmet rmet))
+  1 (fork XX 1 (lctl rctl lalt ralt lmet rmet))
+  2 (fork XX 2 (lctl rctl lalt ralt lmet rmet))
+  3 (fork XX 3 (lctl rctl lalt ralt lmet rmet))
+  4 (fork XX 4 (lctl rctl lalt ralt lmet rmet))
+  5 (fork XX 5 (lctl rctl lalt ralt lmet rmet))
+  6 (fork XX 6 (lctl rctl lalt ralt lmet rmet))
+  7 (fork XX 7 (lctl rctl lalt ralt lmet rmet))
+  8 (fork XX 8 (lctl rctl lalt ralt lmet rmet))
+  9 (fork XX 9 (lctl rctl lalt ralt lmet rmet))
+  0 (fork XX 0 (lctl rctl lalt ralt lmet rmet))
+  - (fork XX - (lctl rctl lalt ralt lmet rmet))
+  = (fork XX = (lctl rctl lalt ralt lmet rmet))
+  bspc bspc
+  tab tab
+  q (fork XX q (lctl rctl lalt ralt lmet rmet))
+  w (fork XX w (lctl rctl lalt ralt lmet rmet))
+  e (fork XX e (lctl rctl lalt ralt lmet rmet))
+  r (fork XX r (lctl rctl lalt ralt lmet rmet))
+  t (fork XX t (lctl rctl lalt ralt lmet rmet))
+  y (fork XX y (lctl rctl lalt ralt lmet rmet))
+  i (fork XX i (lctl rctl lalt ralt lmet rmet))
+  p (fork XX p (lctl rctl lalt ralt lmet rmet))
+  [ (fork XX [ (lctl rctl lalt ralt lmet rmet))
+  ] (fork XX ] (lctl rctl lalt ralt lmet rmet))
+  \ (fork XX \ (lctl rctl lalt ralt lmet rmet))
+  a (fork XX a (lctl rctl lalt ralt lmet rmet))
+  g (fork XX g (lctl rctl lalt ralt lmet rmet))
+  ret ret
+  z (fork XX z (lctl rctl lalt ralt lmet rmet))
+  x (fork XX x (lctl rctl lalt ralt lmet rmet))
+  c (fork XX c (lctl rctl lalt ralt lmet rmet))
+  v (fork XX v (lctl rctl lalt ralt lmet rmet))
+  b (fork XX b (lctl rctl lalt ralt lmet rmet))
+  n (fork XX n (lctl rctl lalt ralt lmet rmet))
+  . (fork XX . (lctl rctl lalt ralt lmet rmet))
+  / (fork XX / (lctl rctl lalt ralt lmet rmet))
+  spc (fork XX spc (lctl rctl lalt ralt lmet rmet))
+  up up
+  down down
+  left left
+  right right
+  home home
+  end end
+  pgup pgup
+  pgdn pgdn
+  ins ins
+  del del
+  f1 f1
+  f2 f2
+  f3 f3
+  f4 f4
+  f5 f5
+  f6 f6
+  f7 f7
+  f8 f8
+  f9 f9
+  f10 f10
+  f11 f11
+  f12 f12
+  ___ XX
+)
+
+;; pointer-exit-edge: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-exit-edge)
+  caps (layer-switch wm-edge)
+)
+
+;; pointer-hint-ui-edge: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-ui-edge)
+  caps (layer-switch wm-edge)
+)
+
+;; pointer-hint-grid-edge: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-grid-edge)
+  caps (layer-switch wm-edge)
+)
+
+;; pointer-teams: persistent Kanata-native pointer mode; Caps/Escape exits through pointer-exit-teams.
+(deflayermap (pointer-teams)
+  h (fork (movemouse-accel-left 8 700 1 12) h (lctl rctl lalt ralt lmet rmet))
+  j (fork (movemouse-accel-down 8 700 1 12) j (lctl rctl lalt ralt lmet rmet))
+  k (fork (movemouse-accel-up 8 700 1 12) k (lctl rctl lalt ralt lmet rmet))
+  l (fork (movemouse-accel-right 8 700 1 12) l (lctl rctl lalt ralt lmet rmet))
+  d (fork (movemouse-speed 40) d (lctl rctl lalt ralt lmet rmet))
+  s (fork (movemouse-speed 10) s (lctl rctl lalt ralt lmet rmet))
+  , (fork (mwheel-up 50 120) , (lctl rctl lalt ralt lmet rmet))
+  m (fork (mwheel-down 50 120) m (lctl rctl lalt ralt lmet rmet))
+  u (fork (mwheel-left 50 120) u (lctl rctl lalt ralt lmet rmet))
+  o (fork (mwheel-right 50 120) o (lctl rctl lalt ralt lmet rmet))
+  ; (fork mltp ; (lsft rsft rctl lalt ralt lmet rmet))
+  ' (fork mrtp ' (lsft rsft rctl lalt ralt lmet rmet))
+  f (fork (fork (layer-switch pointer-hint-ui-teams) (layer-switch pointer-hint-grid-teams) (lsft rsft)) f (lctl rctl lalt ralt lmet rmet))
+  caps (layer-switch pointer-exit-teams)
+  esc (layer-switch pointer-exit-teams)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
+  grv (fork XX grv (lctl rctl lalt ralt lmet rmet))
+  1 (fork XX 1 (lctl rctl lalt ralt lmet rmet))
+  2 (fork XX 2 (lctl rctl lalt ralt lmet rmet))
+  3 (fork XX 3 (lctl rctl lalt ralt lmet rmet))
+  4 (fork XX 4 (lctl rctl lalt ralt lmet rmet))
+  5 (fork XX 5 (lctl rctl lalt ralt lmet rmet))
+  6 (fork XX 6 (lctl rctl lalt ralt lmet rmet))
+  7 (fork XX 7 (lctl rctl lalt ralt lmet rmet))
+  8 (fork XX 8 (lctl rctl lalt ralt lmet rmet))
+  9 (fork XX 9 (lctl rctl lalt ralt lmet rmet))
+  0 (fork XX 0 (lctl rctl lalt ralt lmet rmet))
+  - (fork XX - (lctl rctl lalt ralt lmet rmet))
+  = (fork XX = (lctl rctl lalt ralt lmet rmet))
+  bspc bspc
+  tab tab
+  q (fork XX q (lctl rctl lalt ralt lmet rmet))
+  w (fork XX w (lctl rctl lalt ralt lmet rmet))
+  e (fork XX e (lctl rctl lalt ralt lmet rmet))
+  r (fork XX r (lctl rctl lalt ralt lmet rmet))
+  t (fork XX t (lctl rctl lalt ralt lmet rmet))
+  y (fork XX y (lctl rctl lalt ralt lmet rmet))
+  i (fork XX i (lctl rctl lalt ralt lmet rmet))
+  p (fork XX p (lctl rctl lalt ralt lmet rmet))
+  [ (fork XX [ (lctl rctl lalt ralt lmet rmet))
+  ] (fork XX ] (lctl rctl lalt ralt lmet rmet))
+  \ (fork XX \ (lctl rctl lalt ralt lmet rmet))
+  a (fork XX a (lctl rctl lalt ralt lmet rmet))
+  g (fork XX g (lctl rctl lalt ralt lmet rmet))
+  ret ret
+  z (fork XX z (lctl rctl lalt ralt lmet rmet))
+  x (fork XX x (lctl rctl lalt ralt lmet rmet))
+  c (fork XX c (lctl rctl lalt ralt lmet rmet))
+  v (fork XX v (lctl rctl lalt ralt lmet rmet))
+  b (fork XX b (lctl rctl lalt ralt lmet rmet))
+  n (fork XX n (lctl rctl lalt ralt lmet rmet))
+  . (fork XX . (lctl rctl lalt ralt lmet rmet))
+  / (fork XX / (lctl rctl lalt ralt lmet rmet))
+  spc (fork XX spc (lctl rctl lalt ralt lmet rmet))
+  up up
+  down down
+  left left
+  right right
+  home home
+  end end
+  pgup pgup
+  pgdn pgdn
+  ins ins
+  del del
+  f1 f1
+  f2 f2
+  f3 f3
+  f4 f4
+  f5 f5
+  f6 f6
+  f7 f7
+  f8 f8
+  f9 f9
+  f10 f10
+  f11 f11
+  f12 f12
+  ___ XX
+)
+
+;; pointer-exit-teams: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-exit-teams)
+  caps (layer-switch wm-teams)
+)
+
+;; pointer-hint-ui-teams: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-ui-teams)
+  caps (layer-switch wm-teams)
+)
+
+;; pointer-hint-grid-teams: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-grid-teams)
+  caps (layer-switch wm-teams)
+)
+
+;; pointer-codeflow: persistent Kanata-native pointer mode; Caps/Escape exits through pointer-exit-codeflow.
+(deflayermap (pointer-codeflow)
+  h (fork (movemouse-accel-left 8 700 1 12) h (lctl rctl lalt ralt lmet rmet))
+  j (fork (movemouse-accel-down 8 700 1 12) j (lctl rctl lalt ralt lmet rmet))
+  k (fork (movemouse-accel-up 8 700 1 12) k (lctl rctl lalt ralt lmet rmet))
+  l (fork (movemouse-accel-right 8 700 1 12) l (lctl rctl lalt ralt lmet rmet))
+  d (fork (movemouse-speed 40) d (lctl rctl lalt ralt lmet rmet))
+  s (fork (movemouse-speed 10) s (lctl rctl lalt ralt lmet rmet))
+  , (fork (mwheel-up 50 120) , (lctl rctl lalt ralt lmet rmet))
+  m (fork (mwheel-down 50 120) m (lctl rctl lalt ralt lmet rmet))
+  u (fork (mwheel-left 50 120) u (lctl rctl lalt ralt lmet rmet))
+  o (fork (mwheel-right 50 120) o (lctl rctl lalt ralt lmet rmet))
+  ; (fork mltp ; (lsft rsft rctl lalt ralt lmet rmet))
+  ' (fork mrtp ' (lsft rsft rctl lalt ralt lmet rmet))
+  f (fork (fork (layer-switch pointer-hint-ui-codeflow) (layer-switch pointer-hint-grid-codeflow) (lsft rsft)) f (lctl rctl lalt ralt lmet rmet))
+  caps (layer-switch pointer-exit-codeflow)
+  esc (layer-switch pointer-exit-codeflow)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
+  grv (fork XX grv (lctl rctl lalt ralt lmet rmet))
+  1 (fork XX 1 (lctl rctl lalt ralt lmet rmet))
+  2 (fork XX 2 (lctl rctl lalt ralt lmet rmet))
+  3 (fork XX 3 (lctl rctl lalt ralt lmet rmet))
+  4 (fork XX 4 (lctl rctl lalt ralt lmet rmet))
+  5 (fork XX 5 (lctl rctl lalt ralt lmet rmet))
+  6 (fork XX 6 (lctl rctl lalt ralt lmet rmet))
+  7 (fork XX 7 (lctl rctl lalt ralt lmet rmet))
+  8 (fork XX 8 (lctl rctl lalt ralt lmet rmet))
+  9 (fork XX 9 (lctl rctl lalt ralt lmet rmet))
+  0 (fork XX 0 (lctl rctl lalt ralt lmet rmet))
+  - (fork XX - (lctl rctl lalt ralt lmet rmet))
+  = (fork XX = (lctl rctl lalt ralt lmet rmet))
+  bspc bspc
+  tab tab
+  q (fork XX q (lctl rctl lalt ralt lmet rmet))
+  w (fork XX w (lctl rctl lalt ralt lmet rmet))
+  e (fork XX e (lctl rctl lalt ralt lmet rmet))
+  r (fork XX r (lctl rctl lalt ralt lmet rmet))
+  t (fork XX t (lctl rctl lalt ralt lmet rmet))
+  y (fork XX y (lctl rctl lalt ralt lmet rmet))
+  i (fork XX i (lctl rctl lalt ralt lmet rmet))
+  p (fork XX p (lctl rctl lalt ralt lmet rmet))
+  [ (fork XX [ (lctl rctl lalt ralt lmet rmet))
+  ] (fork XX ] (lctl rctl lalt ralt lmet rmet))
+  \ (fork XX \ (lctl rctl lalt ralt lmet rmet))
+  a (fork XX a (lctl rctl lalt ralt lmet rmet))
+  g (fork XX g (lctl rctl lalt ralt lmet rmet))
+  ret ret
+  z (fork XX z (lctl rctl lalt ralt lmet rmet))
+  x (fork XX x (lctl rctl lalt ralt lmet rmet))
+  c (fork XX c (lctl rctl lalt ralt lmet rmet))
+  v (fork XX v (lctl rctl lalt ralt lmet rmet))
+  b (fork XX b (lctl rctl lalt ralt lmet rmet))
+  n (fork XX n (lctl rctl lalt ralt lmet rmet))
+  . (fork XX . (lctl rctl lalt ralt lmet rmet))
+  / (fork XX / (lctl rctl lalt ralt lmet rmet))
+  spc (fork XX spc (lctl rctl lalt ralt lmet rmet))
+  up up
+  down down
+  left left
+  right right
+  home home
+  end end
+  pgup pgup
+  pgdn pgdn
+  ins ins
+  del del
+  f1 f1
+  f2 f2
+  f3 f3
+  f4 f4
+  f5 f5
+  f6 f6
+  f7 f7
+  f8 f8
+  f9 f9
+  f10 f10
+  f11 f11
+  f12 f12
+  ___ XX
+)
+
+;; pointer-exit-codeflow: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-exit-codeflow)
+  caps (layer-switch wm-codeflow)
+)
+
+;; pointer-hint-ui-codeflow: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-ui-codeflow)
+  caps (layer-switch wm-codeflow)
+)
+
+;; pointer-hint-grid-codeflow: typing fallback while the bridge restores the latest base context.
+(deflayermap (pointer-hint-grid-codeflow)
+  caps (layer-switch wm-codeflow)
 )
 
 ;; wm-workspace: one-shot sub-mode (each action returns to typing; peer sub-modes switchable)
@@ -414,6 +1005,7 @@
   s (layer-switch wm-stack)
   e (layer-switch wm-resize)
   a (layer-switch wm-admin)
+  spc (layer-switch pointer)
   1 (multi (push-msg "wm.workspace.focus.0") (layer-switch base-default))
   2 (multi (push-msg "wm.workspace.focus.1") (layer-switch base-default))
   3 (multi (push-msg "wm.workspace.focus.2") (layer-switch base-default))
@@ -423,6 +1015,14 @@
   7 (multi (push-msg "wm.workspace.focus.6") (layer-switch base-default))
   8 (multi (push-msg "wm.workspace.focus.7") (layer-switch base-default))
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -434,12 +1034,21 @@
   s (layer-switch wm-stack)
   e (layer-switch wm-resize)
   a (layer-switch wm-admin)
+  spc (layer-switch pointer)
   h (multi (push-msg "wm.focus.left") (layer-switch base-default))
   j (multi (push-msg "wm.focus.down") (layer-switch base-default))
   k (multi (push-msg "wm.focus.up") (layer-switch base-default))
   l (multi (push-msg "wm.focus.right") (layer-switch base-default))
   g (multi (push-msg "wm.focus.cycle-next") (layer-switch base-default))
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -451,6 +1060,7 @@
   s (layer-switch wm-stack)
   e (layer-switch wm-resize)
   a (layer-switch wm-admin)
+  spc (layer-switch pointer)
   h (multi (push-msg "wm.move.left") (layer-switch base-default))
   j (multi (push-msg "wm.move.down") (layer-switch base-default))
   k (multi (push-msg "wm.move.up") (layer-switch base-default))
@@ -467,6 +1077,14 @@
   7 (multi (push-msg "wm.workspace.move-to.6") (layer-switch base-default))
   8 (multi (push-msg "wm.workspace.move-to.7") (layer-switch base-default))
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -478,6 +1096,7 @@
   s (layer-switch wm-stack)
   e (layer-switch wm-resize)
   a (layer-switch wm-admin)
+  spc (layer-switch pointer)
   h (multi (push-msg "wm.stack.left") (layer-switch base-default))
   j (multi (push-msg "wm.stack.down") (layer-switch base-default))
   k (multi (push-msg "wm.stack.up") (layer-switch base-default))
@@ -486,6 +1105,14 @@
   p (multi (push-msg "wm.stack.cycle-prev") (layer-switch base-default))
   u (multi (push-msg "wm.stack.unstack") (layer-switch base-default))
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -497,11 +1124,20 @@
   s (layer-switch wm-stack)
   e (layer-switch wm-resize)
   a (layer-switch wm-admin)
+  spc (layer-switch pointer)
   h (multi (push-msg "wm.resize.horizontal-decrease") (layer-switch base-default))
   j (multi (push-msg "wm.resize.vertical-decrease") (layer-switch base-default))
   k (multi (push-msg "wm.resize.vertical-increase") (layer-switch base-default))
   l (multi (push-msg "wm.resize.horizontal-increase") (layer-switch base-default))
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -513,6 +1149,7 @@
   s (layer-switch wm-stack)
   e (layer-switch wm-resize)
   a (layer-switch wm-admin)
+  spc (layer-switch pointer)
   h (multi (push-msg "sound.play.hiyo") (layer-switch base-default))
   o (multi (push-msg "sound.play.horns") (layer-switch base-default))
   r (multi (push-msg "wm.window.reacquire") (layer-switch base-default))
@@ -522,6 +1159,14 @@
   x (multi (push-msg "wm.layout.flip-horizontal") (layer-switch base-default))
   y (multi (push-msg "wm.layout.flip-vertical") (layer-switch base-default))
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -534,6 +1179,7 @@
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
   a (layer-switch wm-admin-toggle)
+  spc (layer-switch pointer)
   1 (push-msg "wm.workspace.focus.0")
   2 (push-msg "wm.workspace.focus.1")
   3 (push-msg "wm.workspace.focus.2")
@@ -550,6 +1196,14 @@
   left left
   right right
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -562,6 +1216,7 @@
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
   a (layer-switch wm-admin-toggle)
+  spc (layer-switch pointer)
   h (push-msg "wm.focus.left")
   j (push-msg "wm.focus.down")
   k (push-msg "wm.focus.up")
@@ -575,6 +1230,14 @@
   left left
   right right
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -587,6 +1250,7 @@
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
   a (layer-switch wm-admin-toggle)
+  spc (layer-switch pointer)
   h (push-msg "wm.move.left")
   j (push-msg "wm.move.down")
   k (push-msg "wm.move.up")
@@ -610,6 +1274,14 @@
   left left
   right right
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -622,6 +1294,7 @@
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
   a (layer-switch wm-admin-toggle)
+  spc (layer-switch pointer)
   h (push-msg "wm.stack.left")
   j (push-msg "wm.stack.down")
   k (push-msg "wm.stack.up")
@@ -637,6 +1310,14 @@
   left left
   right right
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -649,6 +1330,7 @@
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
   a (layer-switch wm-admin-toggle)
+  spc (layer-switch pointer)
   h (push-msg "wm.resize.horizontal-decrease")
   j (push-msg "wm.resize.vertical-decrease")
   k (push-msg "wm.resize.vertical-increase")
@@ -661,6 +1343,14 @@
   left left
   right right
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 
@@ -673,6 +1363,7 @@
   s (layer-switch wm-stack-toggle)
   e (layer-switch wm-resize-toggle)
   a (layer-switch wm-admin-toggle)
+  spc (layer-switch pointer)
   h (push-msg "sound.play.hiyo")
   o (push-msg "sound.play.horns")
   r (push-msg "wm.window.reacquire")
@@ -689,6 +1380,14 @@
   left left
   right right
   esc (layer-switch base-default)
+  lsft lsft
+  rsft rsft
+  lctl lctl
+  rctl rctl
+  lalt lalt
+  ralt ralt
+  lmet lmet
+  rmet rmet
   ___ XX
 )
 

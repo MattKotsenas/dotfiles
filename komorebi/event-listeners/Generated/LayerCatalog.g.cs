@@ -16,6 +16,28 @@ public static class LayerCatalog
     public const string BaseTeams = "base-teams";
     public const string BaseCodeflow = "base-codeflow";
 
+    // Persistent pointer layers (one per focus context).
+    public const string Pointer = "pointer";
+    public const string PointerExit = "pointer-exit";
+    public const string PointerHintUi = "pointer-hint-ui";
+    public const string PointerHintGrid = "pointer-hint-grid";
+    public const string PointerTerminal = "pointer-terminal";
+    public const string PointerTerminalExit = "pointer-exit-terminal";
+    public const string PointerTerminalHintUi = "pointer-hint-ui-terminal";
+    public const string PointerTerminalHintGrid = "pointer-hint-grid-terminal";
+    public const string PointerEdge = "pointer-edge";
+    public const string PointerEdgeExit = "pointer-exit-edge";
+    public const string PointerEdgeHintUi = "pointer-hint-ui-edge";
+    public const string PointerEdgeHintGrid = "pointer-hint-grid-edge";
+    public const string PointerTeams = "pointer-teams";
+    public const string PointerTeamsExit = "pointer-exit-teams";
+    public const string PointerTeamsHintUi = "pointer-hint-ui-teams";
+    public const string PointerTeamsHintGrid = "pointer-hint-grid-teams";
+    public const string PointerCodeflow = "pointer-codeflow";
+    public const string PointerCodeflowExit = "pointer-exit-codeflow";
+    public const string PointerCodeflowHintUi = "pointer-hint-ui-codeflow";
+    public const string PointerCodeflowHintGrid = "pointer-hint-grid-codeflow";
+
     // WM-mode layers (CAP single-tap state per context).
     public const string Wm = "wm";
     public const string WmTerminal = "wm-terminal";
@@ -47,4 +69,62 @@ public static class LayerCatalog
     // Virtual keys the bridge taps over TCP with ActOnFakeKey.
     public const string VirtualKeyTeamsJoinFocused = "teams-join-focused";
     public const string VirtualKeyTeamsJoinToast = "teams-join-toast";
+    public const string VirtualKeyPointerIndicatorOn = "pointer-indicator-on";
+    public const string VirtualKeyPointerIndicatorOff = "pointer-indicator-off";
+    public const string VirtualKeyPointerHintUi = "pointer-hint-ui";
+    public const string VirtualKeyPointerHintGrid = "pointer-hint-grid";
+
+    public static string PointerForBase(string baseLayer) => baseLayer switch
+    {
+        BaseTerminal => PointerTerminal,
+        BaseEdge => PointerEdge,
+        BaseTeams => PointerTeams,
+        BaseCodeflow => PointerCodeflow,
+        _ => Pointer,
+    };
+
+    public static bool IsPointerLayer(string layerName) => layerName switch
+    {
+        Pointer => true,
+        PointerTerminal => true,
+        PointerEdge => true,
+        PointerTeams => true,
+        PointerCodeflow => true,
+        _ => false,
+    };
+
+    public static bool IsPointerExitLayer(string layerName) => layerName switch
+    {
+        PointerExit => true,
+        PointerTerminalExit => true,
+        PointerEdgeExit => true,
+        PointerTeamsExit => true,
+        PointerCodeflowExit => true,
+        _ => false,
+    };
+
+    public static bool IsPointerUiHintLayer(string layerName) => layerName switch
+    {
+        PointerHintUi => true,
+        PointerTerminalHintUi => true,
+        PointerEdgeHintUi => true,
+        PointerTeamsHintUi => true,
+        PointerCodeflowHintUi => true,
+        _ => false,
+    };
+
+    public static bool IsPointerGridHintLayer(string layerName) => layerName switch
+    {
+        PointerHintGrid => true,
+        PointerTerminalHintGrid => true,
+        PointerEdgeHintGrid => true,
+        PointerTeamsHintGrid => true,
+        PointerCodeflowHintGrid => true,
+        _ => false,
+    };
+
+    public static bool IsPointerDepartureLayer(string layerName) =>
+        IsPointerExitLayer(layerName)
+        || IsPointerUiHintLayer(layerName)
+        || IsPointerGridHintLayer(layerName);
 }

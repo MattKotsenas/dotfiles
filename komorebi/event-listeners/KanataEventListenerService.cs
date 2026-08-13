@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Channels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using EventListeners.Models;
@@ -23,6 +24,8 @@ public sealed class KanataEventListenerService : ReconnectingBackgroundService, 
     private readonly int _port;
 
     private readonly SemaphoreSlim _writeLock = new(1, 1);
+    private readonly object _requestQueueLock = new();
+    private ChannelWriter<QueuedKanataRequest>? _requestWriter;
     private NetworkStream? _stream;
 
     public KanataEventListenerService(
@@ -38,11 +41,61 @@ public sealed class KanataEventListenerService : ReconnectingBackgroundService, 
 
     protected override string ConnectionDescription => "Kanata TCP";
 
-    public async Task SendChangeLayerAsync(string layerName, CancellationToken cancellationToken = default) =>
-        await SendAsync(
+    public void QueueChangeLayer(string layerName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(layerName);
+        QueueRequest(
             ChangeLayerRequest(layerName),
-            $"ChangeLayer({layerName})",
-            cancellationToken);
+            $"ChangeLayer({layerName})");
+    }
+
+    public void QueueVirtualKey(string virtualKeyName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(virtualKeyName);
+        QueueRequest(
+            ActOnFakeKeyRequest(virtualKeyName),
+            $"ActOnFakeKey({virtualKeyName})");
+    }
+
+    private void QueueRequest(string json, string description)
+    {
+        lock (_requestQueueLock)
+        {
+            if (_requestWriter is not null
+                && _requestWriter.TryWrite(
+                    new QueuedKanataRequest(json, description)))
+            {
+                return;
+            }
+        }
+
+        _logger.LogWarning(
+            "Cannot queue {Request}: kanata not connected",
+            description);
+    }
+
+    internal RequestEpoch OpenRequestEpoch()
+    {
+        var channel = Channel.CreateUnbounded<QueuedKanataRequest>(
+            new UnboundedChannelOptions
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = false,
+            });
+        lock (_requestQueueLock)
+        {
+            if (_requestWriter is not null)
+            {
+                throw new InvalidOperationException(
+                    "A Kanata request epoch is already active.");
+            }
+
+            _requestWriter = channel.Writer;
+        }
+
+        return new RequestEpoch(this, channel);
+    }
 
     /// <summary>Kanata's wire request for switching the default layer.</summary>
     internal static string ChangeLayerRequest(string layerName) =>
@@ -76,19 +129,33 @@ public sealed class KanataEventListenerService : ReconnectingBackgroundService, 
             return;
         }
 
-        var bytes = Encoding.UTF8.GetBytes(json);
+        try
+        {
+            await WriteToStreamAsync(stream, json, cancellationToken);
+            _logger.LogDebug("Sent {Request}", description);
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send {Request}", description);
+        }
+    }
 
+    private async Task WriteToStreamAsync(
+        NetworkStream stream,
+        string json,
+        CancellationToken cancellationToken)
+    {
+        var bytes = Encoding.UTF8.GetBytes(json);
         await _writeLock.WaitAsync(cancellationToken);
         try
         {
             await stream.WriteAsync(bytes, cancellationToken);
             await stream.FlushAsync(cancellationToken);
-            _logger.LogDebug("Sent {Request}", description);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to send {Request}", description);
-            // Stream will be re-established by the listener loop on reconnect
         }
         finally
         {
@@ -104,21 +171,107 @@ public sealed class KanataEventListenerService : ReconnectingBackgroundService, 
 
         await using var stream = client.GetStream();
         _stream = stream;
+        DispatchEvent(new KanataConnectedEvent());
+        var requestEpoch = OpenRequestEpoch();
+        using var connectionCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        var requestWriter = WriteQueuedRequestsAsync(
+            stream,
+            requestEpoch.Reader,
+            connectionCancellation.Token);
+        var eventReader = ReadEventsAsync(
+            stream,
+            connectionCancellation.Token);
         try
         {
-            using var reader = new StreamReader(stream);
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                var line = await reader.ReadLineAsync(stoppingToken);
-                if (line is null) break;
-                if (string.IsNullOrWhiteSpace(line)) continue;
-
-                ProcessLine(line);
-            }
+            _ = await Task.WhenAny(eventReader, requestWriter);
         }
         finally
         {
             _stream = null;
+            requestEpoch.Dispose();
+            connectionCancellation.Cancel();
+            try
+            {
+                await Task.WhenAll(eventReader, requestWriter);
+            }
+            catch (OperationCanceledException)
+                when (connectionCancellation.IsCancellationRequested)
+            {
+                _logger.LogDebug("Kanata request writer stopped with the connection");
+            }
+        }
+    }
+
+    private async Task ReadEventsAsync(
+        NetworkStream stream,
+        CancellationToken cancellationToken)
+    {
+        using var reader = new StreamReader(stream);
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(cancellationToken);
+            if (line is null) break;
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            ProcessLine(line);
+        }
+    }
+
+    private async Task WriteQueuedRequestsAsync(
+        NetworkStream stream,
+        ChannelReader<QueuedKanataRequest> requests,
+        CancellationToken cancellationToken)
+    {
+        await foreach (var request in requests.ReadAllAsync(
+            cancellationToken))
+        {
+            await WriteToStreamAsync(
+                    stream,
+                    request.Json,
+                    cancellationToken);
+            _logger.LogDebug("Sent {Request}", request.Description);
+        }
+    }
+
+    internal sealed record QueuedKanataRequest(
+        string Json,
+        string Description);
+
+    internal sealed class RequestEpoch : IDisposable
+    {
+        private readonly KanataEventListenerService _owner;
+        private readonly Channel<QueuedKanataRequest> _channel;
+        private int _disposed;
+
+        public RequestEpoch(
+            KanataEventListenerService owner,
+            Channel<QueuedKanataRequest> channel)
+        {
+            _owner = owner;
+            _channel = channel;
+        }
+
+        public ChannelReader<QueuedKanataRequest> Reader =>
+            _channel.Reader;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
+
+            lock (_owner._requestQueueLock)
+            {
+                if (ReferenceEquals(
+                    _owner._requestWriter,
+                    _channel.Writer))
+                {
+                    _owner._requestWriter = null;
+                }
+            }
+            _channel.Writer.TryComplete();
         }
     }
 
@@ -127,6 +280,11 @@ public sealed class KanataEventListenerService : ReconnectingBackgroundService, 
         var evt = ParseEvent(line);
         if (evt is null) return;
 
+        DispatchEvent(evt);
+    }
+
+    private void DispatchEvent(IEvent evt)
+    {
         _logger.LogDebug("Kanata event: {EventType}", evt.GetType().Name);
 
         foreach (var rule in _rules)

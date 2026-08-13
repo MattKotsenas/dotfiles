@@ -35,6 +35,32 @@ internal static class LayerCatalogEmitter
             sb.AppendLine(CultureInfo.InvariantCulture, $"    public const string {prop} = \"base-{ov.Name}\";");
         }
 
+        if (k.PointerMode is not null)
+        {
+            sb.AppendLine();
+            sb.AppendLine("    // Persistent pointer layers (one per focus context).");
+            sb.AppendLine("    public const string Pointer = \"pointer\";");
+            sb.AppendLine("    public const string PointerExit = \"pointer-exit\";");
+            sb.AppendLine("    public const string PointerHintUi = \"pointer-hint-ui\";");
+            sb.AppendLine("    public const string PointerHintGrid = \"pointer-hint-grid\";");
+            foreach (var ov in k.Overlays)
+            {
+                var prop = "Pointer" + Pascalize(ov.Name);
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"    public const string {prop} = \"pointer-{ov.Name}\";");
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"    public const string {prop}Exit = \"pointer-exit-{ov.Name}\";");
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"    public const string {prop}HintUi = \"pointer-hint-ui-{ov.Name}\";");
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"    public const string {prop}HintGrid = \"pointer-hint-grid-{ov.Name}\";");
+            }
+        }
+
         sb.AppendLine();
         sb.AppendLine("    // WM-mode layers (CAP single-tap state per context).");
         sb.AppendLine("    public const string Wm = \"wm\";");
@@ -76,8 +102,89 @@ internal static class LayerCatalogEmitter
             }
         }
 
+        if (k.PointerMode is not null)
+        {
+            sb.AppendLine();
+            sb.AppendLine("    public static string PointerForBase(string baseLayer) => baseLayer switch");
+            sb.AppendLine("    {");
+            foreach (var ov in k.Overlays)
+            {
+                var pascal = Pascalize(ov.Name);
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"        Base{pascal} => Pointer{pascal},");
+            }
+            sb.AppendLine("        _ => Pointer,");
+            sb.AppendLine("    };");
+            sb.AppendLine();
+            sb.AppendLine("    public static bool IsPointerLayer(string layerName) => layerName switch");
+            sb.AppendLine("    {");
+            sb.AppendLine("        Pointer => true,");
+            foreach (var ov in k.Overlays)
+            {
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"        Pointer{Pascalize(ov.Name)} => true,");
+            }
+            sb.AppendLine("        _ => false,");
+            sb.AppendLine("    };");
+            sb.AppendLine();
+            sb.AppendLine("    public static bool IsPointerExitLayer(string layerName) => layerName switch");
+            sb.AppendLine("    {");
+            sb.AppendLine("        PointerExit => true,");
+            foreach (var ov in k.Overlays)
+            {
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"        Pointer{Pascalize(ov.Name)}Exit => true,");
+            }
+            sb.AppendLine("        _ => false,");
+            sb.AppendLine("    };");
+            sb.AppendLine();
+            EmitPointerLayerPredicate(
+                sb,
+                "IsPointerUiHintLayer",
+                "PointerHintUi",
+                k.Overlays,
+                "HintUi");
+            sb.AppendLine();
+            EmitPointerLayerPredicate(
+                sb,
+                "IsPointerGridHintLayer",
+                "PointerHintGrid",
+                k.Overlays,
+                "HintGrid");
+            sb.AppendLine();
+            sb.AppendLine("    public static bool IsPointerDepartureLayer(string layerName) =>");
+            sb.AppendLine("        IsPointerExitLayer(layerName)");
+            sb.AppendLine("        || IsPointerUiHintLayer(layerName)");
+            sb.AppendLine("        || IsPointerGridHintLayer(layerName);");
+        }
+
         sb.AppendLine("}");
         return sb.ToString();
+    }
+
+    private static void EmitPointerLayerPredicate(
+        StringBuilder sb,
+        string methodName,
+        string defaultLayer,
+        IReadOnlyList<Overlay> overlays,
+        string propertySuffix)
+    {
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $"    public static bool {methodName}(string layerName) => layerName switch");
+        sb.AppendLine("    {");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"        {defaultLayer} => true,");
+        foreach (var ov in overlays)
+        {
+            sb.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"        Pointer{Pascalize(ov.Name)}{propertySuffix} => true,");
+        }
+        sb.AppendLine("        _ => false,");
+        sb.AppendLine("    };");
     }
 
     private static string Pascalize(string s)

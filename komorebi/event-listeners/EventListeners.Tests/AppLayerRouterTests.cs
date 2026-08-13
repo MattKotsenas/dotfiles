@@ -168,6 +168,137 @@ public class AppLayerRouterTests
     }
 
     [Fact]
+    public void ProcessEvent_PointerModeTracksFocusWithoutLeavingPointerOwnership()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        Assert.Single(kanata.ChangeLayerCalls);
+
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.PointerEdge));
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "ps", 2));
+
+        Assert.Equal(
+            [LayerCatalog.BaseEdge, LayerCatalog.PointerTerminal],
+            kanata.ChangeLayerCalls);
+        Assert.Equal(
+            [LayerCatalog.VirtualKeyPointerIndicatorOn],
+            kanata.VirtualKeyCalls);
+    }
+
+    [Theory]
+    [InlineData("pointer-exit-edge", "pointer-indicator-off")]
+    [InlineData("pointer-hint-ui-edge", "pointer-hint-ui")]
+    [InlineData("pointer-hint-grid-edge", "pointer-hint-grid")]
+    public void ProcessEvent_PointerDepartureLayerRestoresLatestBase(
+        string departureLayer,
+        string departureVirtualKey)
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.PointerEdge));
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "ps", 2));
+        router.ProcessEvent(new KanataLayerChangeEvent(departureLayer));
+
+        Assert.Equal(
+            [
+                $"layer:{LayerCatalog.BaseEdge}",
+                $"vkey:{LayerCatalog.VirtualKeyPointerIndicatorOn}",
+                $"layer:{LayerCatalog.PointerTerminal}",
+                $"vkey:{departureVirtualKey}",
+                $"layer:{LayerCatalog.BaseTerminal}",
+            ],
+            kanata.Calls);
+    }
+
+    [Fact]
+    public void ProcessEvent_UnexpectedBaseWhilePointerActive_SelfHeals()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.PointerEdge));
+
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+
+        Assert.Equal(
+            [LayerCatalog.BaseEdge, LayerCatalog.PointerEdge],
+            kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_ReconnectBaseEchoDoesNotResurrectPointer()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.PointerEdge));
+
+        router.ProcessEvent(new KanataConnectedEvent());
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "ps", 2));
+        Assert.Equal([LayerCatalog.BaseEdge], kanata.ChangeLayerCalls);
+
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+
+        Assert.Equal(
+            [LayerCatalog.BaseEdge, LayerCatalog.BaseTerminal],
+            kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_ReconnectPointerEchoPreservesPointerOwnership()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+        router.ProcessEvent(FocusEvent("msedge.exe", "x", 1));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.BaseEdge));
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.PointerEdge));
+
+        router.ProcessEvent(new KanataConnectedEvent());
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "ps", 2));
+        Assert.Equal([LayerCatalog.BaseEdge], kanata.ChangeLayerCalls);
+
+        router.ProcessEvent(new KanataLayerChangeEvent(LayerCatalog.PointerEdge));
+
+        Assert.Equal(
+            [LayerCatalog.BaseEdge, LayerCatalog.PointerTerminal],
+            kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_InitialPointerEchoWaitsForFocusContext()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+
+        router.ProcessEvent(new KanataConnectedEvent());
+        router.ProcessEvent(new KanataLayerChangeEvent(
+            LayerCatalog.PointerTerminal));
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "ps", 2));
+
+        Assert.Empty(kanata.ChangeLayerCalls);
+        Assert.Equal(
+            [LayerCatalog.VirtualKeyPointerIndicatorOn],
+            kanata.VirtualKeyCalls);
+    }
+
+    [Fact]
+    public void ProcessEvent_InitialDepartureEchoRestoresAfterFocusContext()
+    {
+        var router = CreateRouter(out var kanata, AppLayerRouter.DefaultRules);
+
+        router.ProcessEvent(new KanataConnectedEvent());
+        router.ProcessEvent(new KanataLayerChangeEvent(
+            LayerCatalog.PointerTerminalExit));
+        Assert.Empty(kanata.ChangeLayerCalls);
+
+        router.ProcessEvent(FocusEvent("WindowsTerminal.exe", "ps", 2));
+
+        Assert.Equal(
+            [LayerCatalog.BaseTerminal],
+            kanata.ChangeLayerCalls);
+    }
+
+    [Fact]
     public void ProcessEvent_MultipleFocusEventsDuringWmMode_LatestWinsOnRestore()
     {
         // While the user is mid-WM-mode, multiple focus events arrive (rapid
@@ -308,13 +439,23 @@ public class AppLayerRouterTests
 internal sealed class RecordingKanataClient : IKanataClient
 {
     public List<string> ChangeLayerCalls { get; } = [];
+    public List<string> VirtualKeyCalls { get; } = [];
+    public List<string> Calls { get; } = [];
 
-    public Task SendChangeLayerAsync(string layerName, CancellationToken cancellationToken = default)
+    public void QueueChangeLayer(string layerName)
     {
         ChangeLayerCalls.Add(layerName);
-        return Task.CompletedTask;
+        Calls.Add($"layer:{layerName}");
     }
 
-    public Task TapVirtualKeyAsync(string virtualKeyName, CancellationToken cancellationToken = default) =>
+    public void QueueVirtualKey(string virtualKeyName)
+    {
+        VirtualKeyCalls.Add(virtualKeyName);
+        Calls.Add($"vkey:{virtualKeyName}");
+    }
+
+    public Task TapVirtualKeyAsync(
+        string virtualKeyName,
+        CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 }

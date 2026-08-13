@@ -19,6 +19,7 @@ public sealed record ReservedKeys(
 public sealed record Keymap(
     ReservedKeys Reserved,
     Layer WmBase,
+    PointerMode? PointerMode,
     IReadOnlyList<SubMode> SubModes,
     IReadOnlyList<Overlay> Overlays,
     IReadOnlyList<VirtualKey> VirtualKeys);
@@ -39,6 +40,16 @@ public sealed record Layer(string Name, IReadOnlyList<Binding> Bindings, string?
 /// mode. Sub-modes affect what HJKL etc. mean (focus vs move vs stack vs resize).
 /// </summary>
 public sealed record SubMode(string Name, string EntryKey, IReadOnlyList<Binding> Bindings, string? Note = null);
+
+/// <summary>
+/// A persistent pointer layer entered from any WM context. It remains active
+/// until Caps/Escape and follows the latest focused-app context.
+/// </summary>
+public sealed record PointerMode(
+    string EntryKey,
+    string HintKey,
+    IReadOnlyList<Binding> Bindings,
+    string? Note = null);
 
 /// <summary>
 /// An overlay is a layer activated by the bridge based on the focused app

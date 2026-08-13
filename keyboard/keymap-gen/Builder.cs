@@ -8,6 +8,7 @@ public sealed class KeymapBuilder
 {
     private ReservedKeys? _reserved;
     private LayerBuilder? _wmBase;
+    private PointerMode? _pointerMode;
     private readonly List<SubMode> _subModes = [];
     private readonly List<Overlay> _overlays = [];
     private readonly List<VirtualKey> _virtualKeys = [];
@@ -31,6 +32,21 @@ public sealed class KeymapBuilder
         var b = new LayerBuilder($"wm-{name}");
         configure(b);
         _subModes.Add(new SubMode(name, entryKey, b.ToList(), b.LayerNote));
+        return this;
+    }
+
+    public KeymapBuilder PointerMode(
+        string entryKey,
+        string hintKey,
+        Action<LayerBuilder> configure)
+    {
+        var layer = new LayerBuilder("pointer");
+        configure(layer);
+        _pointerMode = new PointerMode(
+            entryKey,
+            hintKey,
+            layer.ToList(),
+            layer.LayerNote);
         return this;
     }
 
@@ -62,6 +78,7 @@ public sealed class KeymapBuilder
         var keymap = new Keymap(
             _reserved,
             new Layer("wm-base", _wmBase.ToList(), _wmBase.LayerNote),
+            _pointerMode,
             _subModes,
             _overlays,
             _virtualKeys);

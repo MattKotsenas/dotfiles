@@ -196,8 +196,11 @@ public class TeamsMeetingJoinTests
     {
         public List<string> VirtualKeyTaps { get; } = [];
 
-        public Task SendChangeLayerAsync(string layerName, CancellationToken cancellationToken = default) =>
+        public void QueueChangeLayer(string layerName) =>
             throw new InvalidOperationException("Joining must not change layers.");
+
+        public void QueueVirtualKey(string virtualKeyName) =>
+            VirtualKeyTaps.Add(virtualKeyName);
 
         public Task TapVirtualKeyAsync(string virtualKeyName, CancellationToken cancellationToken = default)
         {

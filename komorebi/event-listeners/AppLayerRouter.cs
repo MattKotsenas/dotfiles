@@ -53,12 +53,14 @@ public sealed class AppLayerRouter : IEventRule
     // Guards _currentLayer + _desiredBaseLayer atomic transitions. Two background
     // threads (Komorebi pipe listener, Kanata TCP listener) both call ProcessEvent;
     // the lock keeps "compare current vs desired then decide to send" race-free.
-    // ChangeLayer dispatches happen OUTSIDE the lock to avoid holding it during
-    // awaitable I/O. Stale in-flight sends are tolerable because the next event
-    // re-evaluates state and corrects.
+    // QueueChangeLayer is nonblocking and runs inside the lock, so event order
+    // and queued layer order share one linearization point. The TCP service
+    // preserves that order and performs I/O asynchronously.
     private readonly object _stateLock = new();
     private string? _currentLayer;
     private string? _desiredBaseLayer;
+    private bool _pointerActive;
+    private bool _awaitingKanataLayer;
 
     public string Name => "AppLayerRouter";
 
@@ -98,6 +100,17 @@ public sealed class AppLayerRouter : IEventRule
 
     public void ProcessEvent(IEvent evt)
     {
+        if (evt is KanataConnectedEvent)
+        {
+            lock (_stateLock)
+            {
+                _currentLayer = null;
+                _pointerActive = false;
+                _awaitingKanataLayer = true;
+            }
+            return;
+        }
+
         if (evt is KanataLayerChangeEvent layerEvt)
         {
             HandleLayerChange(layerEvt.NewLayer);
@@ -131,17 +144,39 @@ public sealed class AppLayerRouter : IEventRule
         var target = Route(ctx);
         string? toSend;
         bool deferred;
+        bool awaitingKanataLayer;
 
         lock (_stateLock)
         {
             _desiredBaseLayer = target;
             var current = _currentLayer;
 
+            if (_awaitingKanataLayer)
+            {
+                awaitingKanataLayer = true;
+                deferred = false;
+                toSend = null;
+            }
+            else if (_pointerActive)
+            {
+                awaitingKanataLayer = false;
+                deferred = false;
+                var pointerTarget = LayerCatalog.PointerForBase(target);
+                toSend = current == pointerTarget ? null : pointerTarget;
+            }
+            else if (current is not null
+                && LayerCatalog.IsPointerDepartureLayer(current))
+            {
+                awaitingKanataLayer = false;
+                deferred = false;
+                toSend = target;
+            }
             // Defer when kanata is mid-WM-mode (any non-base-* layer). Sending
             // a base ChangeLayer here would yank the user out of their active
             // wm-focus-toggle / wm-stack-toggle / etc.
-            if (current is not null && !IsBaseLayer(current))
+            else if (current is not null && !IsBaseLayer(current))
             {
+                awaitingKanataLayer = false;
                 deferred = true;
                 toSend = null;
             }
@@ -150,14 +185,29 @@ public sealed class AppLayerRouter : IEventRule
             // mode at startup, the next user CAP press will recover.
             else if (current == target)
             {
+                awaitingKanataLayer = false;
                 deferred = false;
                 toSend = null;
             }
             else
             {
+                awaitingKanataLayer = false;
                 deferred = false;
                 toSend = target;
             }
+
+            if (toSend is not null)
+            {
+                _kanata.Value.QueueChangeLayer(toSend);
+            }
+        }
+
+        if (awaitingKanataLayer)
+        {
+            _logger.LogDebug(
+                "Focus changed to {Exe}: waiting for kanata's current layer",
+                ctx.Exe);
+            return;
         }
 
         if (deferred)
@@ -171,40 +221,90 @@ public sealed class AppLayerRouter : IEventRule
         if (toSend is null) return;
 
         _logger.LogInformation("Focus changed to {Exe} -> ChangeLayer({Layer})", ctx.Exe, toSend);
-        _ = _kanata.Value.SendChangeLayerAsync(toSend);
     }
 
     private void HandleLayerChange(string newLayer)
     {
         string? toSend = null;
+        string? virtualKey = null;
 
         lock (_stateLock)
         {
             _currentLayer = newLayer;
+            _awaitingKanataLayer = false;
 
+            if (LayerCatalog.IsPointerLayer(newLayer))
+            {
+                virtualKey = LayerCatalog.VirtualKeyPointerIndicatorOn;
+                _pointerActive = true;
+                if (_desiredBaseLayer is not null)
+                {
+                    var target = LayerCatalog.PointerForBase(
+                        _desiredBaseLayer);
+                    if (newLayer != target)
+                    {
+                        toSend = target;
+                    }
+                }
+            }
+            else if (LayerCatalog.IsPointerDepartureLayer(newLayer))
+            {
+                virtualKey = PointerDepartureVirtualKey(newLayer);
+                _pointerActive = false;
+                toSend = _desiredBaseLayer;
+            }
+            else if (_pointerActive)
+            {
+                toSend = LayerCatalog.PointerForBase(
+                    _desiredBaseLayer ?? LayerCatalog.BaseDefault);
+            }
             // Corrective restore: any time kanata lands on a base layer that
             // doesn't match the desired one, push the desired. This recovers
             // from (a) shared sub-mode toggles whose CAPS exits to base-default
             // regardless of overlay context, and (b) deferred focus changes
             // that accumulated during WM mode.
-            if (IsBaseLayer(newLayer)
+            else if (IsBaseLayer(newLayer)
                 && _desiredBaseLayer is not null
                 && _desiredBaseLayer != newLayer)
             {
                 toSend = _desiredBaseLayer;
+            }
+
+            if (virtualKey is not null)
+            {
+                _kanata.Value.QueueVirtualKey(virtualKey);
+            }
+
+            if (toSend is not null)
+            {
+                _kanata.Value.QueueChangeLayer(toSend);
             }
         }
 
         if (toSend is null) return;
 
         _logger.LogInformation(
-            "Restoring base layer after echo {Echo} -> ChangeLayer({Layer})",
+            "Layer echo {Echo} -> ChangeLayer({Layer})",
             newLayer, toSend);
-        _ = _kanata.Value.SendChangeLayerAsync(toSend);
     }
 
     private static bool IsBaseLayer(string layerName) =>
         layerName.StartsWith("base-", StringComparison.Ordinal);
+
+    private static string PointerDepartureVirtualKey(string layerName) =>
+        layerName switch
+        {
+            var layer when LayerCatalog.IsPointerExitLayer(layer) =>
+                LayerCatalog.VirtualKeyPointerIndicatorOff,
+            var layer when LayerCatalog.IsPointerUiHintLayer(layer) =>
+                LayerCatalog.VirtualKeyPointerHintUi,
+            var layer when LayerCatalog.IsPointerGridHintLayer(layer) =>
+                LayerCatalog.VirtualKeyPointerHintGrid,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(layerName),
+                layerName,
+                "Layer is not a pointer departure."),
+        };
 
     /// <summary>Pure function: run the rule chain to resolve a layer for a focus context.</summary>
     internal string Route(FocusContext context)

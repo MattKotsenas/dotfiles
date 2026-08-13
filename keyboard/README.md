@@ -119,18 +119,20 @@ keyboard. Two output paths:
    inside overlays (e.g., Ctrl+b + h in wm-terminal for psmux). No bridge
    involvement; kanata writes directly to the focused window.
 
-The selected pointer architecture assigns continuous pointer motion, wheel, and
-physical button taps to Kanata. Its native accelerated movement composes
-independent axes for diagonals and stops each axis on that key's release,
-without a second keyboard listener or a pressed-state transport.
+Kanata owns continuous pointer motion, wheel, and physical button taps. Native
+accelerated movement composes independent axes for diagonals and stops each axis
+on that key's release, without a second keyboard listener or a pressed-state
+transport. See `KEYMAP.md` for the generated bindings.
 
-A future Mousemaster replacement owns only cursor/hint overlays, UI Automation
-target discovery, semantic activation, and point-only cursor placement. It has
-no keyboard hook and does not duplicate Kanata's continuous pointer state.
+Mousemaster owns the cursor indicator and hint UI. Kanata changes keyboard
+layers locally and never waits on Mousemaster. `CAP backtick` enters
+Mousemaster's full pointer mode.
 
-Mousemaster remains the production owner until bindings and cutover are
-designed. The deterministic native-pointer contract lives in
-`EventListeners.Tests/Kanata/KanataNativePointerSimulatorTests.cs`.
+The deterministic native-pointer contract lives in
+`EventListeners.Tests/Kanata/KanataNativePointerSimulatorTests.cs`. A
+Mousemaster replacement remains scoped to overlays, UI Automation target
+discovery, semantic activation, and point-only cursor placement; it does not
+own keyboard input or continuous motion.
 
 ### What the bridge (event-listeners) does
 
@@ -138,9 +140,9 @@ Plain C# console app, hosted as a wpm service. Three responsibilities:
 
 1. **`IntentDispatchRule`** — maps `wm.*` / `system.*` intent strings from
    kanata's `push-msg` to CliWrap commands (typically `komorebic <verb>`).
-2. **`AppLayerRouter`** — subscribes to komorebi focus events, runs an
-   ordered chain of C# routing rules, and sends `ChangeLayer` to kanata.
-   The single rule today: `WindowsTerminal.exe → base-terminal`.
+2. **`AppLayerRouter`** — routes focus contexts to generated Kanata layers,
+   preserves pointer ownership across focus changes, and translates pointer
+   layer transitions into private Mousemaster virtual keys.
 3. **`WmBorderIndicator`** — subscribes to kanata `LayerChange` events and
    recolours komorebi's focused-window border while a WM mode is active.
 

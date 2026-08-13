@@ -6,8 +6,10 @@ Description = "keyboard-driven mouse control (grid + hint pointer)"
 Kind = "Simple"
 # kanata.toml owns dependency startup.
 Autostart = false
-Restart = "OnFailure"
-RestartSec = 2
+# Do not restart Mousemaster independently: that would install its keyboard hook
+# after Kanata and invert the required hook order. Restart Kanata instead; its
+# Requires edge starts Mousemaster first, then installs Kanata's hook last.
+Restart = "Never"
 # mousemaster loads ./mousemaster.properties relative to its working directory,
 # so pin cwd to where the config (symlinked from the repo) and the exe live.
 WorkingDirectory = "$USERPROFILE/.config/mousemaster"

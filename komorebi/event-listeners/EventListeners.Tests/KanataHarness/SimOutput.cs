@@ -21,8 +21,4 @@ public sealed record SimOutput(
     IReadOnlyList<MouseScrollEvent> MouseScrolls,
     IReadOnlyList<MouseButtonEvent> MouseButtons,
     string RawStdout,
-    string RawStderr)
-{
-    /// <summary>Final layer entered by the state machine.</summary>
-    public string? FinalLayer => LayerNames.Count > 0 ? LayerNames[^1] : null;
-}
+    string RawStderr);

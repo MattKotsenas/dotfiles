@@ -20,12 +20,34 @@ namespace KeymapGen;
 /// </summary>
 internal static class KanataEmitter
 {
+    private const string ShortcutModifiers = "lctl rctl lalt ralt lmet rmet";
+    private const string ClickBlockingModifiers =
+        "lsft rsft rctl lalt ralt lmet rmet";
+    private static readonly string[] ModifierPassthroughKeys =
+        ["lsft", "rsft", "lctl", "rctl", "lalt", "ralt", "lmet", "rmet"];
+    private static readonly string[] PointerKeyboardKeys =
+    [
+        "grv", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "bspc",
+        "tab", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "\\",
+        "caps", "a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'", "ret",
+        "lsft", "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "rsft",
+        "lctl", "lmet", "lalt", "spc", "ralt", "rmet", "rctl",
+        "up", "down", "left", "right", "home", "end", "pgup", "pgdn", "ins", "del",
+        "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12",
+    ];
+    private static readonly HashSet<string> PointerPassthroughKeys =
+    [
+        "tab", "ret", "bspc", "up", "down", "left", "right", "home", "end",
+        "pgup", "pgdn", "ins", "del", "f1", "f2", "f3", "f4", "f5", "f6",
+        "f7", "f8", "f9", "f10", "f11", "f12",
+    ];
+
     public static string Emit(Keymap k)
     {
         var sb = new StringBuilder();
 
         EmitHeader(sb);
-        EmitDefcfg(sb);
+        EmitDefcfg(sb, k);
         EmitDefsrc(sb, k);
         EmitVirtualKeys(sb, k);
 
@@ -36,6 +58,17 @@ internal static class KanataEmitter
         {
             EmitBaseOverlayLayer(sb, ov.Name);
             EmitWmLayers(sb, k, overlayName: ov.Name, overlayBindings: ov.Bindings);
+        }
+
+        if (k.PointerMode is not null)
+        {
+            EmitPointerLayer(sb, k, overlayName: null);
+            EmitPointerDepartureLayers(sb, overlayName: null);
+            foreach (var ov in k.Overlays)
+            {
+                EmitPointerLayer(sb, k, ov.Name);
+                EmitPointerDepartureLayers(sb, ov.Name);
+            }
         }
 
         EmitSubModeOneShot(sb, k);
@@ -66,10 +99,15 @@ internal static class KanataEmitter
         sb.AppendLine();
     }
 
-    private static void EmitDefcfg(StringBuilder sb)
+    private static void EmitDefcfg(StringBuilder sb, Keymap k)
     {
         sb.AppendLine("(defcfg");
         sb.AppendLine("  process-unmapped-keys yes");
+        if (k.PointerMode is not null)
+        {
+            sb.AppendLine("  movemouse-inherit-accel-state yes");
+            sb.AppendLine("  movemouse-smooth-diagonals yes");
+        }
         sb.AppendLine(")");
         sb.AppendLine();
     }
@@ -89,23 +127,37 @@ internal static class KanataEmitter
         // esc is included so wm-* layers can bind it to "exit to base"; in
         // base-* layers it's not bound (so process-unmapped-keys passes it
         // through normally).
-        var keys = new List<string> { "caps", "lsft", "rsft", "esc" };
-        foreach (var b in k.WmBase.Bindings) Add(b.Key);
-        foreach (var sm in k.SubModes)
-            foreach (var b in sm.Bindings) Add(b.Key);
-        foreach (var ov in k.Overlays)
-            foreach (var b in ov.Bindings) Add(b.Key);
+        var keys = CollectDefsrcKeys(k);
 
         sb.AppendLine("(defsrc");
         sb.Append("  ");
         sb.AppendLine(string.Join(' ', keys));
         sb.AppendLine(")");
         sb.AppendLine();
+    }
+
+    private static List<string> CollectDefsrcKeys(Keymap k)
+    {
+        var keys = new List<string> { "caps", "esc" };
+        keys.AddRange(ModifierPassthroughKeys);
+        foreach (var b in k.WmBase.Bindings) Add(b.Key);
+        foreach (var sm in k.SubModes)
+            foreach (var b in sm.Bindings) Add(b.Key);
+        foreach (var ov in k.Overlays)
+            foreach (var b in ov.Bindings) Add(b.Key);
+        if (k.PointerMode is { } pointer)
+        {
+            Add(pointer.EntryKey);
+            Add(pointer.HintKey);
+            foreach (var b in pointer.Bindings) Add(b.Key);
+        }
 
         void Add(string key)
         {
             if (!keys.Contains(key, StringComparer.Ordinal)) keys.Add(key);
         }
+
+        return keys;
     }
 
     private static void EmitBaseDefaultLayer(StringBuilder sb)
@@ -158,6 +210,7 @@ internal static class KanataEmitter
         // same base layer. The toggle uses caps; both bind esc as a "panic
         // button" exit available from any WM layer.
         var exitTarget = overlayName is null ? "base-default" : $"base-{overlayName}";
+        var pointerLayer = overlayName is null ? "pointer" : $"pointer-{overlayName}";
 
         // One-shot variant: a single CAP lands here. CAP again locks into the
         // sticky variant; ESC or completing one action returns to typing. The
@@ -167,6 +220,12 @@ internal static class KanataEmitter
         sb.AppendLine(CultureInfo.InvariantCulture, $";; wm{suffix}: one-shot WM mode ({contextLabel}; first CAP). CAP again locks to sticky.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm{suffix})");
         sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch wm{suffix}-toggle)");
+        if (k.PointerMode is { } pointer)
+        {
+            sb.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"  {pointer.EntryKey} (layer-switch {pointerLayer})");
+        }
         foreach (var sm in k.SubModes)
         {
             if (overlayKeys.Contains(sm.EntryKey)) continue; // overlay overrides sub-mode entry
@@ -183,7 +242,7 @@ internal static class KanataEmitter
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {FormatWithExit(b.Action, exitTarget)}");
         }
         EmitEscExit(sb, exitTarget);
-        EmitShiftPassthrough(sb);
+        EmitModifierPassthrough(sb);
         sb.AppendLine("  ___ XX");
         sb.AppendLine(")");
         sb.AppendLine();
@@ -195,6 +254,12 @@ internal static class KanataEmitter
         sb.AppendLine(CultureInfo.InvariantCulture, $";; CAP returns to one-shot wm{suffix}; ESC exits to {exitTarget}.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap (wm{suffix}-toggle)");
         sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch wm{suffix})");
+        if (k.PointerMode is { } pointerToggle)
+        {
+            sb.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"  {pointerToggle.EntryKey} (layer-switch {pointerLayer})");
+        }
         foreach (var sm in k.SubModes)
         {
             if (overlayKeys.Contains(sm.EntryKey)) continue;
@@ -211,21 +276,113 @@ internal static class KanataEmitter
             sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
         }
         EmitEscExit(sb, exitTarget);
-        EmitShiftPassthrough(sb);
+        EmitModifierPassthrough(sb);
         sb.AppendLine("  ___ XX");
         sb.AppendLine(")");
         sb.AppendLine();
     }
 
-    /// <summary>
-    /// Map lsft/rsft to themselves so Shift passes through to the OS while a
-    /// wm-* layer is active. Without this, ___ XX deadkeys Shift and the user
-    /// loses shifted symbols like CAP + : (Shift + ;) for psmux command mode.
-    /// </summary>
-    private static void EmitShiftPassthrough(StringBuilder sb)
+    private static void EmitPointerLayer(
+        StringBuilder sb,
+        Keymap k,
+        string? overlayName)
     {
-        sb.AppendLine("  lsft lsft");
-        sb.AppendLine("  rsft rsft");
+        var pointer = k.PointerMode
+            ?? throw new InvalidOperationException("Pointer mode is not configured.");
+        var suffix = overlayName is null ? string.Empty : $"-{overlayName}";
+        var layerName = $"pointer{suffix}";
+        var exitTarget = overlayName is null
+            ? "pointer-exit"
+            : $"pointer-exit-{overlayName}";
+        var uiHintTarget = overlayName is null
+            ? "pointer-hint-ui"
+            : $"pointer-hint-ui-{overlayName}";
+        var gridHintTarget = overlayName is null
+            ? "pointer-hint-grid"
+            : $"pointer-hint-grid-{overlayName}";
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $";; {layerName}: persistent Kanata-native pointer mode; Caps/Escape exits through {exitTarget}.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap ({layerName})");
+        foreach (var binding in pointer.Bindings)
+        {
+            var action = ActionFormatter.Format(binding.Action);
+            var modifierTriggers = binding.Key is ";" or "'"
+                ? ClickBlockingModifiers
+                : ShortcutModifiers;
+            sb.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"  {binding.Key} (fork {action} {binding.Key} ({modifierTriggers}))");
+        }
+        var hintAction = $"(layer-switch {uiHintTarget})";
+        var shiftedHintAction = $"(layer-switch {gridHintTarget})";
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $"  {pointer.HintKey} (fork (fork {hintAction} {shiftedHintAction} (lsft rsft)) {pointer.HintKey} ({ShortcutModifiers}))");
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $"  caps (layer-switch {exitTarget})");
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $"  esc (layer-switch {exitTarget})");
+        EmitModifierPassthrough(sb);
+
+        var explicitKeys = pointer.Bindings
+            .Select(binding => binding.Key)
+            .Append(pointer.HintKey)
+            .Append("caps")
+            .Append("esc")
+            .Concat(ModifierPassthroughKeys)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var key in PointerKeyboardKeys)
+        {
+            if (explicitKeys.Contains(key)) continue;
+            var action = PointerPassthroughKeys.Contains(key)
+                ? key
+                : $"(fork XX {key} ({ShortcutModifiers}))";
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {key} {action}");
+        }
+        sb.AppendLine("  ___ XX");
+        sb.AppendLine(")");
+        sb.AppendLine();
+    }
+
+    private static void EmitPointerDepartureLayers(
+        StringBuilder sb,
+        string? overlayName)
+    {
+        var suffix = overlayName is null ? string.Empty : $"-{overlayName}";
+        var wmTarget = overlayName is null ? "wm" : $"wm-{overlayName}";
+        EmitPointerFallbackLayer(sb, $"pointer-exit{suffix}", wmTarget);
+        EmitPointerFallbackLayer(sb, $"pointer-hint-ui{suffix}", wmTarget);
+        EmitPointerFallbackLayer(sb, $"pointer-hint-grid{suffix}", wmTarget);
+    }
+
+    private static void EmitPointerFallbackLayer(
+        StringBuilder sb,
+        string layerName,
+        string wmTarget)
+    {
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $";; {layerName}: typing fallback while the bridge restores the latest base context.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap ({layerName})");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch {wmTarget})");
+        sb.AppendLine(")");
+        sb.AppendLine();
+    }
+
+    /// <summary>
+    /// Map modifiers to themselves so shortcuts pass through while a modal
+    /// layer is active. Without this, ___ XX deadkeys the modifier and breaks
+    /// chords such as Alt+Tab, Ctrl+C, or CAP + : (Shift + ;).
+    /// </summary>
+    private static void EmitModifierPassthrough(StringBuilder sb)
+    {
+        foreach (var key in ModifierPassthroughKeys)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  {key} {key}");
+        }
     }
 
     /// <summary>
@@ -254,11 +411,18 @@ internal static class KanataEmitter
                 sb.AppendLine(CultureInfo.InvariantCulture,
                     $"  {peer.EntryKey} (layer-switch wm-{peer.Name})");
             }
+            if (k.PointerMode is { } pointer)
+            {
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"  {pointer.EntryKey} (layer-switch pointer)");
+            }
             foreach (var b in sm.Bindings)
             {
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {FormatWithExit(b.Action, "base-default")}");
             }
             EmitEscExit(sb, "base-default");
+            EmitModifierPassthrough(sb);
             sb.AppendLine("  ___ XX");
             sb.AppendLine(")");
             sb.AppendLine();
@@ -278,6 +442,12 @@ internal static class KanataEmitter
                 sb.AppendLine(CultureInfo.InvariantCulture,
                     $"  {peer.EntryKey} (layer-switch wm-{peer.Name}-toggle)");
             }
+            if (k.PointerMode is { } pointer)
+            {
+                sb.AppendLine(
+                    CultureInfo.InvariantCulture,
+                    $"  {pointer.EntryKey} (layer-switch pointer)");
+            }
             // sub-mode-specific bindings (these override peer entries if conflicts; e.g. wm-move-toggle's 1-8 override workspaces->move-to)
             foreach (var b in sm.Bindings)
             {
@@ -293,6 +463,7 @@ internal static class KanataEmitter
                 sb.AppendLine(CultureInfo.InvariantCulture, $"  {b.Key} {ActionFormatter.Format(b.Action)}");
             }
             EmitEscExit(sb, "base-default");
+            EmitModifierPassthrough(sb);
             sb.AppendLine("  ___ XX");
             sb.AppendLine(")");
             sb.AppendLine();

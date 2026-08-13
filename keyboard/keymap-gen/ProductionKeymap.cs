@@ -12,10 +12,14 @@ internal static class ProductionKeymap
     public static Keymap Build() => new KeymapBuilder()
         .VirtualKey("teams-join-focused", "C-j")
         .VirtualKey("teams-join-toast", "C-S-j")
+        .VirtualKey("pointer-indicator-on", "f14")
+        .VirtualKey("pointer-indicator-off", "f15")
+        .VirtualKey("pointer-hint-ui", "f16")
+        .VirtualKey("pointer-hint-grid", "f17")
         .Reserve(
             // wm-base globals: tab + / remain, plus grv (backtick) which macros
             // F13 to activate mousemaster (see WmBase).
-            global: ["tab", "/", "grv"],
+            global: ["tab", "/", "grv", "spc"],
             // Sub-mode entries: s = stack (now also covers assemble), d = move,
             // f = focus, e = resize, w = workspace, a = admin.
             subModeEntries: ["a", "s", "d", "f", "e", "w"])
@@ -32,6 +36,23 @@ internal static class ProductionKeymap
             .KanataLiteral("down", "down").Describe("arrow passthrough")
             .KanataLiteral("left", "left").Describe("arrow passthrough")
             .KanataLiteral("right", "right").Describe("arrow passthrough"))
+        .PointerMode(
+            entryKey: "spc",
+            hintKey: "f",
+            configure: b => b
+                .Describe("Persistent Kanata pointer mode. Caps/Escape exits; F hands off to Mousemaster hints.")
+                .KanataLiteral("h", "(movemouse-accel-left 8 700 1 12)").Describe("move pointer left")
+                .KanataLiteral("j", "(movemouse-accel-down 8 700 1 12)").Describe("move pointer down")
+                .KanataLiteral("k", "(movemouse-accel-up 8 700 1 12)").Describe("move pointer up")
+                .KanataLiteral("l", "(movemouse-accel-right 8 700 1 12)").Describe("move pointer right")
+                .KanataLiteral("d", "(movemouse-speed 40)").Describe("slow pointer")
+                .KanataLiteral("s", "(movemouse-speed 10)").Describe("superslow pointer")
+                .KanataLiteral(",", "(mwheel-up 50 120)").Describe("wheel up")
+                .KanataLiteral("m", "(mwheel-down 50 120)").Describe("wheel down")
+                .KanataLiteral("u", "(mwheel-left 50 120)").Describe("wheel left")
+                .KanataLiteral("o", "(mwheel-right 50 120)").Describe("wheel right")
+                .KanataLiteral(";", "mltp").Describe("left click")
+                .KanataLiteral("'", "mrtp").Describe("right click"))
         .SubMode("workspace", "w", b => b
             .Workspaces("wm.workspace.focus.{0}", 0, 7))
         .SubMode("focus", "f", b => b

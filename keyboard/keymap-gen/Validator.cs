@@ -20,6 +20,24 @@ internal static class Validator
                 errors.Add($"SubMode '{sm.Name}' uses entry key '{sm.EntryKey}' which is not in Reserved.SubModeEntries.");
         }
 
+        if (k.PointerMode is { } pointer)
+        {
+            if (!k.Reserved.Global.Contains(pointer.EntryKey))
+            {
+                errors.Add(
+                    $"Pointer mode entry '{pointer.EntryKey}' is not in Reserved.Global.");
+            }
+
+            CheckNoDuplicates(new Layer("pointer", pointer.Bindings), errors);
+            foreach (var reservedKey in new[] { "caps", "esc", pointer.HintKey })
+            {
+                if (pointer.Bindings.Any(binding => binding.Key == reservedKey))
+                {
+                    errors.Add($"Pointer mode binds reserved key '{reservedKey}'.");
+                }
+            }
+        }
+
         // SubMode and Overlay names must be unique
         var allLayerNames = k.SubModes.Select(s => s.Name).Concat(k.Overlays.Select(o => o.Name)).ToList();
         var dupes = allLayerNames.GroupBy(n => n).Where(g => g.Count() > 1).Select(g => g.Key);

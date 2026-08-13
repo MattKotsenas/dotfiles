@@ -36,6 +36,29 @@ Press inside WM mode to enter a sub-mode:
 | `CAP s` | wm-stack |
 | `CAP w` | wm-workspace |
 
+## pointer
+
+Entered via `CAP spc`.
+
+Persistent Kanata pointer mode. Caps/Escape exits; F hands off to Mousemaster hints.
+
+| Key | Action |
+|---|---|
+| `CAP spc '` | right click: raw kanata: `mrtp` |
+| `CAP spc ,` | wheel up: raw kanata: `(mwheel-up 50 120)` |
+| `CAP spc ;` | left click: raw kanata: `mltp` |
+| `CAP spc Shift+f` | hand off to Mousemaster geometric grid hints |
+| `CAP spc d` | slow pointer: raw kanata: `(movemouse-speed 40)` |
+| `CAP spc f` | hand off to Mousemaster UI hints |
+| `CAP spc h` | move pointer left: raw kanata: `(movemouse-accel-left 8 700 1 12)` |
+| `CAP spc j` | move pointer down: raw kanata: `(movemouse-accel-down 8 700 1 12)` |
+| `CAP spc k` | move pointer up: raw kanata: `(movemouse-accel-up 8 700 1 12)` |
+| `CAP spc l` | move pointer right: raw kanata: `(movemouse-accel-right 8 700 1 12)` |
+| `CAP spc m` | wheel down: raw kanata: `(mwheel-down 50 120)` |
+| `CAP spc o` | wheel right: raw kanata: `(mwheel-right 50 120)` |
+| `CAP spc s` | superslow pointer: raw kanata: `(movemouse-speed 10)` |
+| `CAP spc u` | wheel left: raw kanata: `(mwheel-left 50 120)` |
+
 ## wm-workspace
 
 Entered via `CAP w`.

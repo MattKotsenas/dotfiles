@@ -20,6 +20,176 @@ public class KanataEmitterTests
         Assert.Contains("(deflayermap (wm-focus)", output);
         Assert.Contains("(deflayermap (wm-focus-toggle)", output);
         Assert.Contains("(deflayermap (wm-workspace)", output);
+        Assert.Contains("(deflayermap (pointer)", output);
+        Assert.Contains("(deflayermap (pointer-terminal)", output);
+    }
+
+    [Theory]
+    [InlineData("wm", "pointer")]
+    [InlineData("wm-toggle", "pointer")]
+    [InlineData("wm-terminal", "pointer-terminal")]
+    [InlineData("wm-terminal-toggle", "pointer-terminal")]
+    public void ProductionKeymap_CapSpaceEntersPersistentPointerLayer(
+        string sourceLayer,
+        string pointerLayer)
+    {
+        var output = KanataEmitter.Emit(ProductionKeymap.Build());
+        var layer = ExtractLayer(output, sourceLayer);
+
+        Assert.Contains(
+            $"spc (layer-switch {pointerLayer})",
+            layer);
+    }
+
+    [Fact]
+    public void ProductionKeymap_EmitsPointerControls()
+    {
+        var layer = ExtractLayer(
+            KanataEmitter.Emit(ProductionKeymap.Build()),
+            "pointer");
+
+        Assert.Contains(
+            "h (fork (movemouse-accel-left 8 700 1 12) h (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "j (fork (movemouse-accel-down 8 700 1 12) j (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "k (fork (movemouse-accel-up 8 700 1 12) k (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "l (fork (movemouse-accel-right 8 700 1 12) l (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "d (fork (movemouse-speed 40) d (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "s (fork (movemouse-speed 10) s (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            ", (fork (mwheel-up 50 120) , (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "m (fork (mwheel-down 50 120) m (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "u (fork (mwheel-left 50 120) u (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "o (fork (mwheel-right 50 120) o (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "; (fork mltp ; (lsft rsft rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "' (fork mrtp ' (lsft rsft rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "f (fork (fork (layer-switch pointer-hint-ui) (layer-switch pointer-hint-grid) (lsft rsft)) f (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "esc (layer-switch pointer-exit)",
+            layer);
+        Assert.Contains(
+            "caps (layer-switch pointer-exit)",
+            layer);
+    }
+
+    [Fact]
+    public void ProductionKeymap_PointerModePassesShortcutsAndNavigation()
+    {
+        var layer = ExtractLayer(
+            KanataEmitter.Emit(ProductionKeymap.Build()),
+            "pointer");
+
+        Assert.Contains("tab tab", layer);
+        Assert.Contains("lsft lsft", layer);
+        Assert.Contains("rsft rsft", layer);
+        Assert.Contains("lctl lctl", layer);
+        Assert.Contains("rctl rctl", layer);
+        Assert.Contains("lalt lalt", layer);
+        Assert.Contains("ralt ralt", layer);
+        Assert.Contains("lmet lmet", layer);
+        Assert.Contains("rmet rmet", layer);
+        Assert.Contains("f1 f1", layer);
+        Assert.Contains("f12 f12", layer);
+        Assert.Contains(
+            "c (fork XX c (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "a (fork XX a (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "w (fork XX w (lctl rctl lalt ralt lmet rmet))",
+            layer);
+        Assert.Contains(
+            "e (fork XX e (lctl rctl lalt ralt lmet rmet))",
+            layer);
+    }
+
+    [Fact]
+    public void ProductionKeymap_TracksModifiersInDefsrc()
+    {
+        var output = KanataEmitter.Emit(ProductionKeymap.Build());
+        var start = output.IndexOf("(defsrc", StringComparison.Ordinal);
+        var end = output.IndexOf("(defvirtualkeys", start, StringComparison.Ordinal);
+        var defsrc = output[start..end];
+
+        foreach (var modifier in new[]
+        {
+            "lsft", "rsft", "lctl", "rctl", "lalt", "ralt", "lmet", "rmet",
+        })
+        {
+            Assert.Contains(modifier, defsrc, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void ProductionKeymap_PointerOverlayRestoresEntryContext()
+    {
+        var layer = ExtractLayer(
+            KanataEmitter.Emit(ProductionKeymap.Build()),
+            "pointer-terminal");
+
+        Assert.Contains(
+            "esc (layer-switch pointer-exit-terminal)",
+            layer);
+        Assert.Contains(
+            "f (fork (fork (layer-switch pointer-hint-ui-terminal) (layer-switch pointer-hint-grid-terminal)",
+            layer);
+    }
+
+    [Theory]
+    [InlineData("wm-focus")]
+    [InlineData("wm-focus-toggle")]
+    [InlineData("wm-move")]
+    [InlineData("wm-move-toggle")]
+    [InlineData("wm-stack")]
+    [InlineData("wm-stack-toggle")]
+    [InlineData("wm-resize")]
+    [InlineData("wm-resize-toggle")]
+    [InlineData("wm-workspace")]
+    [InlineData("wm-workspace-toggle")]
+    [InlineData("wm-admin")]
+    [InlineData("wm-admin-toggle")]
+    public void ProductionKeymap_PointerEntryIsAvailableFromSubModes(
+        string layerName)
+    {
+        var layer = ExtractLayer(
+            KanataEmitter.Emit(ProductionKeymap.Build()),
+            layerName);
+
+        Assert.Contains(
+            "spc (layer-switch pointer)",
+            layer);
+    }
+
+    [Fact]
+    public void ProductionKeymap_BacktickActivatesMousemasterPointerMode()
+    {
+        var output = KanataEmitter.Emit(ProductionKeymap.Build());
+
+        Assert.Contains("grv (multi (macro f13) (layer-switch base-default))", output);
     }
 
     [Fact]
@@ -33,6 +203,10 @@ public class KanataEmitterTests
         Assert.Contains("(defvirtualkeys", output);
         Assert.Contains("teams-join-focused (macro (unmod lctl j))", output);
         Assert.Contains("teams-join-toast (macro (unmod lctl lsft j))", output);
+        Assert.Contains("pointer-indicator-on (macro f14)", output);
+        Assert.Contains("pointer-indicator-off (macro f15)", output);
+        Assert.Contains("pointer-hint-ui (macro f16)", output);
+        Assert.Contains("pointer-hint-grid (macro f17)", output);
     }
 
     [Theory]
@@ -221,5 +395,18 @@ public class KanataEmitterTests
     {
         Assert.Equal("(macro (unmod 8))",
             ActionFormatter.Format(new MacroAction([new MacroUnmodKey("8")])));
+    }
+
+    private static string ExtractLayer(string config, string layerName)
+    {
+        var start = config.IndexOf(
+            $"(deflayermap ({layerName})",
+            StringComparison.Ordinal);
+        Assert.True(start >= 0, $"Missing layer {layerName}");
+        var end = config.IndexOf(
+            "(deflayermap (",
+            start + 1,
+            StringComparison.Ordinal);
+        return end < 0 ? config[start..] : config[start..end];
     }
 }

@@ -25,6 +25,7 @@ internal static class KeymapMdEmitter
         sb.AppendLine();
 
         EmitGlobals(sb, k);
+        EmitPointerMode(sb, k);
         EmitSubModes(sb, k);
         EmitOverlays(sb, k);
 
@@ -33,6 +34,37 @@ internal static class KeymapMdEmitter
         sb.AppendLine();
         sb.AppendLine("See `keyboard/README.md` for architecture and `keyboard/INTENTS.md` for intent vocabulary.");
         return sb.ToString();
+    }
+
+    private static void EmitPointerMode(StringBuilder sb, Keymap k)
+    {
+        if (k.PointerMode is not { } pointer) return;
+
+        sb.AppendLine("## pointer");
+        sb.AppendLine();
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $"Entered via `CAP {pointer.EntryKey}`.");
+        sb.AppendLine();
+        EmitNote(sb, pointer.Note);
+        sb.AppendLine("| Key | Action |");
+        sb.AppendLine("|---|---|");
+        var rows = pointer.Bindings
+            .Select(binding => (binding.Key, Action: Describe(binding)))
+            .Append((
+                Key: pointer.HintKey,
+                Action: "hand off to Mousemaster UI hints"))
+            .Append((
+                Key: $"Shift+{pointer.HintKey}",
+                Action: "hand off to Mousemaster geometric grid hints"))
+            .OrderBy(row => row.Key, StringComparer.Ordinal);
+        foreach (var row in rows)
+        {
+            sb.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"| `CAP {pointer.EntryKey} {row.Key}` | {row.Action} |");
+        }
+        sb.AppendLine();
     }
 
     private static void EmitGlobals(StringBuilder sb, Keymap k)
