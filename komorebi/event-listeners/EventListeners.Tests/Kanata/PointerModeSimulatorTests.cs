@@ -145,6 +145,19 @@ public sealed class PointerModeSimulatorTests
         Assert.Empty(output.KeyOutputs);
     }
 
+    [Fact]
+    public async Task CapsBacktick_DoesNotActivateMousemaster()
+    {
+        var output = await RunAsync(
+            new SimInput()
+                .Tap("caps")
+                .Tap("grv")
+                .Settle());
+
+        Assert.Empty(output.Intents);
+        Assert.Empty(output.KeyOutputs);
+    }
+
     private static Task<SimOutput> RunAsync(SimInput input) =>
         KanataSimulator.RunAsync(TestPaths.ProductionConfig, input);
 }

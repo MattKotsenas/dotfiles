@@ -125,8 +125,7 @@ on that key's release, without a second keyboard listener or a pressed-state
 transport. See `KEYMAP.md` for the generated bindings.
 
 Mousemaster owns the cursor indicator and hint UI. Kanata changes keyboard
-layers locally and never waits on Mousemaster. `CAP backtick` enters
-Mousemaster's full pointer mode.
+layers locally and never waits on Mousemaster.
 
 The deterministic native-pointer contract lives in
 `EventListeners.Tests/Kanata/KanataNativePointerSimulatorTests.cs`. A

@@ -145,11 +145,9 @@ internal static class KanataEmitter
             foreach (var b in sm.Bindings) Add(b.Key);
         foreach (var ov in k.Overlays)
             foreach (var b in ov.Bindings) Add(b.Key);
-        if (k.PointerMode is { } pointer)
+        if (k.PointerMode is not null)
         {
-            Add(pointer.EntryKey);
-            Add(pointer.HintKey);
-            foreach (var b in pointer.Bindings) Add(b.Key);
+            foreach (var key in PointerKeyboardKeys) Add(key);
         }
 
         void Add(string key)

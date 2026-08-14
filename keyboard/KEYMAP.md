@@ -17,7 +17,6 @@ Always available inside WM mode regardless of overlay or sub-mode.
 |---|---|
 | `CAP /` | intent `system.cheatsheet` |
 | `CAP down` | arrow passthrough: raw kanata: `down` |
-| `CAP grv` | activate mousemaster: macro `f13` |
 | `CAP left` | arrow passthrough: raw kanata: `left` |
 | `CAP right` | arrow passthrough: raw kanata: `right` |
 | `CAP tab` | intent `wm.focus.last-workspace` |

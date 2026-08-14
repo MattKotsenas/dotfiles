@@ -131,9 +131,7 @@ public class KanataEmitterTests
     public void ProductionKeymap_TracksModifiersInDefsrc()
     {
         var output = KanataEmitter.Emit(ProductionKeymap.Build());
-        var start = output.IndexOf("(defsrc", StringComparison.Ordinal);
-        var end = output.IndexOf("(defvirtualkeys", start, StringComparison.Ordinal);
-        var defsrc = output[start..end];
+        var defsrc = ExtractDefsrc(output);
 
         foreach (var modifier in new[]
         {
@@ -185,11 +183,37 @@ public class KanataEmitterTests
     }
 
     [Fact]
-    public void ProductionKeymap_BacktickActivatesMousemasterPointerMode()
+    public void ProductionKeymap_HasNoMousemasterPointerActivation()
     {
         var output = KanataEmitter.Emit(ProductionKeymap.Build());
 
-        Assert.Contains("grv (multi (macro f13) (layer-switch base-default))", output);
+        Assert.DoesNotContain("f13", output, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ProductionKeymap_TracksEveryPointerKeyboardKeyInDefsrc()
+    {
+        var output = KanataEmitter.Emit(ProductionKeymap.Build());
+        var defsrc = ExtractDefsrc(output);
+        var defsrcKeys = defsrc
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+            .ToHashSet(StringComparer.Ordinal);
+        var pointerKeys = ExtractLayer(output, "pointer")
+            .Split(Environment.NewLine)
+            .Select(line => line.Trim())
+            .Where(line => line.Length > 0
+                && !line.StartsWith("(deflayermap", StringComparison.Ordinal)
+                && !line.StartsWith(";;", StringComparison.Ordinal)
+                && line is not ")"
+                && !line.StartsWith("___", StringComparison.Ordinal))
+            .Select(line => line.Split(' ', 2)[0])
+            .ToHashSet(StringComparer.Ordinal);
+        var missingKeys = pointerKeys
+            .Except(defsrcKeys, StringComparer.Ordinal)
+            .OrderBy(key => key, StringComparer.Ordinal)
+            .ToList();
+
+        Assert.Empty(missingKeys);
     }
 
     [Fact]
@@ -408,5 +432,17 @@ public class KanataEmitterTests
             start + 1,
             StringComparison.Ordinal);
         return end < 0 ? config[start..] : config[start..end];
+    }
+
+    private static string ExtractDefsrc(string config)
+    {
+        var start = config.IndexOf("(defsrc", StringComparison.Ordinal);
+        Assert.True(start >= 0, "Missing defsrc");
+        var end = config.IndexOf(
+            "(defvirtualkeys",
+            start,
+            StringComparison.Ordinal);
+        Assert.True(end >= 0, "Missing defvirtualkeys");
+        return config[start..end];
     }
 }

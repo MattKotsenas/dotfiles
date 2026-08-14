@@ -2,7 +2,7 @@ using EventListeners.Tests.KanataHarness;
 
 namespace EventListeners.Tests;
 
-public sealed class MousemasterPointerModeTests
+public sealed class MousemasterTransportTests
 {
     private static string Properties =>
         File.ReadAllText(Path.Combine(
@@ -20,19 +20,15 @@ public sealed class MousemasterPointerModeTests
         Assert.Contains("kanata-mode.to.idle-mode=+f15", properties);
         Assert.Contains("kanata-mode.to.ui-hint-mode=+f16", properties);
         Assert.Contains("kanata-mode.to.hint1-mode=+f17", properties);
-        Assert.Contains("kanata-mode.indicator=normal-mode.indicator", properties);
+        Assert.Contains("kanata-mode.indicator.enabled=true", properties);
         Assert.DoesNotContain("kanata-mode.start-move.", properties);
         Assert.DoesNotContain("kanata-mode.start-wheel.", properties);
         Assert.DoesNotContain("kanata-mode.press.", properties);
     }
 
     [Theory]
-    [InlineData("normal")]
-    [InlineData("grid")]
-    [InlineData("window")]
     [InlineData("hint1")]
     [InlineData("hint2")]
-    [InlineData("screen-selection")]
     [InlineData("ui-hint")]
     [InlineData("click-after-ui-hint")]
     [InlineData("begin-alt-tab")]
@@ -43,22 +39,43 @@ public sealed class MousemasterPointerModeTests
         var properties = Properties;
 
         Assert.Contains($"{mode}-mode.to.kanata-mode=+f14", properties);
-        var transition = properties
+        var transitions = properties
             .Split(
                 ['\r', '\n'],
                 StringSplitOptions.RemoveEmptyEntries)
-            .Single(line => line.StartsWith(
+            .Where(line => line.StartsWith(
                 $"{mode}-mode.to.idle-mode=",
                 StringComparison.Ordinal));
-        Assert.Contains("+f15", transition);
+        Assert.Contains(
+            transitions,
+            transition => transition.Contains(
+                "+f15",
+                StringComparison.Ordinal));
     }
 
     [Fact]
-    public void F13ActivatesMousemasterPointerMode()
+    public void FullMousemasterPointerMode_IsRemoved()
     {
-        Assert.Contains(
-            "idle-mode.to.normal-mode=+enablemod +enablekey | _{enablemod} +enablekey | +f13",
-            Properties);
+        var properties = Properties;
+        var lines = properties.Split(
+            ['\r', '\n'],
+            StringSplitOptions.RemoveEmptyEntries);
+
+        Assert.DoesNotContain("f13", properties, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(
+            lines,
+            line => line.StartsWith("normal-mode.", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            lines,
+            line => line.StartsWith("grid-mode.", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            lines,
+            line => line.StartsWith("window-mode.", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            lines,
+            line => line.StartsWith(
+                "screen-selection-mode.",
+                StringComparison.Ordinal));
     }
 
     [Fact]
@@ -68,5 +85,15 @@ public sealed class MousemasterPointerModeTests
 
         Assert.Contains("idle-mode.to.ui-hint-mode=+f16", properties);
         Assert.Contains("idle-mode.to.hint1-mode=+f17", properties);
+    }
+
+    [Theory]
+    [InlineData("hint1-mode.to.idle-mode=+f15 | +esc | +backspace")]
+    [InlineData("hint2-mode.to.idle-mode=+f15 | +esc | _{none | hint2mod | gridhintmod} +extendedhint1key")]
+    [InlineData("ui-hint-mode.to.idle-mode=+f15 | +esc | +backspace | _{rightalt} +hint1key")]
+    [InlineData("click-after-ui-hint-mode.to.idle-mode=+f15 | ^{hint1key}")]
+    public void HintCompletion_ReturnsToIdle(string transition)
+    {
+        Assert.Contains(transition, Properties);
     }
 }

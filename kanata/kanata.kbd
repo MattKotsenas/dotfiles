@@ -8,7 +8,7 @@
 )
 
 (defsrc
-  caps esc lsft rsft lctl rctl lalt ralt lmet rmet tab / grv up down left right 1 2 3 4 5 6 7 8 h j k l g q t m n p u o r x y b c i v z 0 9 , . \ - [ ] ; spc f d s '
+  caps esc lsft rsft lctl rctl lalt ralt lmet rmet tab / up down left right 1 2 3 4 5 6 7 8 h j k l g q t m n p u o r x y b c i v z 0 9 , . \ - [ ] ; grv = bspc w e a s d f ' ret spc home end pgup pgdn ins del f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12
 )
 
 (defvirtualkeys
@@ -37,7 +37,6 @@
   a (layer-switch wm-admin)
   tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-default))
   / (multi (push-msg "system.cheatsheet") (layer-switch base-default))
-  grv (multi (macro f13) (layer-switch base-default))
   up (multi up (layer-switch base-default))
   down (multi down (layer-switch base-default))
   left (multi left (layer-switch base-default))
@@ -67,7 +66,6 @@
   a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -101,7 +99,6 @@
   a (layer-switch wm-admin)
   tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-terminal))
   / (multi (push-msg "system.cheatsheet") (layer-switch base-terminal))
-  grv (multi (macro f13) (layer-switch base-terminal))
   up (multi up (layer-switch base-terminal))
   down (multi down (layer-switch base-terminal))
   left (multi left (layer-switch base-terminal))
@@ -168,7 +165,6 @@
   a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -239,7 +235,6 @@
   a (layer-switch wm-admin)
   tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-edge))
   / (multi (push-msg "system.cheatsheet") (layer-switch base-edge))
-  grv (multi (macro f13) (layer-switch base-edge))
   up (multi up (layer-switch base-edge))
   down (multi down (layer-switch base-edge))
   left (multi left (layer-switch base-edge))
@@ -271,7 +266,6 @@
   a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -307,7 +301,6 @@
   a (layer-switch wm-admin)
   tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-teams))
   / (multi (push-msg "system.cheatsheet") (layer-switch base-teams))
-  grv (multi (macro f13) (layer-switch base-teams))
   up (multi up (layer-switch base-teams))
   down (multi down (layer-switch base-teams))
   left (multi left (layer-switch base-teams))
@@ -356,7 +349,6 @@
   a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -409,7 +401,6 @@
   a (layer-switch wm-admin)
   tab (multi (push-msg "wm.focus.last-workspace") (layer-switch base-codeflow))
   / (multi (push-msg "system.cheatsheet") (layer-switch base-codeflow))
-  grv (multi (macro f13) (layer-switch base-codeflow))
   up (multi up (layer-switch base-codeflow))
   down (multi down (layer-switch base-codeflow))
   left (multi left (layer-switch base-codeflow))
@@ -452,7 +443,6 @@
   a (layer-switch wm-admin-toggle)
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -1190,7 +1180,6 @@
   8 (push-msg "wm.workspace.focus.7")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -1224,7 +1213,6 @@
   g (push-msg "wm.focus.cycle-next")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -1268,7 +1256,6 @@
   8 (push-msg "wm.workspace.move-to.7")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -1304,7 +1291,6 @@
   u (push-msg "wm.stack.unstack")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -1337,7 +1323,6 @@
   l (push-msg "wm.resize.horizontal-increase")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left
@@ -1374,7 +1359,6 @@
   y (push-msg "wm.layout.flip-vertical")
   tab (push-msg "wm.focus.last-workspace")
   / (push-msg "system.cheatsheet")
-  grv (macro f13)
   up up
   down down
   left left

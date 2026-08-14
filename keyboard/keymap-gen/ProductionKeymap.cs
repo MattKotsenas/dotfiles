@@ -17,17 +17,14 @@ internal static class ProductionKeymap
         .VirtualKey("pointer-hint-ui", "f16")
         .VirtualKey("pointer-hint-grid", "f17")
         .Reserve(
-            // wm-base globals: tab + / remain, plus grv (backtick) which macros
-            // F13 to activate mousemaster (see WmBase).
-            global: ["tab", "/", "grv", "spc"],
+            // wm-base globals: tab + / remain; Space enters pointer mode.
+            global: ["tab", "/", "spc"],
             // Sub-mode entries: s = stack (now also covers assemble), d = move,
             // f = focus, e = resize, w = workspace, a = admin.
             subModeEntries: ["a", "s", "d", "f", "e", "w"])
         .WmBase(b => b
             .Intent("tab", "wm.focus.last-workspace")
             .Intent("/", "system.cheatsheet")
-            // One-shot returns to typing after F13 so mousemaster's own keys work.
-            .Macro("grv", "f13").Describe("activate mousemaster")
             // Arrow passthrough: arrows always do "their thing" even in WM mode
             // (Teams meeting nav, list nav, etc.). KanataLiteral emits the key
             // as itself; the compiler merges wm-base into every WM layer except
