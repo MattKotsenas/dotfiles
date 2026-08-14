@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "grid-hints-4x8-96dpi",
+  "mode": "GridHints",
+  "desktopBounds": {
+    "x": 0,
+    "y": 0,
+    "width": 800,
+    "height": 400
+  },
+  "dpi": 96,
+  "pointer": null,
+  "windows": [],
+  "grid": {
+    "rows": 4,
+    "columns": 8
+  }
+}

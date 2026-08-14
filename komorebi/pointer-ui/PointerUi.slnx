@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="PointerUi.Tests/PointerUi.Tests.csproj" />
+  <Project Path="PointerUi/PointerUi.csproj" />
+</Solution>

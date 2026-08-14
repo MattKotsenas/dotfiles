@@ -1,0 +1,2 @@
+*.verified.json text eol=lf linguist-generated=true
+*.verified.png binary linguist-generated=true

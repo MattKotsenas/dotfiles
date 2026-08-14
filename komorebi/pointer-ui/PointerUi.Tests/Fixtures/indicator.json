@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "indicator-96dpi",
+  "mode": "Indicator",
+  "desktopBounds": {
+    "x": 0,
+    "y": 0,
+    "width": 640,
+    "height": 360
+  },
+  "dpi": 96,
+  "pointer": {
+    "x": 320,
+    "y": 180
+  },
+  "windows": [],
+  "grid": null
+}

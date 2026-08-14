@@ -1,0 +1,26 @@
+﻿{
+  "scene": {
+    "name": "indicator-96dpi",
+    "pixelWidth": 640,
+    "pixelHeight": 360,
+    "dpi": 96,
+    "primitives": [
+      {
+        "kind": "Ellipse",
+        "bounds": {
+          "x": 296,
+          "y": 156,
+          "width": 48,
+          "height": 48
+        },
+        "fill": null,
+        "stroke": "#FFCBA6F7",
+        "strokeThickness": 3,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      }
+    ]
+  },
+  "targets": []
+}

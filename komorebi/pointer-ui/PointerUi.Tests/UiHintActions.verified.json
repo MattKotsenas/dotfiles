@@ -1,0 +1,122 @@
+﻿[
+  {
+    "target": {
+      "processKey": "WindowsTerminal.exe",
+      "name": "Terminal content",
+      "isForeground": true
+    },
+    "activate": {
+      "kind": "CoordinateClick",
+      "logicalTargetId": {
+        "value": "target-v1-2e3a9b995c1b4dbb6c8c170a"
+      },
+      "label": "A",
+      "semanticAction": "None",
+      "point": {
+        "x": 239,
+        "y": 291
+      },
+      "reason": null
+    },
+    "pointOnly": {
+      "kind": "MovePointer",
+      "logicalTargetId": {
+        "value": "target-v1-2e3a9b995c1b4dbb6c8c170a"
+      },
+      "label": "A",
+      "semanticAction": "None",
+      "point": {
+        "x": 239,
+        "y": 291
+      },
+      "reason": null
+    }
+  },
+  {
+    "target": {
+      "processKey": "WindowsTerminal.exe",
+      "name": "PowerShell",
+      "isForeground": true
+    },
+    "activate": {
+      "kind": "InvokeSemantic",
+      "logicalTargetId": {
+        "value": "target-v1-a7badf3bbbf04a5025dca63c"
+      },
+      "label": "D",
+      "semanticAction": "Select",
+      "point": null,
+      "reason": null
+    },
+    "pointOnly": {
+      "kind": "MovePointer",
+      "logicalTargetId": {
+        "value": "target-v1-a7badf3bbbf04a5025dca63c"
+      },
+      "label": "D",
+      "semanticAction": "Select",
+      "point": {
+        "x": 143,
+        "y": 65
+      },
+      "reason": null
+    }
+  },
+  {
+    "target": {
+      "processKey": "ms-teams.exe",
+      "name": "Mute",
+      "isForeground": false
+    },
+    "activate": {
+      "kind": "InvokeSemantic",
+      "logicalTargetId": {
+        "value": "target-v1-e76016a617fd7a7f766eca8d"
+      },
+      "label": "F",
+      "semanticAction": "Toggle",
+      "point": null,
+      "reason": null
+    },
+    "pointOnly": {
+      "kind": "Reject",
+      "logicalTargetId": {
+        "value": "target-v1-e76016a617fd7a7f766eca8d"
+      },
+      "label": "F",
+      "semanticAction": "Toggle",
+      "point": null,
+      "reason": "Point-only placement is restricted to the foreground window."
+    }
+  },
+  {
+    "target": {
+      "processKey": "WindowsTerminal.exe",
+      "name": "New tab",
+      "isForeground": true
+    },
+    "activate": {
+      "kind": "InvokeSemantic",
+      "logicalTargetId": {
+        "value": "target-v1-62f875d344c9af9fee22697e"
+      },
+      "label": "S",
+      "semanticAction": "Invoke",
+      "point": null,
+      "reason": null
+    },
+    "pointOnly": {
+      "kind": "MovePointer",
+      "logicalTargetId": {
+        "value": "target-v1-62f875d344c9af9fee22697e"
+      },
+      "label": "S",
+      "semanticAction": "Invoke",
+      "point": {
+        "x": 417,
+        "y": 65
+      },
+      "reason": null
+    }
+  }
+]
