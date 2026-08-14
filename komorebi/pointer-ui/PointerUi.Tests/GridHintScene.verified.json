@@ -1,0 +1,656 @@
+﻿{
+  "scene": {
+    "name": "grid-hints-4x8-96dpi",
+    "pixelWidth": 800,
+    "pixelHeight": 400,
+    "dpi": 96,
+    "primitives": [
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 800,
+          "height": 400
+        },
+        "fill": "#331E1E2E",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 100,
+          "y": 0,
+          "width": 1,
+          "height": 400
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 200,
+          "y": 0,
+          "width": 1,
+          "height": 400
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 300,
+          "y": 0,
+          "width": 1,
+          "height": 400
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 400,
+          "y": 0,
+          "width": 1,
+          "height": 400
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 500,
+          "y": 0,
+          "width": 1,
+          "height": 400
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 600,
+          "y": 0,
+          "width": 1,
+          "height": 400
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 700,
+          "y": 0,
+          "width": 1,
+          "height": 400
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 0,
+          "y": 100,
+          "width": 800,
+          "height": 1
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 0,
+          "y": 200,
+          "width": 800,
+          "height": 1
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 0,
+          "y": 300,
+          "width": 800,
+          "height": 1
+        },
+        "fill": "#665B6078",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "A",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 100,
+          "y": 0,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "S",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 200,
+          "y": 0,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "D",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 300,
+          "y": 0,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "F",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 400,
+          "y": 0,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "G",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 500,
+          "y": 0,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "H",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 600,
+          "y": 0,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "J",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 700,
+          "y": 0,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "K",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 0,
+          "y": 100,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "L",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 100,
+          "y": 100,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "Q",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 200,
+          "y": 100,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "W",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 300,
+          "y": 100,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "E",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 400,
+          "y": 100,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "R",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 500,
+          "y": 100,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "T",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 600,
+          "y": 100,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "Y",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 700,
+          "y": 100,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "U",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 0,
+          "y": 200,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "I",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 100,
+          "y": 200,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "O",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 200,
+          "y": 200,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "P",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 300,
+          "y": 200,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "Z",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 400,
+          "y": 200,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "X",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 500,
+          "y": 200,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "C",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 600,
+          "y": 200,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "V",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 700,
+          "y": 200,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "B",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 0,
+          "y": 300,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "N",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 100,
+          "y": 300,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "M",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 200,
+          "y": 300,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "AA",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 300,
+          "y": 300,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "AS",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 400,
+          "y": 300,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "AD",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 500,
+          "y": 300,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "AF",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 600,
+          "y": 300,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "AG",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 700,
+          "y": 300,
+          "width": 100,
+          "height": 100
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "AH",
+        "textColor": "#FFCDD6F4",
+        "fontSize": 12
+      }
+    ]
+  },
+  "targets": []
+}

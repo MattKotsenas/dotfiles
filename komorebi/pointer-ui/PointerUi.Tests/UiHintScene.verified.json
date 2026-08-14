@@ -1,0 +1,253 @@
+﻿{
+  "scene": {
+    "name": "ui-hints-two-windows-144dpi",
+    "pixelWidth": 960,
+    "pixelHeight": 540,
+    "dpi": 144,
+    "primitives": [
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 960,
+          "height": 540
+        },
+        "fill": "#331E1E2E",
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 24,
+          "y": 24,
+          "width": 430,
+          "height": 492
+        },
+        "fill": null,
+        "stroke": "#665B6078",
+        "strokeThickness": 1.5,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 500,
+          "y": 42,
+          "width": 430,
+          "height": 458
+        },
+        "fill": null,
+        "stroke": "#665B6078",
+        "strokeThickness": 1.5,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 218.75,
+          "y": 274.5,
+          "width": 40.5,
+          "height": 33
+        },
+        "fill": "#E61E1E2E",
+        "stroke": "#FF45475A",
+        "strokeThickness": 1.5,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 218.75,
+          "y": 274.5,
+          "width": 40.5,
+          "height": 33
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "A",
+        "textColor": "#FFCBA6F7",
+        "fontSize": 16.5
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 122.75,
+          "y": 48.5,
+          "width": 40.5,
+          "height": 33
+        },
+        "fill": "#E61E1E2E",
+        "stroke": "#FF45475A",
+        "strokeThickness": 1.5,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 122.75,
+          "y": 48.5,
+          "width": 40.5,
+          "height": 33
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "D",
+        "textColor": "#FFCBA6F7",
+        "fontSize": 16.5
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 645.75,
+          "y": 441.5,
+          "width": 40.5,
+          "height": 33
+        },
+        "fill": "#E61E1E2E",
+        "stroke": "#FF45475A",
+        "strokeThickness": 1.5,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 645.75,
+          "y": 441.5,
+          "width": 40.5,
+          "height": 33
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "F",
+        "textColor": "#FFCBA6F7",
+        "fontSize": 16.5
+      },
+      {
+        "kind": "Rectangle",
+        "bounds": {
+          "x": 396.75,
+          "y": 48.5,
+          "width": 40.5,
+          "height": 33
+        },
+        "fill": "#E61E1E2E",
+        "stroke": "#FF45475A",
+        "strokeThickness": 1.5,
+        "text": null,
+        "textColor": null,
+        "fontSize": 0
+      },
+      {
+        "kind": "Text",
+        "bounds": {
+          "x": 396.75,
+          "y": 48.5,
+          "width": 40.5,
+          "height": 33
+        },
+        "fill": null,
+        "stroke": null,
+        "strokeThickness": 0,
+        "text": "S",
+        "textColor": "#FFCBA6F7",
+        "fontSize": 16.5
+      }
+    ]
+  },
+  "targets": [
+    {
+      "logicalId": {
+        "value": "target-v1-2e3a9b995c1b4dbb6c8c170a"
+      },
+      "label": "A",
+      "processKey": "WindowsTerminal.exe",
+      "windowRole": "terminal.main",
+      "isForeground": true,
+      "automationId": "",
+      "controlType": "Document",
+      "name": "Terminal content",
+      "bounds": {
+        "x": 48,
+        "y": 96,
+        "width": 382,
+        "height": 390
+      },
+      "semanticAction": "None"
+    },
+    {
+      "logicalId": {
+        "value": "target-v1-a7badf3bbbf04a5025dca63c"
+      },
+      "label": "D",
+      "processKey": "WindowsTerminal.exe",
+      "windowRole": "terminal.main",
+      "isForeground": true,
+      "automationId": "Tab_1",
+      "controlType": "TabItem",
+      "name": "PowerShell",
+      "bounds": {
+        "x": 68,
+        "y": 48,
+        "width": 150,
+        "height": 34
+      },
+      "semanticAction": "Select"
+    },
+    {
+      "logicalId": {
+        "value": "target-v1-e76016a617fd7a7f766eca8d"
+      },
+      "label": "F",
+      "processKey": "ms-teams.exe",
+      "windowRole": "teams.main",
+      "isForeground": false,
+      "automationId": "mute-button",
+      "controlType": "Button",
+      "name": "Mute",
+      "bounds": {
+        "x": 640,
+        "y": 438,
+        "width": 52,
+        "height": 40
+      },
+      "semanticAction": "Toggle"
+    },
+    {
+      "logicalId": {
+        "value": "target-v1-62f875d344c9af9fee22697e"
+      },
+      "label": "S",
+      "processKey": "WindowsTerminal.exe",
+      "windowRole": "terminal.main",
+      "isForeground": true,
+      "automationId": "NewTabButton",
+      "controlType": "Button",
+      "name": "New tab",
+      "bounds": {
+        "x": 400,
+        "y": 48,
+        "width": 34,
+        "height": 34
+      },
+      "semanticAction": "Invoke"
+    }
+  ]
+}
