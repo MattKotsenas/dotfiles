@@ -38,5 +38,7 @@ public sealed record DesktopCaptureResult(
 
 public interface IDesktopCaptureSource
 {
-    DesktopCaptureResult Capture(CaptureLimits limits);
+    DesktopCaptureResult Capture(
+        CaptureLimits limits,
+        string? processKey = null);
 }

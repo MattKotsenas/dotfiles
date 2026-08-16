@@ -60,6 +60,29 @@ Build, test, help, and invalid-argument paths never instantiate the
 Windows/UIA adapter; only the capture command does. Run it only inside the
 dedicated VM.
 
+## VM acceptance harness
+
+VM acceptance runs the recorder against deterministic foreground and
+background WPF controls and proves logical IDs survive a real title change and
+control reorder. The scenario includes semantic patterns, duplicate automation
+IDs, a nameless control, and a coordinate-only foreground editor. The test
+validates the fixture and diagnostics, then writes the rendered scene and frame
+as artifacts. `PointerUi.Acceptance.slnx` remains separate from the normal
+solution.
+
+The test requires the environment and marker contract defined by
+`AcceptanceContract`. The host script's comment-based help owns the default
+marker path.
+
+Run the host entrypoint:
+
+```powershell
+.\vm\Invoke-PointerUiAcceptance.ps1 `
+  -RepoPathInVM C:\src\dotfiles
+```
+
+See its comment-based help for prerequisites and lifecycle options.
+
 ## Policy
 
 - Logical identity hashes semantic properties and hierarchy, never enumeration

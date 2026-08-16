@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/acceptance/">
+    <Project Path="acceptance/PointerUi.Acceptance.Runner/PointerUi.Acceptance.Runner.csproj" />
+    <Project Path="acceptance/PointerUi.Acceptance.Tests/PointerUi.Acceptance.Tests.csproj" />
+    <Project Path="acceptance/PointerUi.TestApp/PointerUi.TestApp.csproj" />
+  </Folder>
+  <Project Path="PointerUi.Recorder/PointerUi.Recorder.csproj" />
+  <Project Path="PointerUi.Windows/PointerUi.Windows.csproj" />
+  <Project Path="PointerUi/PointerUi.csproj" />
+</Solution>
