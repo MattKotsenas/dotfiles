@@ -4,11 +4,13 @@ public sealed class WindowsDesktopCaptureSource : IDesktopCaptureSource
 {
     private readonly UiaTreeReader _uia = new();
 
-    public DesktopCaptureResult Capture(CaptureLimits limits)
+    public DesktopCaptureResult Capture(
+        CaptureLimits limits,
+        string? processKey = null)
     {
         limits.Validate();
         var windows = new List<WindowCapture>();
-        var native = NativeWindowCatalog.Enumerate();
+        var native = NativeWindowCatalog.Enumerate(processKey);
         var diagnostics = native.Diagnostics.ToList();
         foreach (var nativeWindow in native.Windows)
         {

@@ -37,7 +37,7 @@ public static class Program
         try
         {
             var captured = new WindowsDesktopCaptureSource()
-                .Capture(options.Limits);
+                .Capture(options.Limits, options.ProcessKey);
             var projected = DiscoveryProjector.Project(
                 captured.Capture,
                 options.FixtureName,
@@ -94,6 +94,7 @@ public static class Program
           --allow-live-desktop-capture
           --output <fixture.json>
           --name <fixture-name>
+          [--process <executable-name>]
           [--max-depth <{CaptureLimits.MinDepth}-{CaptureLimits.MaxDepthLimit}>]
           [--max-elements-per-window <{CaptureLimits.MinElementsPerWindow}-{CaptureLimits.MaxElementsPerWindowLimit}>]
           [--overwrite]
