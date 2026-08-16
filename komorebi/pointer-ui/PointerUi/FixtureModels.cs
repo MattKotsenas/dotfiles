@@ -45,6 +45,7 @@ public sealed record WindowFixture(
     string ProcessKey,
     string WindowRole,
     PixelRect Bounds,
+    double Dpi,
     bool IsForeground,
     [property: JsonRequired] IReadOnlyList<TargetFixture> Targets);
 
@@ -106,6 +107,10 @@ public static class FixtureLoader
             if (window.Bounds.Width <= 0 || window.Bounds.Height <= 0)
             {
                 throw Invalid(path, "has invalid window bounds");
+            }
+            if (window.Dpi <= 0)
+            {
+                throw Invalid(path, "has invalid window DPI");
             }
             foreach (var target in window.Targets)
             {

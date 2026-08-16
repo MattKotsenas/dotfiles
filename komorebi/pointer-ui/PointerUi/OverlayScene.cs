@@ -30,6 +30,7 @@ public sealed record TargetSnapshot(
     string ProcessKey,
     string WindowRole,
     bool IsForeground,
+    double WindowDpi,
     string AutomationId,
     string ControlType,
     string Name,

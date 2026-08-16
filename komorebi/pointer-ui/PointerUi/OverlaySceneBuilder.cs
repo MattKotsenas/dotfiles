@@ -60,7 +60,6 @@ public static class OverlaySceneBuilder
         DesktopFixture fixture,
         IReadOnlyList<LabeledTarget> targets)
     {
-        var scale = fixture.Dpi / RenderingMetrics.DefaultDpi;
         var primitives = new List<ScenePrimitive>
         {
             new(
@@ -75,6 +74,7 @@ public static class OverlaySceneBuilder
 
         foreach (var window in fixture.Windows)
         {
+            var scale = window.Dpi / RenderingMetrics.DefaultDpi;
             primitives.Add(new ScenePrimitive(
                 ScenePrimitiveKind.Rectangle,
                 ToLocal(fixture, window.Bounds),
@@ -86,6 +86,7 @@ public static class OverlaySceneBuilder
             target => target.Label,
             StringComparer.Ordinal))
         {
+            var scale = target.Window.Dpi / RenderingMetrics.DefaultDpi;
             var center = ToLocal(fixture, target.Target.Bounds).Center;
             var width = (18 + target.Label.Length * 9) * scale;
             var height = 22 * scale;

@@ -20,6 +20,7 @@
         "width": 430,
         "height": 492
       },
+      "dpi": 144,
       "isForeground": true,
       "targets": [
         {
@@ -72,6 +73,7 @@
         "width": 430,
         "height": 458
       },
+      "dpi": 144,
       "isForeground": false,
       "targets": [
         {

@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="PointerUi.Discovery.Tests/PointerUi.Discovery.Tests.csproj" />
+  <Project Path="PointerUi.Recorder/PointerUi.Recorder.csproj" />
   <Project Path="PointerUi.Tests/PointerUi.Tests.csproj" />
+  <Project Path="PointerUi.Windows/PointerUi.Windows.csproj" />
   <Project Path="PointerUi/PointerUi.csproj" />
 </Solution>

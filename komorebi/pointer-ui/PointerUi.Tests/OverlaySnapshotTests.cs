@@ -7,6 +7,7 @@ public sealed class OverlaySnapshotTests
         VerifySceneAsync("indicator.json", "IndicatorScene");
 
     [Fact]
+    [Trait("Category", "Visual")]
     public Task IndicatorFrame_MatchesApprovedRendering() =>
         VerifyFrameAsync("indicator.json", "IndicatorFrame");
 
@@ -15,6 +16,7 @@ public sealed class OverlaySnapshotTests
         VerifySceneAsync("ui-hints.json", "UiHintScene");
 
     [Fact]
+    [Trait("Category", "Visual")]
     public Task UiHintFrame_MatchesApprovedRendering() =>
         VerifyFrameAsync("ui-hints.json", "UiHintFrame");
 
@@ -23,6 +25,7 @@ public sealed class OverlaySnapshotTests
         VerifySceneAsync("grid-hints.json", "GridHintScene");
 
     [Fact]
+    [Trait("Category", "Visual")]
     public Task GridHintFrame_MatchesApprovedRendering() =>
         VerifyFrameAsync("grid-hints.json", "GridHintFrame");
 

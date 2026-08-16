@@ -32,6 +32,7 @@ public sealed class FakeActionPlannerTests
             "background.exe",
             "background.main",
             false,
+            96,
             "target",
             "Button",
             "Target",

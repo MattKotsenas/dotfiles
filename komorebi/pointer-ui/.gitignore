@@ -1,5 +1,7 @@
 bin/
 obj/
+generated/
 .vs/
 TestResults/
+captures/
 *.received.*

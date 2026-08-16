@@ -2,14 +2,22 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefaultItemExcludes>$(DefaultItemExcludes);generated/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="PointerUi.Windows" />
+    <InternalsVisibleTo Include="PointerUi.Discovery.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Interop.UIAutomationClient" Version="10.19041.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PointerUi\PointerUi.csproj" />
   </ItemGroup>
 
 </Project>
