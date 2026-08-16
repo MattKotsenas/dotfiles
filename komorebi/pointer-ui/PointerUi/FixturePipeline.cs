@@ -25,6 +25,7 @@ public static class FixturePipeline
                 target.Window.ProcessKey,
                 target.Window.WindowRole,
                 target.Window.IsForeground,
+                target.Window.Dpi,
                 target.Target.AutomationId,
                 target.Target.ControlType,
                 target.Target.Name,

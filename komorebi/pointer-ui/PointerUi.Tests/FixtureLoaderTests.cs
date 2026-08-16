@@ -19,6 +19,7 @@ public sealed class FixtureLoaderTests
                   "processKey": "app.exe",
                   "windowRole": "app.main",
                   "bounds": { "x": 0, "y": 0, "width": 100, "height": 100 },
+                  "dpi": 96,
                   "isForeground": true,
                   "targets": [
                     {

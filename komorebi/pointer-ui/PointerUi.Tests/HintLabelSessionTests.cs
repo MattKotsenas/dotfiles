@@ -54,6 +54,7 @@ public sealed class HintLabelSessionTests
             window with
             {
                 Bounds = new PixelRect(100, 100, 700, 500),
+                Dpi = 192,
             },
             target with
             {
