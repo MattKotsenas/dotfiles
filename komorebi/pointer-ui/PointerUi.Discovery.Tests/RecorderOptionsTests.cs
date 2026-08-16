@@ -27,6 +27,7 @@ public sealed class RecorderOptionsTests
             "--allow-live-desktop-capture",
             "--output", "captures\\desktop.json",
             "--name", "desktop",
+            "--process", "PointerUi.TestApp.exe",
             "--max-depth", "12",
             "--max-elements-per-window", "2400",
             "--overwrite",
@@ -36,6 +37,9 @@ public sealed class RecorderOptionsTests
             result.Options);
         Assert.True(options.Overwrite);
         Assert.Equal("desktop", options.FixtureName);
+        Assert.Equal(
+            "PointerUi.TestApp.exe",
+            options.ProcessKey);
         Assert.Equal(12, options.Limits.MaxDepth);
         Assert.Equal(2400, options.Limits.MaxElementsPerWindow);
         Assert.EndsWith(

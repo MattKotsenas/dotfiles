@@ -150,7 +150,8 @@ internal static unsafe partial class NativeWindowCatalog
             GetSystemMetrics(SmCxVirtualScreen),
             GetSystemMetrics(SmCyVirtualScreen));
 
-    public static NativeWindowEnumerationResult Enumerate()
+    public static NativeWindowEnumerationResult Enumerate(
+        string? processKey)
     {
         var windows = new List<NativeWindowCandidate>();
         var diagnostics = new List<ProjectionDiagnostic>();
@@ -167,7 +168,8 @@ internal static unsafe partial class NativeWindowCatalog
                             foreground,
                             currentProcessId,
                             virtualDesktopManager,
-                            diagnostics),
+                            diagnostics,
+                            processKey),
                     windows,
                     diagnostics),
                 nint.Zero);
@@ -222,7 +224,8 @@ internal static unsafe partial class NativeWindowCatalog
         nint foreground,
         int currentProcessId,
         IVirtualDesktopManager virtualDesktopManager,
-        List<ProjectionDiagnostic> diagnostics)
+        List<ProjectionDiagnostic> diagnostics,
+        string? processKeyFilter)
     {
         GetWindowThreadProcessId(hwnd, out var rawProcessId);
         var processId = checked((int)rawProcessId);
@@ -262,6 +265,14 @@ internal static unsafe partial class NativeWindowCatalog
                 "process-unreadable",
                 $"0x{hwnd:X}",
                 exception.Message));
+            return null;
+        }
+        if (processKeyFilter is not null
+            && !string.Equals(
+                processKey,
+                processKeyFilter,
+                StringComparison.OrdinalIgnoreCase))
+        {
             return null;
         }
 

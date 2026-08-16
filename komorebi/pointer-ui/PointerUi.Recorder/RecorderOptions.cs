@@ -5,6 +5,7 @@ namespace PointerUi.Recorder;
 public sealed record RecorderOptions(
     string OutputPath,
     string FixtureName,
+    string? ProcessKey,
     CaptureLimits Limits,
     bool Overwrite)
 {
@@ -31,6 +32,7 @@ public sealed record RecorderParseResult(
     {
         string? output = null;
         string? name = null;
+        string? processKey = null;
         var maxDepth = CaptureLimits.Default.MaxDepth;
         var maxElements =
             CaptureLimits.Default.MaxElementsPerWindow;
@@ -59,6 +61,12 @@ public sealed record RecorderParseResult(
                     if (!TryValue(args, ref index, out name))
                     {
                         return Failure("--name requires a fixture name.");
+                    }
+                    break;
+                case "--process":
+                    if (!TryValue(args, ref index, out processKey))
+                    {
+                        return Failure("--process requires an executable name.");
                     }
                     break;
                 case "--max-depth":
@@ -114,6 +122,7 @@ public sealed record RecorderParseResult(
             new RecorderOptions(
                 Path.GetFullPath(output),
                 name,
+                processKey,
                 limits,
                 overwrite),
             null,
