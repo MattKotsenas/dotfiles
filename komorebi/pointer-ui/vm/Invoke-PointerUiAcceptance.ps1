@@ -110,6 +110,126 @@ function Open-DirectSession {
     )
 }
 
+# Stream artifacts through literal file access without wildcard expansion.
+function Copy-AcceptanceArtifact {
+    param(
+        $Session,
+        [string] $GuestPath,
+        [string] $HostPath,
+        [long] $ExpectedLength
+    )
+
+    New-Item `
+        -ItemType Directory `
+        -Path (Split-Path -Parent $HostPath) `
+        -Force |
+        Out-Null
+    $destination = [IO.File]::Open(
+        $HostPath,
+        [IO.FileMode]::Create,
+        [IO.FileAccess]::Write,
+        [IO.FileShare]::Read)
+    $written = 0L
+    try {
+        while ($written -lt $ExpectedLength) {
+            $remaining = $ExpectedLength - $written
+            $requested = [int] [Math]::Min(
+                [long](4MB),
+                $remaining)
+            $chunk = Invoke-Command `
+                -Session $Session `
+                -ScriptBlock {
+                    param(
+                        [string] $Path,
+                        [long] $Offset,
+                        [int] $Count
+                    )
+
+                    $source = [IO.File]::Open(
+                        $Path,
+                        [IO.FileMode]::Open,
+                        [IO.FileAccess]::Read,
+                        (
+                            [IO.FileShare]::ReadWrite -bor
+                            [IO.FileShare]::Delete
+                        ))
+                    try {
+                        $source.Seek(
+                            $Offset,
+                            [IO.SeekOrigin]::Begin) |
+                            Out-Null
+                        $buffer = [Array]::CreateInstance(
+                            [byte],
+                            $Count)
+                        $total = 0
+                        while ($total -lt $Count) {
+                            $readCount = $source.Read(
+                                $buffer,
+                                $total,
+                                $Count - $total)
+                            if ($readCount -eq 0) {
+                                break
+                            }
+                            $total += $readCount
+                        }
+                        if ($total -eq $Count) {
+                            [pscustomobject]@{
+                                Bytes = $buffer
+                            }
+                        } else {
+                            $partial = [Array]::CreateInstance(
+                                [byte],
+                                $total)
+                            [Array]::Copy(
+                                $buffer,
+                                $partial,
+                                $total)
+                            [pscustomobject]@{
+                                Bytes = $partial
+                            }
+                        }
+                    } finally {
+                        $source.Dispose()
+                    }
+                } `
+                -ArgumentList @(
+                    $GuestPath,
+                    $written,
+                    $requested
+                ) `
+                -ErrorAction Stop
+            if ($chunk.Bytes -isnot [byte[]]) {
+                throw (
+                    "Artifact transfer returned " +
+                    "'$($chunk.Bytes.GetType().FullName)' " +
+                    "instead of 'System.Byte[]'."
+                )
+            }
+            $bytes = $chunk.Bytes
+            if ($bytes.Length -eq 0) {
+                throw (
+                    "Artifact ended before $ExpectedLength bytes: " +
+                    "'$GuestPath'."
+                )
+            }
+            $destination.Write(
+                $bytes,
+                0,
+                $bytes.Length)
+            $written += $bytes.Length
+        }
+    } finally {
+        $destination.Dispose()
+    }
+
+    if ($written -ne $ExpectedLength) {
+        throw (
+            "Artifact transfer length mismatch for '$GuestPath': " +
+            "expected $ExpectedLength bytes, wrote $written."
+        )
+    }
+}
+
 try {
     if (-not $ReuseVM) {
         if ($vm.State -ne 'Off') {
@@ -144,17 +264,44 @@ try {
         $ErrorActionPreference = 'Stop'
         Set-StrictMode -Version Latest
 
-        if (@(git -C $RepoPath status --porcelain).Count -ne 0) {
-            throw "The guest checkout is dirty: $RepoPath"
-        }
+        $previousErrorActionPreference = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = 'Continue'
+            $gitStatus = @(
+                git -C $RepoPath status --porcelain 2> $null
+            )
+            $gitStatusExitCode = $LASTEXITCODE
+            if ($gitStatusExitCode -ne 0) {
+                $gitStatusError = @(
+                    git -C $RepoPath status --porcelain 2>&1
+                )
+                $detail = if ($gitStatusError.Count -gt 0) {
+                    $gitStatusError -join "`n"
+                } else {
+                    'No error detail was written.'
+                }
+                throw "Git status failed in the guest: $detail"
+            }
+            if ($gitStatus.Count -ne 0) {
+                throw "The guest checkout is dirty: $RepoPath"
+            }
 
-        git -C $RepoPath fetch origin
-        if ($LASTEXITCODE -ne 0) {
-            throw 'Git fetch failed in the guest.'
-        }
-        git -C $RepoPath checkout --detach $Revision
-        if ($LASTEXITCODE -ne 0) {
-            throw "Guest checkout could not select $Revision."
+            $gitFetch = @(git -C $RepoPath fetch origin 2>&1)
+            if ($LASTEXITCODE -ne 0) {
+                throw "Git fetch failed in the guest: $($gitFetch -join "`n")"
+            }
+
+            $gitCheckout = @(
+                git -C $RepoPath checkout --detach $Revision 2>&1
+            )
+            if ($LASTEXITCODE -ne 0) {
+                throw (
+                    "Guest checkout could not select ${Revision}: " +
+                    ($gitCheckout -join "`n")
+                )
+            }
+        } finally {
+            $ErrorActionPreference = $previousErrorActionPreference
         }
 
         New-Item -ItemType Directory -Path $Artifacts -Force |
@@ -176,11 +323,18 @@ try {
             throw "The interactive acceptance user is not logged in: $InteractiveUser"
         }
 
-        dotnet build $solution -c Release --nologo *>&1 |
-            Set-Content -LiteralPath (
-                Join-Path $Artifacts 'build.log'
-            )
-        if ($LASTEXITCODE -ne 0) {
+        $previousErrorActionPreference = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = 'Continue'
+            dotnet build $solution -c Release --nologo *>&1 |
+                Set-Content -LiteralPath (
+                    Join-Path $Artifacts 'build.log'
+                )
+            $buildExitCode = $LASTEXITCODE
+        } finally {
+            $ErrorActionPreference = $previousErrorActionPreference
+        }
+        if ($buildExitCode -ne 0) {
             throw 'Acceptance build failed.'
         }
 
@@ -205,7 +359,7 @@ try {
             -Argument $argument
         $principal = New-ScheduledTaskPrincipal `
             -UserId $InteractiveUser `
-            -LogonType InteractiveToken `
+            -LogonType Interactive `
             -RunLevel Limited
         $settings = New-ScheduledTaskSettingsSet `
             -ExecutionTimeLimit (
@@ -270,40 +424,59 @@ try {
         $acceptanceError = $_
     }
 
-    $artifactCount = Invoke-Command `
-        -Session $session `
-        -ScriptBlock {
-            param([string] $Path)
-            if (Test-Path -LiteralPath $Path) {
-                @(Get-ChildItem -LiteralPath $Path -Force).Count
-            } else {
-                0
+    try {
+        $artifactFiles = @(
+            Invoke-Command `
+                -Session $session `
+                -ScriptBlock {
+                    param([string] $Path)
+                    if (Test-Path -LiteralPath $Path) {
+                        $prefix = $Path.TrimEnd('\') + '\'
+                        Get-ChildItem `
+                            -LiteralPath $Path `
+                            -Recurse `
+                            -Force `
+                            -File |
+                            ForEach-Object {
+                                [pscustomobject]@{
+                                    RelativePath =
+                                        $_.FullName.Substring(
+                                            $prefix.Length)
+                                    Length = $_.Length
+                                }
+                            }
+                    }
+                } `
+                -ArgumentList $guestArtifacts
+        )
+        if ($artifactFiles.Count -gt 0) {
+            foreach ($artifactFile in $artifactFiles) {
+                Copy-AcceptanceArtifact `
+                    -Session $session `
+                    -GuestPath (
+                        Join-Path `
+                            $guestArtifacts `
+                            $artifactFile.RelativePath
+                    ) `
+                    -HostPath (
+                        Join-Path `
+                            $HostArtifacts `
+                            $artifactFile.RelativePath
+                    ) `
+                    -ExpectedLength $artifactFile.Length
             }
-        } `
-        -ArgumentList $guestArtifacts
-    if ($artifactCount -gt 0) {
-        New-Item `
-            -ItemType Directory `
-            -Path $HostArtifacts `
-            -Force |
-            Out-Null
-        try {
-            Copy-Item `
-                -FromSession $session `
-                -Path (Join-Path $guestArtifacts '*') `
-                -Destination $HostArtifacts `
-                -Recurse `
-                -Force
             Write-Output "Acceptance artifacts: $HostArtifacts"
-        } catch {
-            if ($null -eq $acceptanceError) {
-                throw
-            }
-            Write-Warning (
+        }
+    } catch {
+        if ($null -eq $acceptanceError) {
+            throw
+        }
+        Write-Warning `
+            -Message (
                 "Artifact copy also failed: {0}" -f
                 $_.Exception.Message
-            )
-        }
+            ) `
+            -WarningAction Continue
     }
     if ($null -ne $acceptanceError) {
         throw $acceptanceError
