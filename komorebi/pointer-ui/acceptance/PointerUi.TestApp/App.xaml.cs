@@ -52,11 +52,9 @@ public partial class App : Application
         Directory.CreateDirectory(directory);
         _commandWatcher = new ScenarioCommandWatcher(
             options.CommandFile,
-            () => Dispatcher.BeginInvoke(
+            command => Dispatcher.BeginInvoke(
                 () =>
                 {
-                    var command = File.ReadAllText(
-                        options.CommandFile).Trim();
                     if (!string.Equals(
                             command,
                             "mutate",

@@ -12,6 +12,26 @@ public sealed class ScenarioCommandWatcherTests
     public Task AtomicRename_DeliversCommandOnce() =>
         AssertDeliveryAsync(atomicRename: true);
 
+    [Fact]
+    public void IOException_RetriesCommandRead()
+    {
+        var attempts = 0;
+        var command = ScenarioCommandWatcher.ReadWithRetry(
+            () =>
+            {
+                if (Interlocked.Increment(ref attempts) == 1)
+                {
+                    throw new IOException(
+                        "The command file is still locked.");
+                }
+
+                return "mutate";
+            });
+
+        Assert.Equal("mutate", command);
+        Assert.Equal(2, attempts);
+    }
+
     private static async Task AssertDeliveryAsync(
         bool atomicRename)
     {
@@ -21,7 +41,7 @@ public sealed class ScenarioCommandWatcherTests
         Directory.CreateDirectory(root);
         var command = Path.Combine(root, "command.txt");
         var temporary = $"{command}.tmp";
-        var delivered = new TaskCompletionSource(
+        var delivered = new TaskCompletionSource<string>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         var count = 0;
 
@@ -29,10 +49,10 @@ public sealed class ScenarioCommandWatcherTests
         {
             using var watcher = new ScenarioCommandWatcher(
                 command,
-                () =>
+                value =>
                 {
                     Interlocked.Increment(ref count);
-                    delivered.TrySetResult();
+                    delivered.TrySetResult(value);
                 });
             watcher.Start();
 
@@ -45,8 +65,10 @@ public sealed class ScenarioCommandWatcherTests
             {
                 File.WriteAllText(command, "mutate");
             }
-            await delivered.Task.WaitAsync(
-                TimeSpan.FromSeconds(5));
+            Assert.Equal(
+                "mutate",
+                await delivered.Task.WaitAsync(
+                    TimeSpan.FromSeconds(5)));
 
             Assert.Equal(1, count);
         }
