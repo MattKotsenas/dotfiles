@@ -28,8 +28,25 @@ public sealed class HintLabelSession
                 $"Duplicate logical target identity '{duplicate.Key}'.");
         }
 
+        var labelLength = HintLabelSequence.RequiredLength(
+            materialized.Count);
+        if (_labels.Values.Any(
+                label => label.Length != labelLength))
+        {
+            _labels.Clear();
+        }
+        var currentIds = materialized
+            .Select(candidate => candidate.LogicalId)
+            .ToHashSet();
+        foreach (var removed in _labels.Keys
+            .Where(id => !currentIds.Contains(id))
+            .ToList())
+        {
+            _labels.Remove(removed);
+        }
         var used = _labels.Values.ToHashSet(StringComparer.Ordinal);
-        using var available = HintLabelSequence.Generate()
+        using var available = HintLabelSequence.Generate(
+                labelLength)
             .Where(label => !used.Contains(label))
             .GetEnumerator();
 
@@ -76,6 +93,41 @@ public static class HintLabelSequence
             }
         }
     }
+
+    public static IEnumerable<string> Generate(int length)
+    {
+        if (length <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(length));
+        }
+        return Generate(
+            prefix: string.Empty,
+            remaining: length);
+    }
+
+    public static int RequiredLength(int count)
+    {
+        if (count < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(count));
+        }
+
+        var capacity = Symbols.Length;
+        var length = 1;
+        while (count > capacity)
+        {
+            capacity = checked(capacity * Symbols.Length);
+            length++;
+        }
+        return length;
+    }
+
+    public static bool IsSymbol(string value) =>
+        Symbols.Contains(
+            value,
+            StringComparer.Ordinal);
 
     private static IEnumerable<string> Generate(
         string prefix,
