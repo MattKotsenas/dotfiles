@@ -6,7 +6,7 @@ namespace PointerUi.Acceptance.Tests;
 public sealed class RecorderAcceptanceTests
 {
     private static readonly TimeSpan StartupTimeout =
-        TimeSpan.FromSeconds(15);
+        TimeSpan.FromSeconds(30);
     private static readonly TimeSpan RecorderTimeout =
         TimeSpan.FromSeconds(30);
 

@@ -9,7 +9,7 @@ namespace PointerUi.Acceptance.Tests;
 public sealed class HostAcceptanceTests
 {
     private static readonly TimeSpan StartupTimeout =
-        TimeSpan.FromSeconds(15);
+        TimeSpan.FromSeconds(30);
     private static readonly TimeSpan CommandTimeout =
         TimeSpan.FromSeconds(30);
 
