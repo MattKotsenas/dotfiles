@@ -74,19 +74,27 @@ public static class WpfSceneRenderer
         }
 
         var scale = RenderingMetrics.DefaultDpi / displayDpi;
-        drawing.PushTransform(new MatrixTransform(
-            scale,
-            0,
-            0,
-            scale,
-            -viewportOrigin.X * scale,
-            -viewportOrigin.Y * scale));
+        drawing.PushTransform(
+            new ScaleTransform(scale, scale));
+        var translated = viewportOrigin.X != 0
+            || viewportOrigin.Y != 0;
+        if (translated)
+        {
+            drawing.PushTransform(
+                new TranslateTransform(
+                    -viewportOrigin.X,
+                    -viewportOrigin.Y));
+        }
         foreach (var primitive in scene.Primitives)
         {
             DrawPrimitive(
                 drawing,
                 primitive,
                 displayDpi);
+        }
+        if (translated)
+        {
+            drawing.Pop();
         }
         drawing.Pop();
     }
