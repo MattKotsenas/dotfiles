@@ -29,30 +29,64 @@ public static class Program
             Environment.SetEnvironmentVariable(
                 AcceptanceContract.ArtifactsPathVariable,
                 options.Artifacts);
-            var result = await DotnetProcess.RunAsync(
-                workingDirectory: null,
-                options.ProcessTimeout,
-                "test",
-                options.Solution,
-                "-c",
-                "Release",
-                "--no-build",
-                "--nologo",
-                "--filter",
-                "Category=VmAcceptance|Category=Visual",
-                "--results-directory",
-                Path.Combine(options.Artifacts, "TestResults"),
-                "--logger",
-                "trx",
-                "--blame-hang-timeout",
-                $"{options.BlameTimeout.TotalMinutes:0}m");
+            var root = Path.GetDirectoryName(options.Solution)
+                ?? throw new InvalidOperationException(
+                    "Acceptance solution has no directory.");
+            var invocations = new[]
+            {
+                new TestInvocation(
+                    "recorder",
+                    Path.Combine(
+                        root,
+                        "acceptance",
+                        "PointerUi.Acceptance.Tests",
+                        "PointerUi.Acceptance.Tests.csproj"),
+                    "FullyQualifiedName=PointerUi.Acceptance.Tests.RecorderAcceptanceTests.AllWindowsScenario_ProducesKnownFixture"),
+                new TestInvocation(
+                    "visual",
+                    Path.Combine(
+                        root,
+                        "PointerUi.Tests",
+                        "PointerUi.Tests.csproj"),
+                    "Category=Visual"),
+                new TestInvocation(
+                    "host",
+                    Path.Combine(
+                        root,
+                        "acceptance",
+                        "PointerUi.Acceptance.Tests",
+                        "PointerUi.Acceptance.Tests.csproj"),
+                    "FullyQualifiedName=PointerUi.Acceptance.Tests.HostAcceptanceTests.Host_EndToEndLifecycleRendersTracksAndRecovers"),
+            };
+            var results = new List<(
+                TestInvocation Invocation,
+                DotnetProcessResult Result)>();
+            foreach (var invocation in invocations)
+            {
+                results.Add((
+                    invocation,
+                    await RunTestAsync(
+                        invocation,
+                        options)));
+            }
             File.WriteAllText(
                 Path.Combine(options.Artifacts, "test.log"),
-                result.Output + result.Error);
-            if (result.ExitCode != 0)
+                string.Join(
+                    Environment.NewLine,
+                    results.Select(item =>
+                        $"=== {item.Invocation.Name} ==="
+                        + Environment.NewLine
+                        + item.Result.Output
+                        + item.Result.Error)));
+            var failed = results
+                .Where(item => item.Result.ExitCode != 0)
+                .Select(item => item.Invocation.Name)
+                .ToList();
+            if (failed.Count > 0)
             {
                 throw new InvalidOperationException(
-                    $"Acceptance tests exited {result.ExitCode}.");
+                    $"Acceptance tests failed: "
+                    + string.Join(", ", failed));
             }
 
             File.WriteAllText(options.ResultPath, "0");
@@ -73,7 +107,36 @@ public static class Program
         exception is OutOfMemoryException
         or StackOverflowException
         or AccessViolationException;
+
+    private static Task<DotnetProcessResult> RunTestAsync(
+        TestInvocation invocation,
+        RunnerOptions options) =>
+        DotnetProcess.RunAsync(
+            workingDirectory: null,
+            options.ProcessTimeout,
+            "test",
+            invocation.Project,
+            "-c",
+            "Release",
+            "--no-build",
+            "--nologo",
+            "--filter",
+            invocation.Filter,
+            "--results-directory",
+            Path.Combine(
+                options.Artifacts,
+                "TestResults",
+                invocation.Name),
+            "--logger",
+            "trx",
+            "--blame-hang-timeout",
+            $"{options.BlameTimeout.TotalMinutes:0}m");
 }
+
+internal sealed record TestInvocation(
+    string Name,
+    string Project,
+    string Filter);
 
 internal sealed record RunnerOptions(
     string Solution,
