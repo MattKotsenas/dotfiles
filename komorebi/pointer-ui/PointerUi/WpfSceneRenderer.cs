@@ -37,15 +37,11 @@ public static class WpfSceneRenderer
         var visual = new DrawingVisual();
         using (var drawing = visual.RenderOpen())
         {
-            drawing.PushTransform(
-                new ScaleTransform(
-                    RenderingMetrics.DefaultDpi / scene.Dpi,
-                    RenderingMetrics.DefaultDpi / scene.Dpi));
-            foreach (var primitive in scene.Primitives)
-            {
-                Draw(drawing, primitive, scene.Dpi);
-            }
-            drawing.Pop();
+            Draw(
+                drawing,
+                scene,
+                new PixelPoint(0, 0),
+                scene.Dpi);
         }
 
         var bitmap = new RenderTargetBitmap(
@@ -63,7 +59,39 @@ public static class WpfSceneRenderer
         return stream.ToArray();
     }
 
-    private static void Draw(
+    public static void Draw(
+        DrawingContext drawing,
+        OverlayScene scene,
+        PixelPoint viewportOrigin,
+        double displayDpi)
+    {
+        ArgumentNullException.ThrowIfNull(drawing);
+        ArgumentNullException.ThrowIfNull(scene);
+        if (displayDpi <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(displayDpi));
+        }
+
+        var scale = RenderingMetrics.DefaultDpi / displayDpi;
+        drawing.PushTransform(new MatrixTransform(
+            scale,
+            0,
+            0,
+            scale,
+            -viewportOrigin.X * scale,
+            -viewportOrigin.Y * scale));
+        foreach (var primitive in scene.Primitives)
+        {
+            DrawPrimitive(
+                drawing,
+                primitive,
+                displayDpi);
+        }
+        drawing.Pop();
+    }
+
+    private static void DrawPrimitive(
         DrawingContext drawing,
         ScenePrimitive primitive,
         double dpi)

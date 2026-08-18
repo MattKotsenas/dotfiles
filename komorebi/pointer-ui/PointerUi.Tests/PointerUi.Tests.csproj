@@ -23,6 +23,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PointerUi\PointerUi.csproj" />
+    <ProjectReference Include="..\PointerUi.Protocol\PointerUi.Protocol.csproj" />
+    <ProjectReference Include="..\PointerUi.Host\PointerUi.Host.csproj" />
   </ItemGroup>
 
   <ItemGroup>

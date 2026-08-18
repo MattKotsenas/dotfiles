@@ -1,0 +1,22 @@
+[Unit]
+Name = "pointer-ui"
+Description = "hook-free pointer overlays and UI Automation hints"
+
+[Service]
+Kind = "Simple"
+Autostart = false
+Restart = "OnFailure"
+RestartSec = 2
+
+[Service.ExecStart]
+Executable = "dotnet.exe"
+Arguments = [
+    "run",
+    "--project",
+    "$USERPROFILE/.config/komorebi/pointer-ui/PointerUi.Host/PointerUi.Host.csproj",
+    "-c",
+    "Release",
+    "--no-launch-profile",
+    "--verbosity",
+    "quiet",
+]

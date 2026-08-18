@@ -22,6 +22,11 @@
     <ProjectReference Include="..\..\PointerUi\PointerUi.csproj" />
     <ProjectReference Include="..\PointerUi.Acceptance.Runner\PointerUi.Acceptance.Runner.csproj" />
     <ProjectReference Include="..\PointerUi.TestApp\PointerUi.TestApp.csproj" />
+    <ProjectReference Include="..\..\PointerUi.Protocol\PointerUi.Protocol.csproj" />
+    <ProjectReference Include="..\..\PointerUi.Windows\PointerUi.Windows.csproj" />
+    <ProjectReference
+      Include="..\..\PointerUi.Host\PointerUi.Host.csproj"
+      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

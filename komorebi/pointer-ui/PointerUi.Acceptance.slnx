@@ -4,7 +4,10 @@
     <Project Path="acceptance/PointerUi.Acceptance.Tests/PointerUi.Acceptance.Tests.csproj" />
     <Project Path="acceptance/PointerUi.TestApp/PointerUi.TestApp.csproj" />
   </Folder>
+  <Project Path="PointerUi.Host/PointerUi.Host.csproj" />
+  <Project Path="PointerUi.Protocol/PointerUi.Protocol.csproj" />
   <Project Path="PointerUi.Recorder/PointerUi.Recorder.csproj" />
+  <Project Path="PointerUi.Tests/PointerUi.Tests.csproj" />
   <Project Path="PointerUi.Windows/PointerUi.Windows.csproj" />
   <Project Path="PointerUi/PointerUi.csproj" />
 </Solution>

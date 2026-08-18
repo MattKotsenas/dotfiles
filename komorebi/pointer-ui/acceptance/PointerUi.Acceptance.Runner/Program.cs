@@ -39,11 +39,11 @@ public static class Program
                 "--no-build",
                 "--nologo",
                 "--filter",
-                "Category=VmAcceptance",
+                "Category=VmAcceptance|Category=Visual",
                 "--results-directory",
                 Path.Combine(options.Artifacts, "TestResults"),
                 "--logger",
-                "trx;LogFileName=pointer-ui-acceptance.trx",
+                "trx",
                 "--blame-hang-timeout",
                 $"{options.BlameTimeout.TotalMinutes:0}m");
             File.WriteAllText(

@@ -44,6 +44,18 @@ public sealed class HintLabelSessionTests
     }
 
     [Fact]
+    public void LabelSequence_ExtendsPastTwoCharacters()
+    {
+        var labels = HintLabelSequence.Generate()
+            .Take(703)
+            .ToList();
+
+        Assert.Equal(703, labels.Distinct().Count());
+        Assert.Equal(2, labels[701].Length);
+        Assert.Equal(3, labels[702].Length);
+    }
+
+    [Fact]
     public void Identity_IgnoresGeometryAndMutableNameWhenAutomationIdExists()
     {
         var fixture = LoadUiHints();

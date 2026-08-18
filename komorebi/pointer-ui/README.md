@@ -1,7 +1,7 @@
-# Pointer UI fixture renderer
+# Pointer UI
 
-This project defines the testable rendering and decision core for the
-keyboard-driven pointer UI, with no live input, hooks, or windowing.
+Pointer UI provides a testable rendering and decision core, read-only Windows
+discovery, and a resident overlay host.
 
 `PointerUi` loads versioned desktop fixtures, derives logical target IDs,
 assigns hint labels, builds overlay scenes, plans fake actions, and renders
@@ -33,6 +33,22 @@ fixture, discovery, and policy tests without them:
 ```powershell
 dotnet test .\PointerUi.slnx --filter "Category!=Visual"
 ```
+
+## Resident host
+
+`PointerUi.Host` is a hook-free WPF process. It owns one click-through,
+no-activate overlay window per monitor and accepts versioned commands over a
+current-user, Windows-session-scoped named pipe.
+
+The WPM unit is disabled by default. Production routing uses EventListeners
+and Mousemaster.
+
+VM acceptance starts the host directly and verifies
+indicator, UI-hint, grid, and hidden states.
+
+Grid hints use physical virtual-desktop pixels at 96 DPI.
+
+## Visual snapshots
 
 Received snapshots require human inspection before replacing their verified
 counterparts.

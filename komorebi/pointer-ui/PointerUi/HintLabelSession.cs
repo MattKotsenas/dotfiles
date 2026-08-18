@@ -66,16 +66,34 @@ public static class HintLabelSequence
 
     public static IEnumerable<string> Generate()
     {
-        foreach (var symbol in Symbols)
+        for (var length = 1; ; length++)
         {
-            yield return symbol;
+            foreach (var label in Generate(
+                prefix: string.Empty,
+                remaining: length))
+            {
+                yield return label;
+            }
+        }
+    }
+
+    private static IEnumerable<string> Generate(
+        string prefix,
+        int remaining)
+    {
+        if (remaining == 0)
+        {
+            yield return prefix;
+            yield break;
         }
 
-        foreach (var first in Symbols)
+        foreach (var symbol in Symbols)
         {
-            foreach (var second in Symbols)
+            foreach (var label in Generate(
+                prefix + symbol,
+                remaining - 1))
             {
-                yield return first + second;
+                yield return label;
             }
         }
     }
