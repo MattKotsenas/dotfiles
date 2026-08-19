@@ -38,7 +38,9 @@ public sealed class KeymapBuilder
     public KeymapBuilder PointerMode(
         string entryKey,
         string hintKey,
-        Action<LayerBuilder> configure)
+        Action<LayerBuilder> configure,
+        PointerHintProvider hintProvider =
+            PointerHintProvider.Mousemaster)
     {
         var layer = new LayerBuilder("pointer");
         configure(layer);
@@ -46,7 +48,8 @@ public sealed class KeymapBuilder
             entryKey,
             hintKey,
             layer.ToList(),
-            layer.LayerNote);
+            layer.LayerNote,
+            hintProvider);
         return this;
     }
 

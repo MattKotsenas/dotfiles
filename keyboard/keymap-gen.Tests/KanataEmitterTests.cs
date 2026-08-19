@@ -96,6 +96,102 @@ public class KanataEmitterTests
     }
 
     [Fact]
+    public void PointerUiProvider_EmitsPersistentHintInput()
+    {
+        var keymap = new KeymapBuilder()
+            .Reserve(global: ["spc"])
+            .WmBase(_ => { })
+            .PointerMode(
+                "spc",
+                "f",
+                b => b.KanataLiteral("h", "h"),
+                PointerHintProvider.PointerUi)
+            .Overlay("terminal", _ => { })
+            .Overlay("edge", _ => { })
+            .Overlay("teams", _ => { })
+            .Overlay("codeflow", _ => { })
+            .Build();
+        var output = KanataEmitter.Emit(keymap);
+        var layer = ExtractLayer(
+            output,
+            "pointer-hint-ui");
+
+        Assert.Contains(
+            "a (push-msg \"pointer.hint.key.A\")",
+            layer);
+        Assert.Contains(
+            "m (push-msg \"pointer.hint.key.M\")",
+            layer);
+        Assert.Contains(
+            "bspc (push-msg \"pointer.hint.backspace\")",
+            layer);
+        Assert.Contains(
+            "esc (multi (push-msg \"pointer.hint.cancel\") (layer-switch pointer-exit))",
+            layer);
+        Assert.Contains(
+            "caps (multi (push-msg \"pointer.hint.cancel\") (layer-switch pointer-exit))",
+            layer);
+        Assert.Contains("ralt ralt", layer);
+        Assert.Contains("___ XX", layer);
+
+        foreach (var suffix in new[]
+        {
+            string.Empty,
+            "-terminal",
+            "-edge",
+            "-teams",
+            "-codeflow",
+        })
+        {
+            foreach (var kind in new[]
+            {
+                "ui",
+                "grid",
+            })
+            {
+                var hintLayer = ExtractLayer(
+                    output,
+                    $"pointer-hint-{kind}{suffix}");
+                Assert.Contains(
+                    $"(layer-switch pointer-exit{suffix})",
+                    hintLayer);
+                var expected = "ASDFGHJKLQWERTYUIOPZXCVBNM"
+                    .Select(key =>
+                        $"{char.ToLowerInvariant(key)} "
+                        + $"(push-msg \"pointer.hint.key.{key}\")")
+                    .ToHashSet(StringComparer.Ordinal);
+                var actual = hintLayer
+                    .Split(
+                        ['\r', '\n'],
+                        StringSplitOptions.RemoveEmptyEntries)
+                    .Select(line => line.Trim())
+                    .Where(line => line.Contains(
+                        "pointer.hint.key.",
+                        StringComparison.Ordinal))
+                    .ToHashSet(StringComparer.Ordinal);
+                Assert.Equal(expected, actual);
+            }
+        }
+    }
+
+    [Fact]
+    public void ProductionKeymap_DefaultsToMousemasterFallbackLayers()
+    {
+        var output = KanataEmitter.Emit(
+            ProductionKeymap.Build());
+        var layer = ExtractLayer(
+            output,
+            "pointer-hint-ui");
+
+        Assert.DoesNotContain(
+            "pointer.hint.key.",
+            layer);
+        Assert.Contains(
+            "caps (layer-switch wm)",
+            layer);
+    }
+
+    [Fact]
     public void ProductionKeymap_PointerModePassesShortcutsAndNavigation()
     {
         var layer = ExtractLayer(

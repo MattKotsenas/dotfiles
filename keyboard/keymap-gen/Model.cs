@@ -49,7 +49,15 @@ public sealed record PointerMode(
     string EntryKey,
     string HintKey,
     IReadOnlyList<Binding> Bindings,
-    string? Note = null);
+    string? Note = null,
+    PointerHintProvider HintProvider =
+        PointerHintProvider.Mousemaster);
+
+public enum PointerHintProvider
+{
+    Mousemaster,
+    PointerUi,
+}
 
 /// <summary>
 /// An overlay is a layer activated by the bridge based on the focused app

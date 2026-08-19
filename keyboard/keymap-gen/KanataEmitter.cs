@@ -63,11 +63,17 @@ internal static class KanataEmitter
         if (k.PointerMode is not null)
         {
             EmitPointerLayer(sb, k, overlayName: null);
-            EmitPointerDepartureLayers(sb, overlayName: null);
+            EmitPointerDepartureLayers(
+                sb,
+                overlayName: null,
+                k.PointerMode.HintProvider);
             foreach (var ov in k.Overlays)
             {
                 EmitPointerLayer(sb, k, ov.Name);
-                EmitPointerDepartureLayers(sb, ov.Name);
+                EmitPointerDepartureLayers(
+                    sb,
+                    ov.Name,
+                    k.PointerMode.HintProvider);
             }
         }
 
@@ -347,13 +353,35 @@ internal static class KanataEmitter
 
     private static void EmitPointerDepartureLayers(
         StringBuilder sb,
-        string? overlayName)
+        string? overlayName,
+        PointerHintProvider hintProvider)
     {
         var suffix = overlayName is null ? string.Empty : $"-{overlayName}";
         var wmTarget = overlayName is null ? "wm" : $"wm-{overlayName}";
-        EmitPointerFallbackLayer(sb, $"pointer-exit{suffix}", wmTarget);
-        EmitPointerFallbackLayer(sb, $"pointer-hint-ui{suffix}", wmTarget);
-        EmitPointerFallbackLayer(sb, $"pointer-hint-grid{suffix}", wmTarget);
+        var exitLayer = $"pointer-exit{suffix}";
+        EmitPointerFallbackLayer(sb, exitLayer, wmTarget);
+        if (hintProvider is PointerHintProvider.PointerUi)
+        {
+            EmitPointerInputLayer(
+                sb,
+                $"pointer-hint-ui{suffix}",
+                exitLayer);
+            EmitPointerInputLayer(
+                sb,
+                $"pointer-hint-grid{suffix}",
+                exitLayer);
+        }
+        else
+        {
+            EmitPointerFallbackLayer(
+                sb,
+                $"pointer-hint-ui{suffix}",
+                wmTarget);
+            EmitPointerFallbackLayer(
+                sb,
+                $"pointer-hint-grid{suffix}",
+                wmTarget);
+        }
     }
 
     private static void EmitPointerFallbackLayer(
@@ -366,6 +394,37 @@ internal static class KanataEmitter
             $";; {layerName}: typing fallback while the bridge restores the latest base context.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"(deflayermap ({layerName})");
         sb.AppendLine(CultureInfo.InvariantCulture, $"  caps (layer-switch {wmTarget})");
+        sb.AppendLine(")");
+        sb.AppendLine();
+    }
+
+    private static void EmitPointerInputLayer(
+        StringBuilder sb,
+        string layerName,
+        string exitLayer)
+    {
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $";; {layerName}: provider-owned hint input.");
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $"(deflayermap ({layerName})");
+        foreach (var key in "asdfghjklqwertyuiopzxcvbnm")
+        {
+            sb.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"  {key} (push-msg \"pointer.hint.key.{char.ToUpperInvariant(key)}\")");
+        }
+        sb.AppendLine(
+            "  bspc (push-msg \"pointer.hint.backspace\")");
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $"  esc (multi (push-msg \"pointer.hint.cancel\") (layer-switch {exitLayer}))");
+        sb.AppendLine(
+            CultureInfo.InvariantCulture,
+            $"  caps (multi (push-msg \"pointer.hint.cancel\") (layer-switch {exitLayer}))");
+        EmitModifierPassthrough(sb);
+        sb.AppendLine("  ___ XX");
         sb.AppendLine(")");
         sb.AppendLine();
     }
