@@ -235,6 +235,243 @@ public sealed class PointerUiCommandServerTests
         }
     }
 
+    [Fact]
+    public async Task Input_DoesNotSupersedePendingMode()
+    {
+        var modeAtGate = NewSignal();
+        var releaseMode = NewSignal();
+        var admitted = new List<long>();
+        var fixture = ServerFixture.Create(
+            (work, _) => Task.FromResult(
+                Applied(work.Request)),
+            onAdmit: request =>
+            {
+                lock (admitted)
+                {
+                    admitted.Add(request.Sequence);
+                }
+            });
+        fixture.Server.BeforeAdmissionGate = request =>
+        {
+            if (request.Sequence == 1)
+            {
+                modeAtGate.TrySetResult();
+                releaseMode.Task.Wait(
+                    TimeSpan.FromSeconds(5));
+            }
+        };
+        await using var client = await fixture.ConnectAsync();
+
+        try
+        {
+            await PointerUiProtocol.WriteAsync(
+                client,
+                Request(1, PointerUiMode.UiHints));
+            await modeAtGate.Task.WaitAsync(
+                TimeSpan.FromSeconds(5));
+            await PointerUiProtocol.WriteAsync(
+                client,
+                new PointerUiRequest(
+                    PointerUiProtocol.CurrentVersion,
+                    2,
+                    PointerUiMode.UiHints,
+                    new PointerUiInput(
+                        PointerUiInputKind.Cancel,
+                        0)));
+
+            var input =
+                await PointerUiProtocol.ReadResponseAsync(
+                    client)
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(2, input.Sequence);
+            Assert.True(input.Applied);
+
+            releaseMode.TrySetResult();
+            var mode =
+                await PointerUiProtocol.ReadResponseAsync(
+                    client)
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(1, mode.Sequence);
+            Assert.True(mode.Applied);
+            lock (admitted)
+            {
+                Assert.Equal([2L, 1L], admitted);
+            }
+        }
+        finally
+        {
+            releaseMode.TrySetResult();
+            await fixture.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task SupersededModeError_IsSuppressed()
+    {
+        var firstStarted = NewSignal();
+        var releaseFirst = NewSignal();
+        var fixture = ServerFixture.Create(
+            async (work, cancellationToken) =>
+            {
+                if (work.Request.Sequence == 1)
+                {
+                    firstStarted.TrySetResult();
+                    await releaseFirst.Task.WaitAsync(
+                        cancellationToken);
+                    return new PointerUiResponse(
+                        PointerUiProtocol.CurrentVersion,
+                        1,
+                        work.Request.Mode,
+                        false,
+                        0,
+                        "stale failure",
+                        false);
+                }
+                return Applied(work.Request);
+            });
+        await using var client = await fixture.ConnectAsync();
+
+        try
+        {
+            await PointerUiProtocol.WriteAsync(
+                client,
+                Request(1, PointerUiMode.UiHints));
+            await firstStarted.Task.WaitAsync(
+                TimeSpan.FromSeconds(5));
+            await PointerUiProtocol.WriteAsync(
+                client,
+                Request(2, PointerUiMode.Hidden));
+            var hidden =
+                await PointerUiProtocol.ReadResponseAsync(
+                    client);
+            Assert.True(hidden.Applied);
+
+            releaseFirst.TrySetResult();
+            var stale =
+                await PointerUiProtocol.ReadResponseAsync(
+                    client);
+            Assert.False(stale.Applied);
+            Assert.Null(stale.Error);
+        }
+        finally
+        {
+            releaseFirst.TrySetResult();
+            await fixture.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task InputError_IsNotSuppressedByModeSequence()
+    {
+        var fixture = ServerFixture.Create(
+            (work, _) => Task.FromResult(
+                work.Request.Input is null
+                    ? Applied(work.Request)
+                    : new PointerUiResponse(
+                        PointerUiProtocol.CurrentVersion,
+                        work.Request.Sequence,
+                        work.Request.Mode,
+                        false,
+                        1,
+                        "no session",
+                        false)));
+        await using var client = await fixture.ConnectAsync();
+
+        try
+        {
+            await PointerUiProtocol.WriteAsync(
+                client,
+                Request(1, PointerUiMode.UiHints));
+            _ = await PointerUiProtocol.ReadResponseAsync(
+                client);
+            await PointerUiProtocol.WriteAsync(
+                client,
+                new PointerUiRequest(
+                    PointerUiProtocol.CurrentVersion,
+                    2,
+                    PointerUiMode.UiHints,
+                    new PointerUiInput(
+                        PointerUiInputKind.Cancel,
+                        0)));
+
+            var input =
+                await PointerUiProtocol.ReadResponseAsync(
+                    client);
+            Assert.Equal("no session", input.Error);
+        }
+        finally
+        {
+            await fixture.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task InputLane_PreservesEveryRequest()
+    {
+        var firstStarted = NewSignal();
+        var releaseFirst = NewSignal();
+        var admitted = new List<long>();
+        var fixture = ServerFixture.Create(
+            async (work, cancellationToken) =>
+            {
+                if (work.Request.Sequence == 1)
+                {
+                    firstStarted.TrySetResult();
+                    await releaseFirst.Task.WaitAsync(
+                        cancellationToken);
+                }
+                return Applied(work.Request);
+            },
+            onAdmit: request =>
+            {
+                lock (admitted)
+                {
+                    admitted.Add(request.Sequence);
+                }
+            });
+        await using var client = await fixture.ConnectAsync();
+
+        try
+        {
+            await PointerUiProtocol.WriteAsync(
+                client,
+                Input(1, "A"));
+            await firstStarted.Task.WaitAsync(
+                TimeSpan.FromSeconds(5));
+            await PointerUiProtocol.WriteAsync(
+                client,
+                Input(2, "S"));
+            await PointerUiProtocol.WriteAsync(
+                client,
+                Input(3, "D"));
+
+            releaseFirst.TrySetResult();
+            var responses = new[]
+            {
+                await PointerUiProtocol.ReadResponseAsync(
+                    client),
+                await PointerUiProtocol.ReadResponseAsync(
+                    client),
+                await PointerUiProtocol.ReadResponseAsync(
+                    client),
+            };
+            Assert.Equal(
+                [1L, 2L, 3L],
+                responses
+                    .Select(response => response.Sequence)
+                    .ToList());
+            lock (admitted)
+            {
+                Assert.Equal([1L, 2L, 3L], admitted);
+            }
+        }
+        finally
+        {
+            releaseFirst.TrySetResult();
+            await fixture.DisposeAsync();
+        }
+    }
+
     private static PointerUiResponse Applied(
         PointerUiRequest request) =>
         new(
@@ -244,7 +481,11 @@ public sealed class PointerUiCommandServerTests
             true,
             request.Mode is PointerUiMode.Hidden ? 0 : 1,
             null,
-            false);
+            false,
+            null,
+            request.Mode is PointerUiMode.UiHints
+                ? request.Sequence
+                : null);
 
     private static TaskCompletionSource NewSignal() =>
         new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -256,6 +497,18 @@ public sealed class PointerUiCommandServerTests
             PointerUiProtocol.CurrentVersion,
             sequence,
             mode);
+
+    private static PointerUiRequest Input(
+        long sequence,
+        string key) =>
+        new(
+            PointerUiProtocol.CurrentVersion,
+            sequence,
+            PointerUiMode.UiHints,
+            new PointerUiInput(
+                PointerUiInputKind.Key,
+                0,
+                key));
 
     private sealed class ServerFixture : IAsyncDisposable
     {

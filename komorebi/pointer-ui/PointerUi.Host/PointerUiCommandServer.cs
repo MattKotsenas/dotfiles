@@ -17,6 +17,10 @@ internal sealed class PointerUiCommandServer(
     Func<Task<int>> windowCount,
     Func<Task> disconnected)
 {
+    private sealed record QueuedResponse(
+        PointerUiResponse Response,
+        bool IsModeRequest);
+
     private static readonly TimeSpan FrameTimeout =
         TimeSpan.FromSeconds(5);
 
@@ -96,8 +100,9 @@ internal sealed class PointerUiCommandServer(
                 cancellationToken);
         var fastRequests = RequestChannel();
         var uiRequests = RequestChannel();
+        var inputRequests = InputChannel();
         var responses =
-            Channel.CreateBounded<PointerUiResponse>(
+            Channel.CreateBounded<QueuedResponse>(
                 new BoundedChannelOptions(16)
                 {
                     FullMode = BoundedChannelFullMode.Wait,
@@ -111,6 +116,7 @@ internal sealed class PointerUiCommandServer(
                 stream,
                 fastRequests.Writer,
                 uiRequests.Writer,
+                inputRequests.Writer,
                 responses.Writer,
                 connectionCancellation.Token),
             ProcessRequestsAsync(
@@ -122,6 +128,10 @@ internal sealed class PointerUiCommandServer(
                 uiRequests.Reader,
                 responses.Writer,
                 windowCount,
+                connectionCancellation.Token),
+            ProcessInputRequestsAsync(
+                inputRequests.Reader,
+                responses.Writer,
                 connectionCancellation.Token),
             WriteResponsesAsync(
                 stream,
@@ -143,6 +153,7 @@ internal sealed class PointerUiCommandServer(
             connectionCancellation.Cancel();
             fastRequests.Writer.TryComplete();
             uiRequests.Writer.TryComplete();
+            inputRequests.Writer.TryComplete();
             responses.Writer.TryComplete();
             try
             {
@@ -170,7 +181,8 @@ internal sealed class PointerUiCommandServer(
         Stream stream,
         ChannelWriter<PointerUiRequest> fastRequests,
         ChannelWriter<PointerUiRequest> uiRequests,
-        ChannelWriter<PointerUiResponse> responses,
+        ChannelWriter<PointerUiWork> inputRequests,
+        ChannelWriter<QueuedResponse> responses,
         CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -184,7 +196,7 @@ internal sealed class PointerUiCommandServer(
             lock (_admissionGate)
             {
                 terminal = _terminal;
-                if (!terminal)
+                if (!terminal && request.Input is null)
                 {
                     _latestSequence = request.Sequence;
                 }
@@ -196,20 +208,30 @@ internal sealed class PointerUiCommandServer(
                     cancellationToken);
                 return;
             }
+            if (request.Input is not null)
+            {
+                await inputRequests.WriteAsync(
+                    admit(request),
+                    cancellationToken);
+                continue;
+            }
+
             var writer = request.Mode is PointerUiMode.UiHints
                 ? uiRequests
                 : fastRequests;
             if (!writer.TryWrite(request))
             {
                 await responses.WriteAsync(
-                    new PointerUiResponse(
-                        PointerUiProtocol.CurrentVersion,
-                        request.Sequence,
-                        request.Mode,
-                        false,
-                        await windowCount(),
-                        null,
-                        false),
+                    new QueuedResponse(
+                        new PointerUiResponse(
+                            PointerUiProtocol.CurrentVersion,
+                            request.Sequence,
+                            request.Mode,
+                            false,
+                            await windowCount(),
+                            null,
+                            false),
+                        request.Input is null),
                     cancellationToken);
             }
         }
@@ -217,7 +239,7 @@ internal sealed class PointerUiCommandServer(
 
     private async Task ProcessRequestsAsync(
         ChannelReader<PointerUiRequest> requests,
-        ChannelWriter<PointerUiResponse> responses,
+        ChannelWriter<QueuedResponse> responses,
         Func<Task<int>> getWindowCount,
         CancellationToken cancellationToken)
     {
@@ -228,7 +250,8 @@ internal sealed class PointerUiCommandServer(
             PointerUiWork? work = null;
             lock (_admissionGate)
             {
-                if (request.Sequence == _latestSequence)
+                if (request.Input is not null
+                    || request.Sequence == _latestSequence)
                 {
                     work = admit(request);
                 }
@@ -236,14 +259,16 @@ internal sealed class PointerUiCommandServer(
             if (work is null)
             {
                 await responses.WriteAsync(
-                    new PointerUiResponse(
-                        PointerUiProtocol.CurrentVersion,
-                        request.Sequence,
-                        request.Mode,
-                        false,
-                        await getWindowCount(),
-                        null,
-                        false),
+                    new QueuedResponse(
+                        new PointerUiResponse(
+                            PointerUiProtocol.CurrentVersion,
+                            request.Sequence,
+                            request.Mode,
+                            false,
+                            await getWindowCount(),
+                            null,
+                            false),
+                        request.Input is null),
                     cancellationToken);
                 continue;
             }
@@ -251,29 +276,51 @@ internal sealed class PointerUiCommandServer(
                 work,
                 cancellationToken);
             await responses.WriteAsync(
-                response,
+                new QueuedResponse(
+                    response,
+                    request.Input is null),
+                cancellationToken);
+        }
+    }
+
+    private async Task ProcessInputRequestsAsync(
+        ChannelReader<PointerUiWork> requests,
+        ChannelWriter<QueuedResponse> responses,
+        CancellationToken cancellationToken)
+    {
+        await foreach (var work in requests.ReadAllAsync(
+            cancellationToken))
+        {
+            var response = await handler(
+                work,
+                cancellationToken);
+            await responses.WriteAsync(
+                new QueuedResponse(
+                    response,
+                    IsModeRequest: false),
                 cancellationToken);
         }
     }
 
     private async Task WriteResponsesAsync(
         Stream stream,
-        ChannelReader<PointerUiResponse> responses,
+        ChannelReader<QueuedResponse> responses,
         CancellationToken cancellationToken)
     {
-        await foreach (var response in responses.ReadAllAsync(
+        await foreach (var queued in responses.ReadAllAsync(
             cancellationToken))
         {
             PointerUiResponse current;
             bool terminal;
             lock (_admissionGate)
             {
-                current = response;
-                if (response.Sequence != _latestSequence
-                    && response.Error is not null
-                    && !response.RestartRequired)
+                current = queued.Response;
+                if (queued.IsModeRequest
+                    && current.Sequence != _latestSequence
+                    && current.Error is not null
+                    && !current.RestartRequired)
                 {
-                    current = response with
+                    current = current with
                     {
                         Applied = false,
                         Error = null,
@@ -318,6 +365,17 @@ internal sealed class PointerUiCommandServer(
         RequestChannel() =>
         Channel.CreateBounded<PointerUiRequest>(
             new BoundedChannelOptions(1)
+            {
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = true,
+                AllowSynchronousContinuations = false,
+            });
+
+    private static Channel<PointerUiWork>
+        InputChannel() =>
+        Channel.CreateBounded<PointerUiWork>(
+            new BoundedChannelOptions(64)
             {
                 FullMode = BoundedChannelFullMode.Wait,
                 SingleReader = true,

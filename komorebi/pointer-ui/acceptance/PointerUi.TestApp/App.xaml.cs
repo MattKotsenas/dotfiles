@@ -15,7 +15,17 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         var scenario = AcceptanceScenarioCatalog.Create(
-            options.Scenario);
+            options.Scenario,
+            () =>
+            {
+                Directory.CreateDirectory(
+                    Path.GetDirectoryName(
+                        options.ActionFile)
+                    ?? string.Empty);
+                File.AppendAllText(
+                    options.ActionFile,
+                    "save" + Environment.NewLine);
+            });
         foreach (var window in scenario.Windows)
         {
             window.Show();
@@ -87,7 +97,8 @@ internal sealed record ScenarioOptions(
     string Scenario,
     string ReadyFile,
     string CommandFile,
-    string AcknowledgementFile)
+    string AcknowledgementFile,
+    string ActionFile)
 {
     public static ScenarioOptions Parse(string[] args)
     {
@@ -95,6 +106,7 @@ internal sealed record ScenarioOptions(
         string? readyFile = null;
         string? commandFile = null;
         string? acknowledgementFile = null;
+        string? actionFile = null;
         for (var index = 0; index < args.Length; index++)
         {
             switch (args[index])
@@ -113,6 +125,12 @@ internal sealed record ScenarioOptions(
                         args,
                         ref index,
                         "--ack-file");
+                    break;
+                case "--action-file":
+                    actionFile = Value(
+                        args,
+                        ref index,
+                        "--action-file");
                     break;
                 default:
                     throw new ArgumentException(
@@ -134,7 +152,11 @@ internal sealed record ScenarioOptions(
             Path.GetFullPath(
                 acknowledgementFile
                 ?? throw new ArgumentException(
-                    "--ack-file is required.")));
+                    "--ack-file is required.")),
+            Path.GetFullPath(
+                actionFile
+                ?? throw new ArgumentException(
+                    "--action-file is required.")));
     }
 
     private static string Value(

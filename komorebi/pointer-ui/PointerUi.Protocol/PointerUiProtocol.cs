@@ -13,10 +13,7 @@ public static class PointerUiProtocol
 
     public static string Serialize(PointerUiRequest request)
     {
-        Validate(
-            request.Version,
-            request.Sequence,
-            request.Mode);
+        Validate(request);
         return JsonSerializer.Serialize(
             request,
             PointerUiJsonContext.Default.PointerUiRequest);
@@ -24,10 +21,7 @@ public static class PointerUiProtocol
 
     public static string Serialize(PointerUiResponse response)
     {
-        Validate(
-            response.Version,
-            response.Sequence,
-            response.Mode);
+        Validate(response);
         return JsonSerializer.Serialize(
             response,
             PointerUiJsonContext.Default.PointerUiResponse);
@@ -41,10 +35,7 @@ public static class PointerUiProtocol
             PointerUiJsonContext.Default.PointerUiRequest)
             ?? throw new InvalidDataException(
                 "Pointer UI request is null.");
-        Validate(
-            request.Version,
-            request.Sequence,
-            request.Mode);
+        Validate(request);
         return request;
     }
 
@@ -56,10 +47,7 @@ public static class PointerUiProtocol
             PointerUiJsonContext.Default.PointerUiResponse)
             ?? throw new InvalidDataException(
                 "Pointer UI response is null.");
-        Validate(
-            response.Version,
-            response.Sequence,
-            response.Mode);
+        Validate(response);
         return response;
     }
 
@@ -138,6 +126,121 @@ public static class PointerUiProtocol
         {
             throw new InvalidDataException(
                 $"Unknown pointer UI mode '{mode}'.");
+        }
+    }
+
+    private static void Validate(PointerUiRequest request)
+    {
+        Validate(
+            request.Version,
+            request.Sequence,
+            request.Mode);
+        if (request.Input is null)
+        {
+            return;
+        }
+        if (request.Mode is not PointerUiMode.UiHints)
+        {
+            throw new InvalidDataException(
+                "Pointer UI input requires UI hints mode.");
+        }
+        if (!Enum.IsDefined(request.Input.Kind))
+        {
+            throw new InvalidDataException(
+                $"Unknown pointer UI input kind "
+                + $"'{request.Input.Kind}'.");
+        }
+        if (request.Input.SessionToken < 0)
+        {
+            throw new InvalidDataException(
+                "Pointer UI session token cannot be negative.");
+        }
+        if (request.Input.Kind is PointerUiInputKind.Key)
+        {
+            if (request.Input.Key is not { Length: 1 } key
+                || key[0] is < 'A' or > 'Z')
+            {
+                throw new InvalidDataException(
+                    "Pointer UI key input requires one "
+                    + "uppercase ASCII letter.");
+            }
+            return;
+        }
+        if (request.Input.Key is not null)
+        {
+            throw new InvalidDataException(
+                "Only key input accepts key data.");
+        }
+    }
+
+    private static void Validate(PointerUiResponse response)
+    {
+        Validate(
+            response.Version,
+            response.Sequence,
+            response.Mode);
+        if (response.Input is null)
+        {
+            if (response.SessionToken is < 0)
+            {
+                throw new InvalidDataException(
+                    "Pointer UI session token cannot be negative.");
+            }
+            if (response.Mode is PointerUiMode.UiHints
+                && response.Applied
+                && response.Error is null
+                && response.SessionToken is null)
+            {
+                throw new InvalidDataException(
+                    "Applied UI hints require a session token.");
+            }
+            if (response.Mode is not PointerUiMode.UiHints
+                && response.SessionToken is not null)
+            {
+                throw new InvalidDataException(
+                    "Only UI hints responses accept a session token.");
+            }
+            return;
+        }
+        if (response.Mode is not PointerUiMode.UiHints
+            || !response.Applied
+            || response.Error is not null
+            || response.RestartRequired)
+        {
+            throw new InvalidDataException(
+                "Pointer UI input result has an invalid response envelope.");
+        }
+        if (!Enum.IsDefined(response.Input.Status)
+            || response.Input.Prefix is null)
+        {
+            throw new InvalidDataException(
+                "Pointer UI input result is invalid.");
+        }
+        var valid = response.Input.Status switch
+        {
+            PointerUiSessionStatus.Active =>
+                response.Input.SelectedLabel is null,
+            PointerUiSessionStatus.Completed =>
+                response.Input.Accepted
+                && !string.IsNullOrWhiteSpace(
+                    response.Input.SelectedLabel)
+                && response.Input.Prefix
+                    == response.Input.SelectedLabel,
+            PointerUiSessionStatus.Cancelled =>
+                response.Input.Accepted
+                && response.Input.SelectedLabel is null,
+            _ => false,
+        };
+        if (!valid)
+        {
+            throw new InvalidDataException(
+                "Pointer UI input result does not match "
+                + "its session status.");
+        }
+        if (response.SessionToken is null or < 0)
+        {
+            throw new InvalidDataException(
+                "Pointer UI input result requires a session token.");
         }
     }
 
@@ -232,5 +335,7 @@ public static class PointerUiProtocol
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(PointerUiRequest))]
 [JsonSerializable(typeof(PointerUiResponse))]
+[JsonSerializable(typeof(PointerUiInput))]
+[JsonSerializable(typeof(PointerUiInputResult))]
 internal sealed partial class PointerUiJsonContext
     : JsonSerializerContext;

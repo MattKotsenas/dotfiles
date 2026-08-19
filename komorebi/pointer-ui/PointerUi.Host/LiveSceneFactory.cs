@@ -5,14 +5,15 @@ namespace PointerUi.Host;
 internal sealed record LiveOverlayFrame(
     OverlayScene Scene,
     PixelRect VirtualBounds,
-    IReadOnlyList<MonitorSnapshot> Monitors);
+    IReadOnlyList<MonitorSnapshot> Monitors,
+    IReadOnlyList<TargetSnapshot> Targets);
 
 internal sealed class LiveSceneFactory
 {
     public LiveOverlayFrame Create(PointerUi.Protocol.PointerUiMode mode)
     {
         var layout = WindowsDesktopLayout.Capture();
-        var scene = mode switch
+        var output = mode switch
         {
             PointerUi.Protocol.PointerUiMode.Indicator =>
                 Indicator(layout),
@@ -27,17 +28,17 @@ internal sealed class LiveSceneFactory
         };
 
         return new LiveOverlayFrame(
-            scene,
+            output.Scene,
             layout.VirtualBounds,
-            layout.Monitors);
+            layout.Monitors,
+            output.Targets);
     }
 
-    private static OverlayScene Indicator(
+    private static FixtureOutput Indicator(
         DesktopLayoutSnapshot layout)
     {
         var dpi = PointerMonitor(layout).Dpi;
-        return
-        FixturePipeline.Prepare(
+        return FixturePipeline.Prepare(
             new DesktopFixture(
                 1,
                 "live-indicator",
@@ -47,10 +48,10 @@ internal sealed class LiveSceneFactory
                 layout.Pointer,
                 [],
                 null),
-            new HintLabelSession()).Scene;
+            new HintLabelSession());
     }
 
-    private OverlayScene UiHints()
+    private FixtureOutput UiHints()
     {
         var captured = new WindowsDesktopCaptureSource()
             .Capture(CaptureLimits.Default);
@@ -67,14 +68,13 @@ internal sealed class LiveSceneFactory
         }
         return FixturePipeline.Prepare(
             projection.Fixture,
-            new HintLabelSession()).Scene;
+            new HintLabelSession());
     }
 
-    private static OverlayScene Grid(
+    private static FixtureOutput Grid(
         DesktopLayoutSnapshot layout)
     {
-        return
-        FixturePipeline.Prepare(
+        return FixturePipeline.Prepare(
             new DesktopFixture(
                 1,
                 "live-grid-hints",
@@ -84,7 +84,7 @@ internal sealed class LiveSceneFactory
                 null,
                 [],
                 new GridFixture(4, 8)),
-            new HintLabelSession()).Scene;
+            new HintLabelSession());
     }
 
     private static MonitorSnapshot PointerMonitor(

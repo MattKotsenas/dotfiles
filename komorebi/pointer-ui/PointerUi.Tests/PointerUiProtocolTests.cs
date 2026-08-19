@@ -76,6 +76,110 @@ public sealed class PointerUiProtocolTests
             () => PointerUiProtocol.ParseRequest(json));
     }
 
+    [Theory]
+    [InlineData(PointerUiInputKind.Key, "A")]
+    [InlineData(PointerUiInputKind.Backspace, null)]
+    [InlineData(PointerUiInputKind.Cancel, null)]
+    public void InputRequest_RoundTrips(
+        PointerUiInputKind kind,
+        string? key)
+    {
+        var request = new PointerUiRequest(
+            PointerUiProtocol.CurrentVersion,
+            9,
+            PointerUiMode.UiHints,
+            new PointerUiInput(
+                kind,
+                7,
+                key));
+
+        Assert.Equal(
+            request,
+            PointerUiProtocol.ParseRequest(
+                PointerUiProtocol.Serialize(request)));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("a")]
+    [InlineData("AA")]
+    public void KeyInput_RejectsInvalidSymbol(string? key)
+    {
+        var request = new PointerUiRequest(
+            PointerUiProtocol.CurrentVersion,
+            1,
+            PointerUiMode.UiHints,
+            new PointerUiInput(
+                PointerUiInputKind.Key,
+                7,
+                key));
+
+        Assert.Throws<InvalidDataException>(
+            () => PointerUiProtocol.Serialize(request));
+    }
+
+    [Fact]
+    public void Input_RejectsNonUiHintMode()
+    {
+        var request = new PointerUiRequest(
+            PointerUiProtocol.CurrentVersion,
+            1,
+            PointerUiMode.Hidden,
+            new PointerUiInput(
+                PointerUiInputKind.Cancel,
+                1));
+
+        Assert.Throws<InvalidDataException>(
+            () => PointerUiProtocol.Serialize(request));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("S")]
+    public void CompletedInput_RequiresMatchingSelection(
+        string? selectedLabel)
+    {
+        var response = new PointerUiResponse(
+            PointerUiProtocol.CurrentVersion,
+            1,
+            PointerUiMode.UiHints,
+            true,
+            0,
+            null,
+            false,
+            new PointerUiInputResult(
+                PointerUiSessionStatus.Completed,
+                "A",
+                true,
+                selectedLabel));
+
+        Assert.Throws<InvalidDataException>(
+            () => PointerUiProtocol.Serialize(response));
+    }
+
+    [Fact]
+    public void InputResult_RejectsContradictoryEnvelope()
+    {
+        var response = new PointerUiResponse(
+            PointerUiProtocol.CurrentVersion,
+            1,
+            PointerUiMode.Hidden,
+            true,
+            0,
+            "error",
+            true,
+            new PointerUiInputResult(
+                PointerUiSessionStatus.Active,
+                string.Empty,
+                true,
+                null),
+            1);
+
+        Assert.Throws<InvalidDataException>(
+            () => PointerUiProtocol.Serialize(response));
+    }
+
     [Fact]
     public void PipeName_IsScopedToWindowsSession()
     {

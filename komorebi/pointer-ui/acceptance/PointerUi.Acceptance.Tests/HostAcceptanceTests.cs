@@ -28,6 +28,9 @@ public sealed class HostAcceptanceTests
         var acknowledgementFile = Path.Combine(
             artifacts,
             "ack.txt");
+        var actionFile = Path.Combine(
+            artifacts,
+            "actions.txt");
         var pointerUiRoot = PointerUiRoot();
         using var app = DotnetProcess.Start(
             pointerUiRoot,
@@ -49,7 +52,9 @@ public sealed class HostAcceptanceTests
             "--command-file",
             commandFile,
             "--ack-file",
-            acknowledgementFile);
+            acknowledgementFile,
+            "--action-file",
+            actionFile);
         var appOutput = app.StandardOutput.ReadToEndAsync();
         var appError = app.StandardError.ReadToEndAsync();
         using var host = StartHost(
@@ -250,6 +255,77 @@ public sealed class HostAcceptanceTests
                         Luminance(
                             HostWindowCatalog.ScreenColor(
                                 uiSample)) < 100);
+                    Assert.NotNull(response.SessionToken);
+                    var staleToken =
+                        response.SessionToken.Value;
+                    var replacement = await SendAsync(
+                        ++sequence,
+                        mode,
+                        pipe);
+                    Assert.NotNull(replacement.SessionToken);
+                    var sessionToken =
+                        replacement.SessionToken.Value;
+                    Assert.NotEqual(staleToken, sessionToken);
+                    var staleInput = await SendAsync(
+                        ++sequence,
+                        mode,
+                        pipe,
+                        new PointerUiInput(
+                            PointerUiInputKind.Key,
+                            staleToken,
+                            save.Label[0].ToString()));
+                    Assert.False(staleInput.Applied);
+                    Assert.NotNull(staleInput.Error);
+                    Assert.Equal(
+                        expectedBounds.Count,
+                        HostWindowCatalog
+                            .Enumerate(host.Id).Count);
+
+                    PointerUiResponse? selected = null;
+                    foreach (var key in save.Label)
+                    {
+                        selected = await SendAsync(
+                            ++sequence,
+                            mode,
+                            pipe,
+                            new PointerUiInput(
+                                PointerUiInputKind.Key,
+                                sessionToken,
+                                key.ToString()));
+                    }
+                    Assert.NotNull(selected);
+                    Assert.Equal(
+                        PointerUiSessionStatus.Completed,
+                        selected.Input?.Status);
+                    Assert.Equal(
+                        save.Label,
+                        selected.Input?.SelectedLabel);
+                    Assert.Equal(
+                        newPointer,
+                        WindowsDesktopLayout.Capture().Pointer);
+                    Assert.False(
+                        File.Exists(actionFile));
+                    Assert.Empty(
+                        HostWindowCatalog.Enumerate(host.Id));
+
+                    var reopened = await SendAsync(
+                        ++sequence,
+                        mode,
+                        pipe);
+                    Assert.True(reopened.Applied);
+                    Assert.NotNull(reopened.SessionToken);
+                    var cancelled = await SendAsync(
+                        ++sequence,
+                        mode,
+                        pipe,
+                        new PointerUiInput(
+                            PointerUiInputKind.Cancel,
+                            reopened.SessionToken.Value));
+                    Assert.Equal(
+                        PointerUiSessionStatus.Cancelled,
+                        cancelled.Input?.Status);
+                    Assert.Empty(
+                        HostWindowCatalog.Enumerate(host.Id));
                 }
                 else
                 {
@@ -321,12 +397,14 @@ public sealed class HostAcceptanceTests
     private static async Task<PointerUiResponse> SendAsync(
         long sequence,
         PointerUiMode mode,
-        Stream stream)
+        Stream stream,
+        PointerUiInput? input = null)
     {
         var request = new PointerUiRequest(
             PointerUiProtocol.CurrentVersion,
             sequence,
-            mode);
+            mode,
+            input);
         await PointerUiProtocol.WriteAsync(
             stream,
             request);

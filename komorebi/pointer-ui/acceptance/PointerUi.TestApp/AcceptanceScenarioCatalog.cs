@@ -6,17 +6,21 @@ namespace PointerUi.TestApp;
 
 internal static class AcceptanceScenarioCatalog
 {
-    public static AcceptanceScenario Create(string scenario) =>
+    public static AcceptanceScenario Create(
+        string scenario,
+        Action saveAction) =>
         scenario switch
         {
-            "all-windows" => CreateAllWindows(),
+            "all-windows" => CreateAllWindows(
+                saveAction),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(scenario),
                 scenario,
                 "Unknown acceptance scenario."),
         };
 
-    private static AcceptanceScenario CreateAllWindows()
+    private static AcceptanceScenario CreateAllWindows(
+        Action saveAction)
     {
         var background = Window(
             "acceptance-background",
@@ -75,11 +79,13 @@ internal static class AcceptanceScenarioCatalog
                 Content = "Advanced content",
             },
             "advanced-tab"));
+        var save = Identified(
+            new Button { Content = "Save" },
+            "save");
+        save.Click += (_, _) => saveAction();
         var primaryPanel = Panel(
             Heading("Foreground targets"),
-            Identified(
-                new Button { Content = "Save" },
-                "save"),
+            save,
             Identified(
                 new TextBox
                 {

@@ -27,6 +27,9 @@ public sealed class RecorderAcceptanceTests
         var acknowledgementFile = Path.Combine(
             artifacts,
             "ack.txt");
+        var actionFile = Path.Combine(
+            artifacts,
+            "actions.txt");
         var firstFixturePath = Path.Combine(
             artifacts,
             "desktop-before.json");
@@ -54,7 +57,9 @@ public sealed class RecorderAcceptanceTests
             "--command-file",
             commandFile,
             "--ack-file",
-            acknowledgementFile);
+            acknowledgementFile,
+            "--action-file",
+            actionFile);
         var appOutput = app.StandardOutput.ReadToEndAsync();
         var appError = app.StandardError.ReadToEndAsync();
 
