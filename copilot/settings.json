@@ -3,6 +3,7 @@
   "banner": "never",
   "renderMarkdown": true,
   "experimental": true,
+  "defaultPermissionMode": "allow-all",
   "includeCoAuthoredBy": false,
   "keepAlive": "busy"
 }

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Start a Copilot session in YOLO mode.
+Start a Copilot session with Git fsmonitor disabled.
 
 .DESCRIPTION
 Pass arguments to Copilot without creating persistent Git fsmonitor daemons;
@@ -12,9 +12,9 @@ The sidecar at ~/.copilot/clod-sidecar.txt contains one complete Copilot CLI
 option per line. Options that take values use --option=value so they cannot
 consume arguments passed directly to clod. After trimming, blank lines and lines
 starting with # are ignored. Remaining lines are passed without PowerShell
-evaluation. Sidecar arguments follow --yolo and precede direct arguments. If the
-sidecar is missing or unreadable, clod warns and continues without it. An
-invalid option stops clod before Copilot starts.
+evaluation. Sidecar arguments precede direct arguments. If the sidecar is
+missing or unreadable, clod warns and continues without it. An invalid option
+stops clod before Copilot starts.
 
 .EXAMPLE
 clod
@@ -66,7 +66,7 @@ function Invoke-CopilotFast {
             Set-Item "Env:$keyName" 'core.fsmonitor'
             Set-Item "Env:$valueName" 'false'
             $env:GIT_CONFIG_COUNT = $configCount + 1
-            & copilot --yolo @Arguments
+            & copilot @Arguments
         }
         finally {
             if ($null -eq $previousCount) { Remove-Item Env:GIT_CONFIG_COUNT -ErrorAction SilentlyContinue } else { $env:GIT_CONFIG_COUNT = $previousCount }
