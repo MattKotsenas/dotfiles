@@ -521,11 +521,11 @@ properties:
       dependsOn:
         - install-rustup
       directives:
-        description: Install tuicr 0.20.0 (code-review TUI)
+        description: Install tuicr 0.24.0 (code-review TUI)
         allowPrerelease: true
       settings:
         Url: https://github.com/agavra/tuicr.git
-        Rev: 8b14bb233ab72774446c21dd31ff8e5c3bc115ce
+        Rev: 2793274e62db966004b888914f856d325dc4ecdf
         Crates:
           - tuicr
     - resource: PSDscResources/Script
