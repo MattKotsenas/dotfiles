@@ -21,9 +21,9 @@ Every fact has one home. Duplicate it and the copies drift apart at the next edi
 
 Write every non-historical artifact in timeless present tense: state what is true, not how it got that way. History narrated in living prose becomes false at the next change, and the reader cannot trust it; leave the past to the version control system, which is built to hold it.
 
-A comment says what the code does; a commit message says what changed. Prose that narrates change ("previously", "now", "we renamed", "as of DATE"), names a thing only to say it is gone, or defends a choice against the alternative it rejected is telling history in the wrong place. Cut it.
+A commit message says what changed. Prose that narrates change ("previously", "now", "we renamed", "as of DATE"), names a thing only to say it is gone, or defends a choice against the alternative it rejected is telling history in the wrong place. Move it to the commit or cut it.
 
-The exception is an artifact whose subject *is* history: a commit message, a CHANGELOG, an ADR's `Superseded by` line and its context, a dated snapshot. Everywhere else, history is a smell.
+The exception is an artifact whose subject *is* history: a commit message, a CHANGELOG, a dated snapshot. Everywhere else, history is a smell.
 
 ## Cut to the load-bearing
 
@@ -48,6 +48,14 @@ No em-dash; use a hyphen, comma, or period. No validation openers or conversatio
 ## Match confidence to reality
 
 State the most likely answer rather than hedging; when uncertainty is real, bound it instead of gesturing at it. If a clarification or experiment would meaningfully reduce uncertainty, propose it. Qualify to fit the facts: "may fail" for a race, not "fails". Vague hedging and confident overstatement share one error: confidence that does not match what you know.
+
+## Make comments earn their line
+
+A comment is valuable when it provides details the code cannot (rationale, invariants, constraints) Follow project conventions when authoring. A plain, accurate summary is better than an invented rationale.
+
+Keep each claim with the code that owns it. Do not document behavior implemented by the code that uses it. Verify comments you add or edit, update any comment your change makes false, and preserve qualifiers that carry a contract.
+
+Apply [Necessary and sufficient](global.instructions.md#2-necessary-and-sufficient) to comments. Editing an unrelated comment is scope creep; flag one that appears false or redundant instead.
 
 ## Review someone else's code
 
