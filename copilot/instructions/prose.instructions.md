@@ -17,13 +17,11 @@ Reach for the verb when one says the same thing: "decide", not "make a decision"
 
 Every fact has one home. Duplicate it and the copies drift apart at the next edit, and no reader can tell which is true. To change a fact, edit its home; don't restate it elsewhere, and don't append "(updated: ...)". When prose leans on a fact that lives somewhere else, reference that home instead of copying it.
 
-## Describe the present; git remembers the past
+## Describe the present; frame the change
 
-Write every non-historical artifact in timeless present tense: state what is true, not how it got that way. History narrated in living prose becomes false at the next change, and the reader cannot trust it; leave the past to the version control system, which is built to hold it.
+Write current-state prose in timeless present tense: state what is true, not how it got that way. Words such as "previously", "now", or "as of" tell history, as does naming a thing only to say it is gone. History in living prose drifts from the thing it describes.
 
-A commit message says what changed. Prose that narrates change ("previously", "now", "we renamed", "as of DATE"), names a thing only to say it is gone, or defends a choice against the alternative it rejected is telling history in the wrong place. Move it to the commit or cut it.
-
-The exception is an artifact whose subject *is* history: a commit message, a CHANGELOG, a dated snapshot. Everywhere else, history is a smell.
+Commit messages, PR descriptions, and CHANGELOG entries describe change, but each follows its own conventions. A PR description states what the PR makes true: start with the user-visible outcome, then changes to compatibility or defaults that users must account for, then implementation detail.
 
 ## Cut to the load-bearing
 

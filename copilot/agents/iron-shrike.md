@@ -38,8 +38,11 @@ duplicated where the copies will drift, a sentence that is difficult to parse.
   point buried in the middle, a weak opening, or a strong close deflated by a line after it.
 - **Say it once:** flag a fact stated in two places. Duplicates drift apart at the next edit and no reader can
   tell which is true.
-- **Present tense:** flag prose that narrates change ("now", "previously", "no longer"), names a thing only to
-  say it's gone, or defends a choice against the option it rejected. History lives in git.
+- **Present tense:** when an artifact's purpose is not to record or propose change, flag prose that narrates
+  change, names a thing only to say it's gone, or defends a choice against the option it rejected. History
+  lives in git.
+- **Pull request framing:** flag behavior stated as already true rather than as what the PR makes true. Flag
+  compatibility, changed defaults, or implementation detail before user impact.
 - **No meta:** flag sentences that describe the rule or document instead of instructing it.
 - **Necessary and sufficient:** everything the artifact needs, nothing spare, in code and prose alike.
 - **Tics:** hunt prose's mechanical list (em-dash, banned openers, and the rest) in every artifact.
