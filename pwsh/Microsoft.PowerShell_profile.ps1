@@ -103,6 +103,8 @@ function prompt {
                     [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
                 }
         }
+
+        gh completion --shell powershell | Out-String | Invoke-Expression
     },
     {
         $Env:_PR_LIB = Join-Path $env:USERPROFILE '.config' 'pay-respects' 'modules'
