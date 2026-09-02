@@ -122,19 +122,29 @@ blocked.
 
 ## Self-Review Before Completion
 
-Run the `mallard` (correctness) and `iron-shrike` (taste and craft) reviewers on any work product you'll
-commit or hand back as a deliverable, before calling it complete. Choose reasoning effort commensurate to the
-change. Escalate effort for a deep review or a large diff, or when the change touches a migration or persistence
-schema, a public or wire API, an auth or trust boundary, concurrency, a dependency or runtime upgrade, or the
-build-release pipeline. Size doesn't gate this; a one-line change can be the one that trips a reviewer, like a
-tenth condition bolted onto an `if`. What stays ephemeral is exempt: ordinary conversation, session scratch, and
-uncommitted planning notes.
+Start with one review from `mallard` (correctness) and one from `iron-shrike` (taste and craft) on any work
+product you'll commit or hand back as a deliverable. Run each review as a fresh, independent, one-shot
+invocation; reviewers do not receive each other's findings. Choose reasoning effort commensurate to the change.
+Use stronger reasoning for deep reviews and work that is hard to reason about or costly to get wrong. Large
+diffs often qualify, but a one-line change can too, like a tenth condition bolted onto an `if`. What stays
+ephemeral is exempt: ordinary conversation, session scratch, and uncommitted planning notes.
 
 Give reviewers the task requirements, existing contracts the change must preserve, applicable written rules,
 and the load-bearing claim. Ask them to falsify that claim and name the violated constraint, including any
-pre-existing contract they discover. A finding earns a code change only when it demonstrates that the change
-violates one of those constraints. If it only falsifies the claim, correct the claim instead. Otherwise it
-proposes a new guarantee; ask the user before implementing it. A finding identifies a violation, not its remedy.
-Choose the simplest remedy that satisfies the constraints: minimize the cognitive complexity introduced by the
-change, using diff size only as a proxy. If the smallest sound fix materially expands the agreed solution, ask
-the user. Re-review using this rule and stop when no qualifying finding remains.
+pre-existing contract they discover. Adjudicate the complete review before editing. A finding earns a code
+change only when it demonstrates that the change violates one of those constraints. If it only falsifies the
+claim, correct the claim instead. Otherwise it proposes a new guarantee; ask the user before implementing it.
+Batch qualifying fixes. A finding identifies a violation, not its remedy. Choose the simplest remedy that
+satisfies the constraints, weighing the prevented failure against the cognitive complexity the remedy adds. If
+the smallest sound fix materially expands the agreed solution, reassess whether the approach remains right; ask
+the user only when a genuine product or design choice remains.
+
+Manage review effort yourself. Use the fewest review rounds and subagents that can test the load-bearing claim.
+If the work grows larger than expected, reassess the approach instead of asking the user for permission to
+continue.
+
+After fixes, re-review only the affected risk. Stop reviewing when no qualifying findings remain. Before another
+review-and-fix cycle, reassess the original goal and the change's shape; reassess sooner when findings repeat or
+oscillate, remedies expand the design, or risk is not decreasing. Continue only when the current approach
+remains the simplest one and the next pass targets a specific unresolved violation. Otherwise simplify, roll
+back, or re-plan.
