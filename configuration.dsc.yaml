@@ -103,6 +103,7 @@ properties:
         source: winget
         version: '2.55.0.2'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: install-gh
       directives:
         description: Install GitHub CLI
         allowPrerelease: true
@@ -110,6 +111,27 @@ properties:
         id: GitHub.cli
         source: winget
         version: '2.96.0'
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-gh
+      directives:
+        description: Install the gh-notifications CLI extension
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          @{ Result = (gh extension list 2>&1 | Out-String) }
+        TestScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          $expected = 'xirzec/gh-notifications'
+          $installed = @(gh extension list 2>&1 | ForEach-Object {
+            if ($_ -match '^\S+\s+\S+\s+(\S+)') { $matches[1] }
+          })
+          $LASTEXITCODE -eq 0 -and $expected -in $installed
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          gh extension install xirzec/gh-notifications
+          if ($LASTEXITCODE -ne 0) { throw "gh extension install xirzec/gh-notifications failed (exit $LASTEXITCODE)" }
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-copilot
       directives:
