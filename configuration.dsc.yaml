@@ -140,7 +140,6 @@ properties:
       settings:
         id: GitHub.Copilot
         source: winget
-        version: 'v1.0.69'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-jq
       directives:
@@ -156,6 +155,7 @@ properties:
       directives:
         # Deep-merge the repo's copilot/settings.json into ~/.copilot/settings.json
         # so existing on-disk settings (e.g., per-machine tweaks) are preserved.
+        # Union disabledMcpServers because jq otherwise replaces arrays.
         # Test returns false so the merge runs every winget configure. It's cheap,
         # and the source can change between runs.
         description: Merge Copilot user settings into ~/.copilot/settings.json
@@ -172,7 +172,7 @@ properties:
           $null = New-Item -ItemType Directory -Force -Path (Split-Path $t)
           if (-not (Test-Path -LiteralPath $t)) { '{}' | Set-Content -LiteralPath $t }
           $src = Join-Path '${WinGetConfigRoot}' 'copilot\settings.json'
-          $merged = jq -s '.[0] * .[1]' $t $src
+          $merged = jq -s '.[0] as $existing | .[1] as $desired | ($existing * $desired) | .disabledMcpServers = ((($existing.disabledMcpServers // []) + ($desired.disabledMcpServers // [])) | unique)' $t $src
           if ($LASTEXITCODE -ne 0) { throw "jq merge of $src into $t failed with exit code $LASTEXITCODE" }
           $merged | Set-Content -LiteralPath $t
     - resource: PSDscResources/Script
@@ -634,7 +634,6 @@ properties:
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
           $plugins = [ordered]@{
             'dotnet-skills@dotnet-skills' = 'dotnet-skills@dotnet-skills'
-            'delve@agent-plugins'         = 'delve@agent-plugins'
             'git-good@agent-plugins'      = 'git-good@agent-plugins'
             'prune@agent-plugins'         = 'prune@agent-plugins'
             'toasty@agent-plugins'        = 'toasty@agent-plugins'
