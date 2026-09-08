@@ -19,7 +19,9 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "pwsh -NoLogo -NoProfile -Command \"Set-Variable status ([Console]::In.ReadToEnd()|ConvertFrom-Json);Set-Variable aic ([decimal]((Get-Variable status -ValueOnly).ai_used.total_nano_aiu)/1000000000);[string]::Format([Globalization.CultureInfo]::GetCultureInfo('en-US'),'AIC {0:N2} ({2}{1:N2})',(Get-Variable aic -ValueOnly),((Get-Variable aic -ValueOnly)/100),[char]36)\""
+    "command": "pwsh -NoLogo -NoProfile -File \"%USERPROFILE%\\.copilot\\extensions\\turn-budget\\statusline.ps1\"",
+    "padding": 0,
+    "refreshInterval": 1
   },
   "includeCoAuthoredBy": false,
   "keepAlive": "busy"

@@ -1,0 +1,668 @@
+{
+  "observedWith": "Copilot CLI 1.0.84-1",
+  "observedAt": "2026-09-06",
+  "notes": "Conversation content and events ignored by the reducer are omitted. Timestamps, ordering, usage, mode, delivery, source, continuation, and objective fields are retained.",
+  "ordinary": {
+    "events": [
+      {
+        "type": "user.message",
+        "id": "ordinary-root",
+        "timestamp": "2026-09-07T00:57:03.595Z",
+        "data": {
+          "delivery": "idle",
+          "interactionId": "ordinary-interaction"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "ordinary-usage-1",
+        "timestamp": "2026-09-07T00:57:16.515Z",
+        "data": {
+          "totalNanoAiu": 1236950000
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "ordinary-hook",
+        "timestamp": "2026-09-07T00:57:20.957Z",
+        "data": {
+          "delivery": "queued"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "ordinary-usage-2",
+        "timestamp": "2026-09-07T00:57:32.143Z",
+        "data": {
+          "totalNanoAiu": 1255450000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "ordinary-idle",
+        "timestamp": "2026-09-07T00:57:35.197Z",
+        "data": {}
+      }
+    ],
+    "expected": [
+      {
+        "kind": "ordinary",
+        "usedNanoAiu": 2492400000,
+        "capAiCredits": 1000,
+        "capSource": "ordinary-default",
+        "outcome": "completed",
+        "endedAt": "2026-09-07T00:57:35.197Z",
+        "endEventId": "ordinary-idle"
+      }
+    ]
+  },
+  "explicit": {
+    "events": [
+      {
+        "type": "session.autopilot_objective_changed",
+        "id": "explicit-objective",
+        "timestamp": "2026-09-07T00:59:52.043Z",
+        "data": {
+          "operation": "create",
+          "id": 1,
+          "status": "active",
+          "creditLimitAiCredits": 30
+        }
+      },
+      {
+        "type": "session.mode_changed",
+        "id": "explicit-mode",
+        "timestamp": "2026-09-07T00:59:52.046Z",
+        "data": {
+          "previousMode": "interactive",
+          "newMode": "autopilot"
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "explicit-root",
+        "timestamp": "2026-09-07T00:59:56.171Z",
+        "data": {
+          "source": "autopilot-objective",
+          "delivery": "idle",
+          "agentMode": "autopilot",
+          "interactionId": "explicit-interaction"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "explicit-usage-1",
+        "timestamp": "2026-09-07T01:00:14.163Z",
+        "data": {
+          "totalNanoAiu": 1143670000
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "explicit-hook-1",
+        "timestamp": "2026-09-07T01:00:22.599Z",
+        "data": {
+          "delivery": "queued",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "explicit-usage-2",
+        "timestamp": "2026-09-07T01:00:32.877Z",
+        "data": {
+          "totalNanoAiu": 143225000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "explicit-intermediate-idle",
+        "timestamp": "2026-09-07T01:00:34.716Z",
+        "data": {}
+      },
+      {
+        "type": "session.autopilot_objective_changed",
+        "id": "explicit-continuation-scheduled",
+        "timestamp": "2026-09-07T01:00:34.760Z",
+        "data": {
+          "operation": "update",
+          "id": 1,
+          "status": "active",
+          "creditLimitAiCredits": 30
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "explicit-continuation",
+        "timestamp": "2026-09-07T01:00:36.144Z",
+        "data": {
+          "source": "autopilot",
+          "delivery": "idle",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "explicit-usage-3",
+        "timestamp": "2026-09-07T01:00:48.548Z",
+        "data": {
+          "totalNanoAiu": 181715000
+        }
+      },
+      {
+        "type": "session.task_complete",
+        "id": "explicit-complete",
+        "timestamp": "2026-09-07T01:00:49.505Z",
+        "data": {
+          "success": true
+        }
+      },
+      {
+        "type": "session.autopilot_objective_changed",
+        "id": "explicit-objective-completed",
+        "timestamp": "2026-09-07T01:00:49.520Z",
+        "data": {
+          "operation": "update",
+          "id": 1,
+          "status": "completed"
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "explicit-hook-2",
+        "timestamp": "2026-09-07T01:00:53.402Z",
+        "data": {
+          "delivery": "queued",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "explicit-usage-4",
+        "timestamp": "2026-09-07T01:01:07.054Z",
+        "data": {
+          "totalNanoAiu": 1304625000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "explicit-final-idle",
+        "timestamp": "2026-09-07T01:01:08.999Z",
+        "data": {}
+      }
+    ],
+    "expected": [
+      {
+        "kind": "autopilot",
+        "usedNanoAiu": 2773235000,
+        "capAiCredits": 30,
+        "capSource": "explicit-native",
+        "outcome": "completed",
+        "endedAt": "2026-09-07T01:01:08.999Z",
+        "endEventId": "explicit-final-idle"
+      }
+    ]
+  },
+  "inferred": {
+    "events": [
+      {
+        "type": "session.mode_changed",
+        "id": "inferred-mode",
+        "timestamp": "2026-09-07T01:03:38.039Z",
+        "data": {
+          "previousMode": "interactive",
+          "newMode": "autopilot"
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "inferred-root",
+        "timestamp": "2026-09-07T01:03:59.145Z",
+        "data": {
+          "delivery": "idle",
+          "agentMode": "autopilot",
+          "interactionId": "inferred-interaction"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "inferred-usage-1",
+        "timestamp": "2026-09-07T01:04:09.477Z",
+        "data": {
+          "totalNanoAiu": 160520000
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "inferred-hook-1",
+        "timestamp": "2026-09-07T01:04:18.009Z",
+        "data": {
+          "delivery": "queued",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "inferred-usage-2",
+        "timestamp": "2026-09-07T01:04:23.447Z",
+        "data": {
+          "totalNanoAiu": 155875000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "inferred-intermediate-idle",
+        "timestamp": "2026-09-07T01:04:28.992Z",
+        "data": {}
+      },
+      {
+        "type": "user.message",
+        "id": "inferred-continuation",
+        "timestamp": "2026-09-07T01:04:31.290Z",
+        "data": {
+          "source": "autopilot",
+          "delivery": "idle",
+          "agentMode": "autopilot",
+          "isAutopilotContinuation": true
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "inferred-usage-3",
+        "timestamp": "2026-09-07T01:04:38.501Z",
+        "data": {
+          "totalNanoAiu": 164370000
+        }
+      },
+      {
+        "type": "session.task_complete",
+        "id": "inferred-complete",
+        "timestamp": "2026-09-07T01:04:40.383Z",
+        "data": {
+          "success": true
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "inferred-hook-2",
+        "timestamp": "2026-09-07T01:04:48.396Z",
+        "data": {
+          "delivery": "queued",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "inferred-usage-4",
+        "timestamp": "2026-09-07T01:04:55.803Z",
+        "data": {
+          "totalNanoAiu": 182965000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "inferred-final-idle",
+        "timestamp": "2026-09-07T01:04:58.298Z",
+        "data": {}
+      }
+    ],
+    "expected": [
+      {
+        "kind": "autopilot",
+        "usedNanoAiu": 663730000,
+        "capAiCredits": 1000,
+        "capSource": "autopilot-default",
+        "outcome": "completed",
+        "endedAt": "2026-09-07T01:04:58.298Z",
+        "endEventId": "inferred-final-idle"
+      }
+    ]
+  },
+  "pauseResume": {
+    "events": [
+      {
+        "type": "session.autopilot_objective_changed",
+        "id": "pause-objective",
+        "timestamp": "2026-09-07T01:07:05.067Z",
+        "data": {
+          "operation": "create",
+          "id": 1,
+          "status": "active",
+          "creditLimitAiCredits": 30
+        }
+      },
+      {
+        "type": "session.mode_changed",
+        "id": "pause-mode-on",
+        "timestamp": "2026-09-07T01:07:05.070Z",
+        "data": {
+          "previousMode": "interactive",
+          "newMode": "autopilot"
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "pause-root",
+        "timestamp": "2026-09-07T01:07:08.198Z",
+        "data": {
+          "source": "autopilot-objective",
+          "delivery": "idle",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "pause-usage-1",
+        "timestamp": "2026-09-07T01:07:16.720Z",
+        "data": {
+          "totalNanoAiu": 201570000
+        }
+      },
+      {
+        "type": "session.mode_changed",
+        "id": "pause-mode-off",
+        "timestamp": "2026-09-07T01:07:19.339Z",
+        "data": {
+          "previousMode": "autopilot",
+          "newMode": "interactive"
+        }
+      },
+      {
+        "type": "session.autopilot_objective_changed",
+        "id": "pause-objective-paused",
+        "timestamp": "2026-09-07T01:07:19.351Z",
+        "data": {
+          "operation": "update",
+          "id": 1,
+          "status": "paused"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "pause-usage-2",
+        "timestamp": "2026-09-07T01:07:47.066Z",
+        "data": {
+          "totalNanoAiu": 157970000
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "pause-hook",
+        "timestamp": "2026-09-07T01:07:52.451Z",
+        "data": {
+          "delivery": "queued"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "pause-usage-3",
+        "timestamp": "2026-09-07T01:08:00.506Z",
+        "data": {
+          "totalNanoAiu": 270210000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "pause-idle",
+        "timestamp": "2026-09-07T01:08:04.270Z",
+        "data": {}
+      },
+      {
+        "type": "session.autopilot_objective_changed",
+        "id": "resume-objective",
+        "timestamp": "2026-09-07T01:08:46.303Z",
+        "data": {
+          "operation": "update",
+          "id": 1,
+          "status": "active",
+          "creditLimitAiCredits": 30
+        }
+      },
+      {
+        "type": "session.mode_changed",
+        "id": "resume-mode",
+        "timestamp": "2026-09-07T01:08:46.305Z",
+        "data": {
+          "previousMode": "interactive",
+          "newMode": "autopilot"
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "resume-root",
+        "timestamp": "2026-09-07T01:08:48.890Z",
+        "data": {
+          "source": "autopilot-objective",
+          "delivery": "idle",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "resume-usage-1",
+        "timestamp": "2026-09-07T01:08:57.004Z",
+        "data": {
+          "totalNanoAiu": 183290000
+        }
+      },
+      {
+        "type": "session.task_complete",
+        "id": "resume-complete",
+        "timestamp": "2026-09-07T01:08:58.423Z",
+        "data": {
+          "success": true
+        }
+      },
+      {
+        "type": "session.autopilot_objective_changed",
+        "id": "resume-objective-completed",
+        "timestamp": "2026-09-07T01:08:58.444Z",
+        "data": {
+          "operation": "update",
+          "id": 1,
+          "status": "completed"
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "resume-hook",
+        "timestamp": "2026-09-07T01:09:03.579Z",
+        "data": {
+          "delivery": "queued",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "resume-usage-2",
+        "timestamp": "2026-09-07T01:09:11.562Z",
+        "data": {
+          "totalNanoAiu": 171885000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "resume-idle",
+        "timestamp": "2026-09-07T01:09:14.494Z",
+        "data": {}
+      }
+    ],
+    "expected": [
+      {
+        "kind": "autopilot",
+        "usedNanoAiu": 629750000,
+        "capAiCredits": 30,
+        "capSource": "explicit-native",
+        "outcome": "paused",
+        "endedAt": "2026-09-07T01:08:04.270Z",
+        "endEventId": "pause-idle"
+      },
+      {
+        "kind": "autopilot",
+        "usedNanoAiu": 355175000,
+        "capAiCredits": 30,
+        "capSource": "explicit-native",
+        "outcome": "completed",
+        "endedAt": "2026-09-07T01:09:14.494Z",
+        "endEventId": "resume-idle"
+      }
+    ]
+  },
+  "continuationExhaustion": {
+    "events": [
+      {
+        "type": "session.mode_changed",
+        "id": "exhaustion-mode-on",
+        "timestamp": "2026-09-07T01:12:39.748Z",
+        "data": {
+          "previousMode": "interactive",
+          "newMode": "autopilot"
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "exhaustion-root",
+        "timestamp": "2026-09-07T01:12:47.108Z",
+        "data": {
+          "delivery": "idle",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "exhaustion-usage-1",
+        "timestamp": "2026-09-07T01:13:27.515Z",
+        "data": {
+          "totalNanoAiu": 1102725000
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "exhaustion-hook-1",
+        "timestamp": "2026-09-07T01:13:31.823Z",
+        "data": {
+          "delivery": "queued",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "exhaustion-usage-2",
+        "timestamp": "2026-09-07T01:13:43.450Z",
+        "data": {
+          "totalNanoAiu": 1201020000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "exhaustion-idle-1",
+        "timestamp": "2026-09-07T01:13:46.745Z",
+        "data": {}
+      },
+      {
+        "type": "user.message",
+        "id": "exhaustion-continuation-1",
+        "timestamp": "2026-09-07T01:13:48.023Z",
+        "data": {
+          "source": "autopilot",
+          "delivery": "idle",
+          "agentMode": "autopilot",
+          "isAutopilotContinuation": true
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "exhaustion-usage-3",
+        "timestamp": "2026-09-07T01:13:54.078Z",
+        "data": {
+          "totalNanoAiu": 174565000
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "exhaustion-hook-2",
+        "timestamp": "2026-09-07T01:13:58.137Z",
+        "data": {
+          "delivery": "queued",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "exhaustion-usage-4",
+        "timestamp": "2026-09-07T01:14:05.364Z",
+        "data": {
+          "totalNanoAiu": 169105000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "exhaustion-idle-2",
+        "timestamp": "2026-09-07T01:14:07.994Z",
+        "data": {}
+      },
+      {
+        "type": "user.message",
+        "id": "exhaustion-continuation-2",
+        "timestamp": "2026-09-07T01:14:09.164Z",
+        "data": {
+          "source": "autopilot",
+          "delivery": "idle",
+          "agentMode": "autopilot",
+          "isAutopilotContinuation": true
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "exhaustion-usage-5",
+        "timestamp": "2026-09-07T01:14:15.751Z",
+        "data": {
+          "totalNanoAiu": 187695000
+        }
+      },
+      {
+        "type": "user.message",
+        "id": "exhaustion-hook-3",
+        "timestamp": "2026-09-07T01:14:19.690Z",
+        "data": {
+          "delivery": "queued",
+          "agentMode": "autopilot"
+        }
+      },
+      {
+        "type": "assistant.usage",
+        "id": "exhaustion-usage-6",
+        "timestamp": "2026-09-07T01:14:27.894Z",
+        "data": {
+          "totalNanoAiu": 175465000
+        }
+      },
+      {
+        "type": "session.idle",
+        "id": "exhaustion-final-idle",
+        "timestamp": "2026-09-07T01:14:30.692Z",
+        "data": {}
+      },
+      {
+        "type": "session.mode_changed",
+        "id": "exhaustion-mode-off",
+        "timestamp": "2026-09-07T01:15:52.733Z",
+        "data": {
+          "previousMode": "autopilot",
+          "newMode": "interactive"
+        }
+      }
+    ],
+    "expected": [
+      {
+        "kind": "autopilot",
+        "usedNanoAiu": 3010575000,
+        "capAiCredits": 1000,
+        "capSource": "autopilot-default",
+        "outcome": "mode-exit",
+        "endedAt": "2026-09-07T01:14:30.692Z",
+        "endEventId": "exhaustion-final-idle"
+      }
+    ]
+  }
+}

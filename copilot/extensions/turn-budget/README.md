@@ -1,0 +1,230 @@
+# Turn budget
+
+Turn budget records the AI-credit cost of each ordinary turn or autopilot run.
+It listens to Copilot CLI session events and stores all mutable data inside the
+current session workspace, so concurrent Copilot sessions never share runtime
+state.
+
+The extension is passive: reaching a cap does not abort work. `config.json`
+defines the caps that the state and history records report:
+
+```json
+{
+  "schemaVersion": 1,
+  "ordinaryAiCredits": 1000,
+  "autopilotAiCredits": 1000,
+  "heartbeatSeconds": 2
+}
+```
+
+An explicit native `/goal ... --max-ai-credits N` value replaces the autopilot
+default for that budget unit. The CLI rejects native values below 30 AIC; the
+extension's own defaults are not subject to that native minimum.
+
+## Status line
+
+`statusline.ps1` combines the CLI's session total with the extension's current
+budget unit:
+
+```text
+S 3,961A ($39.61) | T 327/1,000A ($3.27/$10) - PASSIVE
+```
+
+`S` is the CLI-reported session usage. `T` is the open budget unit, or the
+latest completed unit while the session is idle. A fresh session shows zero
+against the configured ordinary or autopilot default. The turn segment changes
+from green to yellow at 70 percent and red at 100 percent; the session segment
+is dimmed.
+
+`PASSIVE` makes that operating mode visible. Missing, malformed, stale,
+mismatched, or faulted extension state produces `T ? - PASSIVE` instead of a
+plausible total. Set
+`TURN_BUDGET_STATUSLINE_DEBUG=1` when invoking the script directly to print the
+rejected-state reason to stderr.
+
+The renderer locates `state.json` beneath the CLI-provided `transcript_path`,
+then verifies its schema, session ID, health, heartbeat, and accounting fields.
+Despite its name, `transcript_path` contains the session workspace directory in
+CLI `1.0.84-1`, not the `events.jsonl` path. The renderer does not use
+process-global state.
+The Windows command status line drops `│` and `·` from script output in this
+CLI build, so the rendered contract uses visible ASCII separators. ANSI color
+sequences are preserved.
+
+### Live compatibility checks
+
+The passive integration was exercised against CLI `1.0.84-1` on 2026-09-07:
+
+- An ordinary turn plus its queued review hook finalized as one unit, and the
+  displayed rounded AIC matched the history record.
+- An inferred-autopilot run included a real explore subagent, its queued hooks,
+  and one `source: "autopilot"` continuation in one unit. This exposed the
+  descendant `source: "agent-..."` boundary the reducer keeps in the parent
+  unit.
+- An explicit `/goal ... --max-ai-credits 30` displayed and persisted 30 AIC
+  with `capSource: "explicit-native"`.
+- Restarting an idle session replaced the extension instance, preserved the
+  latest completed unit, and continued to render healthy status.
+
+Pause/resume stays covered by the observed-timeline fixture; automated input
+to a busy interactive TUI is too nondeterministic to re-test live.
+
+## Data
+
+The extension writes only beneath its current session:
+
+```text
+<session workspace>\files\turn-budget\
+  state.json
+  history\
+    <budget-unit-id>.json
+```
+
+`state.json` contains the extension instance, heartbeat, health, reducer state,
+open budget unit, and latest completed budget unit. Each completed unit gets
+one deterministic history file. Rewriting the same record is idempotent.
+
+History contains event identifiers, timestamps, objective and interaction
+identifiers, nano-AIU usage, cap, cap source, and outcome. It does not copy
+prompts, responses, tool arguments, or tool output.
+
+## Observed Copilot behavior
+
+These timelines were observed with Copilot CLI `1.0.84-1` on 2026-09-06. They
+record the behavior the reducer must contend with, not a permanent CLI
+contract. The sanitized executable record is
+`tests\fixtures\observed-timelines.json`; it retains event ordering,
+timestamps, usage, modes, delivery, sources, continuation markers, and
+objective transitions while omitting conversation content and irrelevant
+events.
+
+### Ordinary prompt
+
+```text
+root user.message
+  -> assistant.usage
+  -> queued hook user.message
+  -> assistant.usage
+  -> session.idle
+```
+
+There is no idle event between the visible answer and a queued hook turn. Both
+usage records precede the same final idle event.
+
+### Explicit `/goal`
+
+```text
+objective active
+  -> mode autopilot
+  -> objective root message
+  -> usage and queued hook usage
+  -> session.idle while objective remains active
+  -> source: autopilot continuation
+  -> usage
+  -> session.task_complete
+  -> objective completed
+  -> queued hook usage
+  -> final session.idle
+```
+
+The objective remained active across the intermediate idle. The observed
+explicit continuation had `source: "autopilot"` without
+`isAutopilotContinuation: true`.
+
+### Inferred autopilot
+
+```text
+mode autopilot, no objective record
+  -> root user.message
+  -> usage and queued hook usage
+  -> session.idle
+  -> source: autopilot continuation
+  -> usage
+  -> session.task_complete
+  -> queued hook usage
+  -> final session.idle
+```
+
+`session.task_complete` appeared before the final queued hook and idle.
+
+### Pause and resume
+
+```text
+active objective
+  -> usage
+  -> mode interactive while work remains active
+  -> objective paused
+  -> in-flight and queued hook usage
+  -> session.idle
+
+objective active again
+  -> mode autopilot
+  -> new objective root message
+  -> usage
+  -> completion and queued hook usage
+  -> session.idle
+```
+
+`/autopilot off` does not cancel work already in flight. Resume increments the
+objective's resume count and resets its native limit usage while preserving
+cumulative objective usage.
+
+### Continuation exhaustion
+
+```text
+root user.message
+  -> usage and queued hook usage
+  -> session.idle
+  -> automatic continuation
+  -> usage and queued hook usage
+  -> session.idle
+  -> automatic continuation
+  -> usage and queued hook usage
+  -> session.idle
+```
+
+Exhausting `--max-autopilot-continues` emitted no terminal, abort, objective, or
+mode-change event. The session remained in autopilot mode. A later
+`/autopilot off` emitted only a mode change.
+
+## Accounting state machine
+
+`ordinary-active` starts on root work outside autopilot. It includes all usage,
+including descendant and queued-hook usage, and finalizes on `session.idle`.
+
+`autopilot-active` starts on explicit objective activation, resumed objective
+activation, or root work delivered in autopilot mode. It includes all usage and
+does not finalize at an intermediate idle.
+
+An automatic continuation is identified by `source: "autopilot"` or
+`isAutopilotContinuation: true`. Resumed objectives start a new budget unit.
+Subagent root messages use a session-scoped `agent-...` source. They do not
+start or supersede a unit; their usage remains in the parent unit.
+
+An idle autopilot unit without a terminal signal becomes
+`autopilot-quiescent`. An automatic continuation reactivates it. A new
+non-continuation root message finalizes it at the retained idle timestamp and
+starts another budget unit. Leaving autopilot while quiescent finalizes it
+immediately.
+
+Task completion, objective completion/pause/deletion, or leaving autopilot
+while work is active moves the unit to `autopilot-terminal-pending`. Usage from
+work and hooks already in flight remains in the unit, which finalizes at the
+next `session.idle`.
+
+If usage arrives without an open budget unit, or persisted state disagrees with
+the live mode/objective while a unit is open, the extension records a fault and
+stops accounting. It does not invent a partial total.
+
+Installing or reloading the extension after work has already started also
+records a fault. Run `/extensions reload` once the session is idle to account
+for subsequent work.
+
+## Running the tests
+
+The reducer uses Node's built-in test runner and has no package dependencies:
+
+```powershell
+node --test copilot\extensions\turn-budget\tests\accounting.test.mjs copilot\extensions\turn-budget\tests\operation-queue.test.mjs copilot\extensions\turn-budget\tests\persistence.test.mjs
+pwsh -NoLogo -NoProfile -File copilot\extensions\turn-budget\tests\statusline.Tests.ps1
+```

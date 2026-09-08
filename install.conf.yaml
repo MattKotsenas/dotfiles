@@ -59,6 +59,9 @@
     ~/.config/mousemaster: mousemaster/**
     ~/.copilot/instructions: copilot/instructions/**
     ~/.copilot/agents: copilot/agents/**
+    ~/.copilot/extensions/turn-budget:
+      path: copilot/extensions/turn-budget
+      glob: false
     ~/.copilot/preferences.yaml: copilot/preferences.yaml
     ~/.copilot/measure-twice/config.json: copilot/measure-twice/config.json
     $LOCALAPPDATA/nvim: nvim/**
