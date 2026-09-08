@@ -23,7 +23,7 @@ function Get-Property {
         throw "Missing property '$Name'"
     }
 
-    $property.Value
+    return ,$property.Value
 }
 
 function Get-OptionalProperty {
@@ -40,7 +40,7 @@ function Get-OptionalProperty {
         return $null
     }
 
-    $property.Value
+    return ,$property.Value
 }
 
 function ConvertTo-NonNegativeDecimal {
@@ -63,6 +63,22 @@ function ConvertTo-NonNegativeDecimal {
     }
 
     $number
+}
+
+function Test-IsJsonNumber {
+    param([object] $Value)
+
+    $Value -is [byte] -or
+    $Value -is [sbyte] -or
+    $Value -is [short] -or
+    $Value -is [ushort] -or
+    $Value -is [int] -or
+    $Value -is [uint] -or
+    $Value -is [long] -or
+    $Value -is [ulong] -or
+    $Value -is [float] -or
+    $Value -is [double] -or
+    $Value -is [decimal]
 }
 
 function Format-AiCredits {
@@ -105,7 +121,8 @@ function Format-SessionSegment {
 function Format-TurnSegment {
     param(
         [Nullable[decimal]] $UsedNanoAiu,
-        [Nullable[decimal]] $CapAiCredits
+        [Nullable[decimal]] $CapAiCredits,
+        [Nullable[decimal]] $PendingAiCredits
     )
 
     if ($null -eq $UsedNanoAiu -or $null -eq $CapAiCredits -or [decimal] $CapAiCredits -le 0) {
@@ -118,8 +135,13 @@ function Format-TurnSegment {
     $color = if ($ratio -ge 1d) { 31 } elseif ($ratio -ge 0.7d) { 33 } else { 32 }
     $text = "T $(Format-AiCredits $usedAiCredits)/$(Format-AiCredits $cap)A " +
         "(`$$(Format-Usd $usedAiCredits)/`$$(Format-Usd $cap))"
+    $pending = if ($null -eq $PendingAiCredits) {
+        ''
+    } else {
+        Add-Color -Text " - NEXT $(Format-AiCredits ([decimal] $PendingAiCredits))A" -Code 36
+    }
 
-    "$(Add-Color -Text $text -Code $color)$(Add-Color -Text $marker -Code 33)"
+    "$(Add-Color -Text $text -Code $color)$pending$(Add-Color -Text $marker -Code 33)"
 }
 
 function Read-Configuration {
@@ -199,6 +221,55 @@ function Read-TurnState {
         throw 'Unsupported accounting schema'
     }
 
+    $pendingProperty = $accounting.PSObject.Properties['pendingOverride']
+    $pendingOverride = $null
+    if ($null -ne $pendingProperty) {
+        $pendingOverride = $pendingProperty.Value
+    }
+    $pendingAiCredits = $null
+    if ($null -ne $pendingOverride) {
+        if ($pendingOverride -isnot [System.Management.Automation.PSCustomObject]) {
+            throw 'Invalid pending override'
+        }
+
+        $pendingAiCreditsValue = Get-Property $pendingOverride 'aiCredits'
+        if (-not (Test-IsJsonNumber $pendingAiCreditsValue)) {
+            throw 'Pending override AIC must be a number'
+        }
+
+        $pendingAiCredits = ConvertTo-NonNegativeDecimal $pendingAiCreditsValue 'pendingOverride.aiCredits'
+        if (
+            $pendingAiCredits -le 0 -or
+            $pendingAiCredits -ne [decimal]::Truncate($pendingAiCredits) -or
+            $pendingAiCredits -gt 9007199254740991d
+        ) {
+            throw 'Pending override must be a positive safe integer'
+        }
+
+        $pendingSetAtValue = Get-Property $pendingOverride 'setAt'
+        $pendingSetAt = [datetimeoffset]::MinValue
+        if ($pendingSetAtValue -is [datetime]) {
+            $pendingSetAt = [datetimeoffset] $pendingSetAtValue
+        } elseif (
+            $pendingSetAtValue -isnot [string] -or
+            -not [datetimeoffset]::TryParseExact(
+                $pendingSetAtValue,
+                "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
+                [System.Globalization.CultureInfo]::InvariantCulture,
+                [System.Globalization.DateTimeStyles]::AssumeUniversal -bor
+                    [System.Globalization.DateTimeStyles]::AdjustToUniversal,
+                [ref] $pendingSetAt
+            )
+        ) {
+            throw 'Invalid pending override timestamp'
+        }
+
+        $pendingEventId = Get-Property $pendingOverride 'setEventId'
+        if ($pendingEventId -isnot [string] -or [string]::IsNullOrWhiteSpace($pendingEventId)) {
+            throw 'Invalid pending override event'
+        }
+    }
+
     $unit = Get-OptionalProperty $accounting 'openUnit'
     if ($null -eq $unit) {
         $unit = Get-OptionalProperty $accounting 'latestUnit'
@@ -208,6 +279,7 @@ function Read-TurnState {
         return [pscustomobject]@{
             UsedNanoAiu = ConvertTo-NonNegativeDecimal (Get-Property $unit 'usedNanoAiu') 'usedNanoAiu'
             CapAiCredits = ConvertTo-NonNegativeDecimal (Get-Property $unit 'capAiCredits') 'capAiCredits'
+            PendingAiCredits = $pendingAiCredits
         }
     }
 
@@ -225,12 +297,14 @@ function Read-TurnState {
     [pscustomobject]@{
         UsedNanoAiu = 0d
         CapAiCredits = $cap
+        PendingAiCredits = $pendingAiCredits
     }
 }
 
 $sessionUsedNanoAiu = $null
 $turnUsedNanoAiu = $null
 $turnCapAiCredits = $null
+$pendingAiCredits = $null
 
 try {
     $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json
@@ -241,6 +315,7 @@ try {
     $turnState = Read-TurnState -Payload $payload -Configuration $configuration
     $turnUsedNanoAiu = $turnState.UsedNanoAiu
     $turnCapAiCredits = $turnState.CapAiCredits
+    $pendingAiCredits = $turnState.PendingAiCredits
 }
 catch {
     if ($env:TURN_BUDGET_STATUSLINE_DEBUG) {
@@ -248,4 +323,4 @@ catch {
     }
 }
 
-"$(Format-SessionSegment $sessionUsedNanoAiu)$separator$(Format-TurnSegment $turnUsedNanoAiu $turnCapAiCredits)"
+"$(Format-SessionSegment $sessionUsedNanoAiu)$separator$(Format-TurnSegment $turnUsedNanoAiu $turnCapAiCredits $pendingAiCredits)"

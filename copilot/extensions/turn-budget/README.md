@@ -21,6 +21,27 @@ An explicit native `/goal ... --max-ai-credits N` value replaces the autopilot
 default for that budget unit. The CLI rejects native values below 30 AIC; the
 extension's own defaults are not subject to that native minimum.
 
+## Next-unit override
+
+Use `/budget next N` to set a positive integer AIC cap for the next budget unit:
+
+```text
+/budget next 2000
+```
+
+The override belongs to the current session and survives an idle extension or
+CLI restart. Setting it does not change a unit already in progress, and setting
+another value before consumption replaces the pending value. The next unit
+consumes it with this precedence:
+
+1. Explicit native `/goal --max-ai-credits`
+2. Pending `/budget next`
+3. Configured default for the unit's kind
+
+An explicit native cap consumes the pending override even though the native cap
+wins. This prevents an older override from unexpectedly applying to a later
+turn.
+
 ## Status line
 
 `statusline.ps1` combines the CLI's session total with the extension's current
@@ -35,6 +56,12 @@ latest completed unit while the session is idle. A fresh session shows zero
 against the configured ordinary or autopilot default. The turn segment changes
 from green to yellow at 70 percent and red at 100 percent; the session segment
 is dimmed.
+
+An armed override adds `NEXT` until a unit consumes it:
+
+```text
+S 3,961A ($39.61) | T 327/1,000A ($3.27/$10) - NEXT 2,000A - PASSIVE
+```
 
 `PASSIVE` makes that operating mode visible. Missing, malformed, stale,
 mismatched, or faulted extension state produces `T ? - PASSIVE` instead of a
@@ -69,6 +96,13 @@ The passive integration was exercised against CLI `1.0.84-1` on 2026-09-07:
 Pause/resume stays covered by the observed-timeline fixture; automated input
 to a busy interactive TUI is too nondeterministic to re-test live.
 
+The next-unit override was exercised against CLI `1.0.84-1` on 2026-09-08.
+`/budget next 2` armed without starting model work, appeared as `NEXT 2A`, and
+produced an ordinary history record with `capSource: "next-override"`. A
+subsequent pending 5-AIC override was consumed by an explicit 30-AIC goal,
+whose history retained `capSource: "explicit-native"`. Invalid input displayed
+the command usage without faulting accounting.
+
 ## Data
 
 The extension writes only beneath its current session:
@@ -81,8 +115,9 @@ The extension writes only beneath its current session:
 ```
 
 `state.json` contains the extension instance, heartbeat, health, reducer state,
-open budget unit, and latest completed budget unit. Each completed unit gets
-one deterministic history file. Rewriting the same record is idempotent.
+pending override, open budget unit, and latest completed budget unit. Each
+completed unit gets one deterministic history file. Rewriting the same record
+is idempotent.
 
 History contains event identifiers, timestamps, objective and interaction
 identifiers, nano-AIU usage, cap, cap source, and outcome. It does not copy
@@ -225,6 +260,6 @@ for subsequent work.
 The reducer uses Node's built-in test runner and has no package dependencies:
 
 ```powershell
-node --test copilot\extensions\turn-budget\tests\accounting.test.mjs copilot\extensions\turn-budget\tests\operation-queue.test.mjs copilot\extensions\turn-budget\tests\persistence.test.mjs
+node --test copilot\extensions\turn-budget\tests\accounting.test.mjs copilot\extensions\turn-budget\tests\budget-command.test.mjs copilot\extensions\turn-budget\tests\operation-queue.test.mjs copilot\extensions\turn-budget\tests\persistence.test.mjs
 pwsh -NoLogo -NoProfile -File copilot\extensions\turn-budget\tests\statusline.Tests.ps1
 ```

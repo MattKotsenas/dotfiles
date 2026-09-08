@@ -30,6 +30,7 @@ export function createAccountingState({
       id: objectiveId,
       status: objectiveStatus,
     },
+    pendingOverride: null,
     openUnit: null,
     latestUnit: null,
   };
@@ -40,13 +41,17 @@ export function restoreAccountingState(value) {
     value?.schemaVersion !== SCHEMA_VERSION ||
     !MODES.has(value.mode) ||
     !isObjective(value.objective) ||
+    !isPendingOverride(value.pendingOverride ?? null) ||
     !isUnitOrNull(value.openUnit) ||
     !isUnitOrNull(value.latestUnit)
   ) {
     throw new TypeError("state.json contains an unsupported accounting state");
   }
 
-  return structuredClone(value);
+  return {
+    ...structuredClone(value),
+    pendingOverride: value.pendingOverride ?? null,
+  };
 }
 
 export function reduceAccounting(state, event, policy) {
@@ -93,6 +98,11 @@ export function reduceAccounting(state, event, policy) {
     }
 
     const usesExplicitCap = kind === "autopilot" && explicitCap !== undefined;
+    const pendingOverride = next.pendingOverride;
+    const usesPendingOverride =
+      !usesExplicitCap && pendingOverride !== null;
+    next.pendingOverride = null;
+
     next.openUnit = {
       id: `${kind}-${event.id}`,
       kind,
@@ -104,14 +114,18 @@ export function reduceAccounting(state, event, policy) {
       usedNanoAiu: 0,
       capAiCredits: usesExplicitCap
         ? explicitCap
-        : kind === "autopilot"
-          ? policy.autopilotAiCredits
-          : policy.ordinaryAiCredits,
+        : usesPendingOverride
+          ? pendingOverride.aiCredits
+          : kind === "autopilot"
+            ? policy.autopilotAiCredits
+            : policy.ordinaryAiCredits,
       capSource: usesExplicitCap
         ? "explicit-native"
-        : kind === "autopilot"
-          ? "autopilot-default"
-          : "ordinary-default",
+        : usesPendingOverride
+          ? "next-override"
+          : kind === "autopilot"
+            ? "autopilot-default"
+            : "ordinary-default",
       lastIdleAt: null,
       lastIdleEventId: null,
       terminalReason: null,
@@ -137,6 +151,22 @@ export function reduceAccounting(state, event, policy) {
   };
 
   switch (event.type) {
+    case "budget.next": {
+      const aiCredits = event.data.aiCredits;
+      if (!Number.isSafeInteger(aiCredits) || aiCredits <= 0) {
+        throw new TypeError(
+          "budget.next requires a positive safe integer AI-credit cap",
+        );
+      }
+
+      next.pendingOverride = {
+        aiCredits,
+        setAt: event.timestamp,
+        setEventId: event.id,
+      };
+      break;
+    }
+
     case "session.mode_changed": {
       assertMode(event.data.newMode);
       const previousMode = next.mode;
@@ -357,6 +387,19 @@ function isObjective(value) {
     typeof value === "object" &&
     (value.id === null || Number.isInteger(value.id)) &&
     (value.status === null || typeof value.status === "string")
+  );
+}
+
+function isPendingOverride(value) {
+  return (
+    value === null ||
+    (typeof value === "object" &&
+      Number.isSafeInteger(value.aiCredits) &&
+      value.aiCredits > 0 &&
+      typeof value.setAt === "string" &&
+      !Number.isNaN(Date.parse(value.setAt)) &&
+      typeof value.setEventId === "string" &&
+      value.setEventId.length > 0)
   );
 }
 

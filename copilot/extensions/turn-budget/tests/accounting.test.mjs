@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   createAccountingState,
   reduceAccounting,
+  restoreAccountingState,
 } from "../accounting.mjs";
 
 const policy = {
@@ -152,8 +153,167 @@ test("keeps descendant agent work inside the active autopilot unit", () => {
   assert.equal(result.state.openUnit.usedNanoAiu, 5);
 });
 
-function run(events) {
-  let state = createAccountingState();
+test("arms and consumes the next override for ordinary work", () => {
+  const result = run([
+    nextBudget(2000),
+    {
+      type: "user.message",
+      id: "ordinary-root",
+      timestamp: "2026-09-07T00:00:01.000Z",
+      data: { delivery: "idle" },
+    },
+  ]);
+
+  assert.equal(result.state.pendingOverride, null);
+  assert.equal(result.state.openUnit.capAiCredits, 2000);
+  assert.equal(result.state.openUnit.capSource, "next-override");
+});
+
+test("uses the next override for inferred autopilot work", () => {
+  const result = run([
+    nextBudget(2500),
+    {
+      type: "session.mode_changed",
+      id: "mode-on",
+      timestamp: "2026-09-07T00:00:01.000Z",
+      data: { previousMode: "interactive", newMode: "autopilot" },
+    },
+    {
+      type: "user.message",
+      id: "autopilot-root",
+      timestamp: "2026-09-07T00:00:02.000Z",
+      data: { delivery: "idle", agentMode: "autopilot" },
+    },
+  ]);
+
+  assert.equal(result.state.pendingOverride, null);
+  assert.equal(result.state.openUnit.capAiCredits, 2500);
+  assert.equal(result.state.openUnit.capSource, "next-override");
+});
+
+test("uses a next override only once", () => {
+  const first = run([
+    nextBudget(2000),
+    {
+      type: "user.message",
+      id: "first-root",
+      timestamp: "2026-09-07T00:00:01.000Z",
+      data: { delivery: "idle" },
+    },
+    {
+      type: "session.idle",
+      id: "first-idle",
+      timestamp: "2026-09-07T00:00:02.000Z",
+      data: {},
+    },
+    {
+      type: "user.message",
+      id: "second-root",
+      timestamp: "2026-09-07T00:00:03.000Z",
+      data: { delivery: "idle" },
+    },
+  ]);
+
+  assert.equal(first.completedUnits[0].capSource, "next-override");
+  assert.equal(first.state.openUnit.capAiCredits, 1000);
+  assert.equal(first.state.openUnit.capSource, "ordinary-default");
+});
+
+test("explicit native caps win and still consume the next override", () => {
+  const armed = run([nextBudget(2500)]).state;
+  assert.equal(armed.pendingOverride.aiCredits, 2500);
+
+  const result = reduceAccounting(
+    armed,
+    {
+      type: "session.autopilot_objective_changed",
+      id: "objective",
+      timestamp: "2026-09-07T00:00:01.000Z",
+      data: {
+        operation: "create",
+        id: 1,
+        status: "active",
+        creditLimitAiCredits: 30,
+      },
+    },
+    policy,
+  );
+
+  assert.equal(result.state.pendingOverride, null);
+  assert.equal(result.state.openUnit.capAiCredits, 30);
+  assert.equal(result.state.openUnit.capSource, "explicit-native");
+});
+
+test("a later next override replaces the pending value", () => {
+  const result = run([
+    nextBudget(1500),
+    {
+      ...nextBudget(2000, "2026-09-07T00:00:01.000Z"),
+      id: "budget-next-replacement",
+    },
+  ]);
+
+  assert.deepEqual(result.state.pendingOverride, {
+    aiCredits: 2000,
+    setAt: "2026-09-07T00:00:01.000Z",
+    setEventId: "budget-next-replacement",
+  });
+});
+
+test("arming an override does not widen an open unit", () => {
+  const first = run([
+    {
+      type: "user.message",
+      id: "first-root",
+      timestamp: "2026-09-07T00:00:00.000Z",
+      data: { delivery: "idle" },
+    },
+    nextBudget(2000, "2026-09-07T00:00:01.000Z"),
+  ]);
+
+  assert.equal(first.state.openUnit.capAiCredits, 1000);
+  assert.equal(first.state.pendingOverride.aiCredits, 2000);
+
+  const second = run(
+    [
+      {
+        type: "session.idle",
+        id: "first-idle",
+        timestamp: "2026-09-07T00:00:02.000Z",
+        data: {},
+      },
+      {
+        type: "user.message",
+        id: "second-root",
+        timestamp: "2026-09-07T00:00:03.000Z",
+        data: { delivery: "idle" },
+      },
+    ],
+    first.state,
+  );
+
+  assert.equal(second.state.openUnit.capAiCredits, 2000);
+  assert.equal(second.state.openUnit.capSource, "next-override");
+});
+
+test("restores pre-override accounting state with no pending override", () => {
+  const state = createAccountingState();
+  delete state.pendingOverride;
+
+  assert.equal(restoreAccountingState(state).pendingOverride, null);
+});
+
+test("restores a pending next override", () => {
+  const state = run([nextBudget(2000)]).state;
+
+  assert.deepEqual(
+    restoreAccountingState(state).pendingOverride,
+    state.pendingOverride,
+  );
+});
+
+function run(events, initialState = createAccountingState()) {
+  let state = initialState;
   const completedUnits = [];
 
   for (const event of events) {
@@ -163,6 +323,18 @@ function run(events) {
   }
 
   return { state, completedUnits };
+}
+
+function nextBudget(
+  aiCredits,
+  timestamp = "2026-09-07T00:00:00.000Z",
+) {
+  return {
+    type: "budget.next",
+    id: `budget-next-${aiCredits}`,
+    timestamp,
+    data: { aiCredits },
+  };
 }
 
 function project(unit) {

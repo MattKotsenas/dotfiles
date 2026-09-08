@@ -8,6 +8,7 @@ import {
   restoreAccountingState,
   validatePolicy,
 } from "./accounting.mjs";
+import { parseBudgetCommand } from "./budget-command.mjs";
 import {
   getHistoryPath,
   readJsonIfExists,
@@ -25,11 +26,22 @@ const TRACKED_EVENTS = new Set([
   "session.idle",
   "session.shutdown",
 ]);
+const aiCreditFormatter = new Intl.NumberFormat("en-US");
 
 const config = parseConfig(
   JSON.parse(await readFile(new URL("./config.json", import.meta.url), "utf8")),
 );
-const session = await joinSession();
+
+const operations = createOperationQueue(reportFailure);
+const session = await joinSession({
+  commands: [
+    {
+      name: "budget",
+      description: "Set the AI-credit cap for the next budget unit",
+      handler: handleBudgetCommand,
+    },
+  ],
+});
 
 if (!session.workspacePath) {
   throw new Error("Turn budget requires an infinite-session workspace");
@@ -43,7 +55,6 @@ const policy = validatePolicy(config);
 let accounting = createAccountingState();
 let revision = 0;
 let heartbeat;
-const operations = createOperationQueue(reportFailure);
 
 operations.enqueue(initialize);
 
@@ -138,7 +149,15 @@ async function initialize() {
 
 async function processEvent(event) {
   const normalized = await normalizeEvent(event);
-  const result = reduceAccounting(accounting, normalized, policy);
+  await applyAccountingEvent(normalized);
+
+  if (event.type === "session.shutdown") {
+    clearInterval(heartbeat);
+  }
+}
+
+async function applyAccountingEvent(event) {
+  const result = reduceAccounting(accounting, event, policy);
 
   for (const unit of result.completedUnits) {
     await writeJsonAtomic(
@@ -150,10 +169,28 @@ async function processEvent(event) {
 
   accounting = result.state;
   await persistState();
+}
 
-  if (event.type === "session.shutdown") {
-    clearInterval(heartbeat);
+async function handleBudgetCommand({ args }) {
+  let command;
+  try {
+    command = parseBudgetCommand(args);
+  } catch (error) {
+    await session.log(error.message, { level: "error" });
+    return;
   }
+
+  return operations.enqueue(async () => {
+    await applyAccountingEvent({
+      type: "budget.next",
+      id: `budget-next-${randomUUID()}`,
+      timestamp: new Date().toISOString(),
+      data: command,
+    });
+    await session.log(
+      `Next budget set to ${aiCreditFormatter.format(command.aiCredits)} AIC`,
+    );
+  });
 }
 
 async function normalizeEvent(event) {

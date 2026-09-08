@@ -34,7 +34,8 @@ function New-State {
         [string] $Mode = 'interactive',
         [string] $Health = 'ok',
         [string] $Heartbeat = '',
-        [string] $StateSessionId = $sessionId
+        [string] $StateSessionId = $sessionId,
+        [object] $PendingOverride = $null
     )
 
     if ([string]::IsNullOrWhiteSpace($Heartbeat)) {
@@ -49,6 +50,7 @@ function New-State {
         accounting = [ordered]@{
             schemaVersion = 1
             mode = $Mode
+            pendingOverride = $PendingOverride
             openUnit = $OpenUnit
             latestUnit = $LatestUnit
         }
@@ -117,6 +119,95 @@ try {
     $output = Invoke-Renderer
     Check 'explicit native cap is rendered from the unit' `
         ($output -eq 'S 3,961A ($39.61) | T 126/250A ($1.26/$2.5) - PASSIVE') $output
+
+    $pending = [ordered]@{
+        aiCredits = 2000
+        setAt = [datetime]::UtcNow.ToString(
+            "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
+            [System.Globalization.CultureInfo]::InvariantCulture
+        )
+        setEventId = 'budget-next'
+    }
+    Write-State (New-State -LatestUnit (New-Unit -UsedNanoAiu 842000000000) -PendingOverride $pending)
+    $output = Invoke-Renderer
+    Check 'pending next override remains visible while idle' `
+        ($output -eq 'S 3,961A ($39.61) | T 842/1,000A ($8.42/$10) - NEXT 2,000A - PASSIVE') $output
+
+    $invalidPendingOverrides = @(
+        [ordered]@{
+            Name = 'string AIC'
+            Value = [ordered]@{
+                aiCredits = '2000'
+                setAt = [datetime]::UtcNow.ToString('O')
+                setEventId = 'budget-next'
+            }
+        },
+        [ordered]@{
+            Name = 'unsafe integer AIC'
+            Value = [ordered]@{
+                aiCredits = 9007199254740992
+                setAt = [datetime]::UtcNow.ToString('O')
+                setEventId = 'budget-next'
+            }
+        },
+        [ordered]@{
+            Name = 'numeric event ID'
+            Value = [ordered]@{
+                aiCredits = 2000
+                setAt = [datetime]::UtcNow.ToString('O')
+                setEventId = 1
+            }
+        },
+        [ordered]@{
+            Name = 'array AIC'
+            Value = [ordered]@{
+                aiCredits = @(2000)
+                setAt = [datetime]::UtcNow.ToString('O')
+                setEventId = 'budget-next'
+            }
+        },
+        [ordered]@{
+            Name = 'array timestamp'
+            Value = [ordered]@{
+                aiCredits = 2000
+                setAt = @([datetime]::UtcNow.ToString('O'))
+                setEventId = 'budget-next'
+            }
+        },
+        [ordered]@{
+            Name = 'array event ID'
+            Value = [ordered]@{
+                aiCredits = 2000
+                setAt = [datetime]::UtcNow.ToString('O')
+                setEventId = @('budget-next')
+            }
+        },
+        [ordered]@{
+            Name = 'time-only timestamp'
+            Value = [ordered]@{
+                aiCredits = 2000
+                setAt = '12:30'
+                setEventId = 'budget-next'
+            }
+        },
+        [ordered]@{
+            Name = 'array value'
+            Value = @(
+                [ordered]@{
+                    aiCredits = 2000
+                    setAt = [datetime]::UtcNow.ToString('O')
+                    setEventId = 'budget-next'
+                }
+            )
+        }
+    )
+
+    foreach ($case in $invalidPendingOverrides) {
+        Write-State (New-State -PendingOverride $case.Value)
+        $output = Invoke-Renderer
+        Check "invalid pending override ($($case.Name)) fails visibly" `
+            ($output -eq 'S 3,961A ($39.61) | T ? - PASSIVE') $output
+    }
 
     Remove-Item -LiteralPath $statePath -Force
     $output = Invoke-Renderer
