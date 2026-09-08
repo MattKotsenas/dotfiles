@@ -48,7 +48,7 @@ turn.
 budget unit:
 
 ```text
-S 3,961A ($39.61) | T 327/1,000A ($3.27/$10) - PASSIVE
+S 3,961AIC ($39.61) | T 327/1,000AIC ($3.27/$10) - PASSIVE
 ```
 
 `S` is the CLI-reported session usage. `T` is the open budget unit, or the
@@ -60,7 +60,7 @@ is dimmed.
 An armed override adds `NEXT` until a unit consumes it:
 
 ```text
-S 3,961A ($39.61) | T 327/1,000A ($3.27/$10) - NEXT 2,000A - PASSIVE
+S 3,961AIC ($39.61) | T 327/1,000AIC ($3.27/$10) - NEXT 2,000AIC - PASSIVE
 ```
 
 `PASSIVE` makes that operating mode visible. Missing, malformed, stale,
@@ -97,11 +97,11 @@ Pause/resume stays covered by the observed-timeline fixture; automated input
 to a busy interactive TUI is too nondeterministic to re-test live.
 
 The next-unit override was exercised against CLI `1.0.84-1` on 2026-09-08.
-`/budget next 2` armed without starting model work, appeared as `NEXT 2A`, and
-produced an ordinary history record with `capSource: "next-override"`. A
-subsequent pending 5-AIC override was consumed by an explicit 30-AIC goal,
-whose history retained `capSource: "explicit-native"`. Invalid input displayed
-the command usage without faulting accounting.
+`/budget next 2` armed without starting model work and produced an ordinary
+history record with `capSource: "next-override"`. A subsequent pending 5-AIC
+override was consumed by an explicit 30-AIC goal, whose history retained
+`capSource: "explicit-native"`. Invalid input displayed the command usage
+without faulting accounting.
 
 ## Data
 
