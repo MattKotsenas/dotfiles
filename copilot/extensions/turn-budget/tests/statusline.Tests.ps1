@@ -103,22 +103,22 @@ try {
     Write-State (New-State -OpenUnit (New-Unit -UsedNanoAiu 327123400000))
     $output = Invoke-Renderer
     Check 'active unit uses open accounting' `
-        ($output -eq 'S 3,961AIC ($39.61) | T 327/1,000AIC ($3.27/$10) - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T 327 / 1,000 AIC ($3.27 / $10) - PASSIVE') $output
 
     Write-State (New-State -LatestUnit (New-Unit -UsedNanoAiu 842000000000))
     $output = Invoke-Renderer
     Check 'idle state uses latest completed unit' `
-        ($output -eq 'S 3,961AIC ($39.61) | T 842/1,000AIC ($8.42/$10) - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T 842 / 1,000 AIC ($8.42 / $10) - PASSIVE') $output
 
     Write-State (New-State)
     $output = Invoke-Renderer -SessionNanoAiu 0
     Check 'fresh session shows zero with ordinary default' `
-        ($output -eq 'S 0AIC ($0) | T 0/1,000AIC ($0/$10) - PASSIVE') $output
+        ($output -eq 'S 0 AIC ($0) | T 0 / 1,000 AIC ($0 / $10) - PASSIVE') $output
 
     Write-State (New-State -OpenUnit (New-Unit -UsedNanoAiu 125500000000 -CapAiCredits 250))
     $output = Invoke-Renderer
     Check 'explicit native cap is rendered from the unit' `
-        ($output -eq 'S 3,961AIC ($39.61) | T 126/250AIC ($1.26/$2.5) - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T 126 / 250 AIC ($1.26 / $2.5) - PASSIVE') $output
 
     $pending = [ordered]@{
         aiCredits = 2000
@@ -131,7 +131,7 @@ try {
     Write-State (New-State -LatestUnit (New-Unit -UsedNanoAiu 842000000000) -PendingOverride $pending)
     $output = Invoke-Renderer
     Check 'pending next override remains visible while idle' `
-        ($output -eq 'S 3,961AIC ($39.61) | T 842/1,000AIC ($8.42/$10) - NEXT 2,000AIC - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T 842 / 1,000 AIC ($8.42 / $10) - NEXT 2,000 AIC - PASSIVE') $output
 
     $invalidPendingOverrides = @(
         [ordered]@{
@@ -206,23 +206,23 @@ try {
         Write-State (New-State -PendingOverride $case.Value)
         $output = Invoke-Renderer
         Check "invalid pending override ($($case.Name)) fails visibly" `
-            ($output -eq 'S 3,961AIC ($39.61) | T ? - PASSIVE') $output
+            ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
     }
 
     Remove-Item -LiteralPath $statePath -Force
     $output = Invoke-Renderer
     Check 'missing state fails visibly' `
-        ($output -eq 'S 3,961AIC ($39.61) | T ? - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
 
     Set-Content -LiteralPath $statePath -Value '{invalid'
     $output = Invoke-Renderer
     Check 'malformed state fails visibly' `
-        ($output -eq 'S 3,961AIC ($39.61) | T ? - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
 
     Write-State (New-State -StateSessionId ([guid]::NewGuid().ToString()))
     $output = Invoke-Renderer
     Check 'mismatched session fails visibly' `
-        ($output -eq 'S 3,961AIC ($39.61) | T ? - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
 
     $staleHeartbeat = [datetime]::UtcNow.AddMinutes(-1).ToString(
         'O',
@@ -231,17 +231,17 @@ try {
     Write-State (New-State -Heartbeat $staleHeartbeat)
     $output = Invoke-Renderer
     Check 'stale heartbeat fails visibly' `
-        ($output -eq 'S 3,961AIC ($39.61) | T ? - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
 
     Write-State (New-State -Health 'fault')
     $output = Invoke-Renderer
     Check 'faulted accounting fails visibly' `
-        ($output -eq 'S 3,961AIC ($39.61) | T ? - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
 
     Write-State (New-State -Mode 'unsupported')
     $output = Invoke-Renderer
     Check 'unsupported accounting mode fails visibly' `
-        ($output -eq 'S 3,961AIC ($39.61) | T ? - PASSIVE') $output
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
 
     $output = '{}' | pwsh -NoLogo -NoProfile -File $renderer
     $plain = "$output" -replace "$([char]27)\[[0-9;]*m", ''

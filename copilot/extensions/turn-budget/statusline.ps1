@@ -114,7 +114,7 @@ function Format-SessionSegment {
     }
 
     $usedAiCredits = [decimal] $UsedNanoAiu / 1000000000d
-    $text = "S $(Format-AiCredits $usedAiCredits)AIC (`$$(Format-Usd $usedAiCredits))"
+    $text = "S $(Format-AiCredits $usedAiCredits) AIC (`$$(Format-Usd $usedAiCredits))"
     Add-Color -Text $text -Code 2
 }
 
@@ -133,12 +133,12 @@ function Format-TurnSegment {
     $cap = [decimal] $CapAiCredits
     $ratio = $usedAiCredits / $cap
     $color = if ($ratio -ge 1d) { 31 } elseif ($ratio -ge 0.7d) { 33 } else { 32 }
-    $text = "T $(Format-AiCredits $usedAiCredits)/$(Format-AiCredits $cap)AIC " +
-        "(`$$(Format-Usd $usedAiCredits)/`$$(Format-Usd $cap))"
+    $text = "T $(Format-AiCredits $usedAiCredits) / $(Format-AiCredits $cap) AIC " +
+        "(`$$(Format-Usd $usedAiCredits) / `$$(Format-Usd $cap))"
     $pending = if ($null -eq $PendingAiCredits) {
         ''
     } else {
-        Add-Color -Text " - NEXT $(Format-AiCredits ([decimal] $PendingAiCredits))AIC" -Code 36
+        Add-Color -Text " - NEXT $(Format-AiCredits ([decimal] $PendingAiCredits)) AIC" -Code 36
     }
 
     "$(Add-Color -Text $text -Code $color)$pending$(Add-Color -Text $marker -Code 33)"

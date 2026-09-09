@@ -48,7 +48,7 @@ turn.
 budget unit:
 
 ```text
-S 3,961AIC ($39.61) | T 327/1,000AIC ($3.27/$10) - PASSIVE
+S 3,961 AIC ($39.61) | T 327 / 1,000 AIC ($3.27 / $10) - PASSIVE
 ```
 
 `S` is the CLI-reported session usage. `T` is the open budget unit, or the
@@ -60,7 +60,7 @@ is dimmed.
 An armed override adds `NEXT` until a unit consumes it:
 
 ```text
-S 3,961AIC ($39.61) | T 327/1,000AIC ($3.27/$10) - NEXT 2,000AIC - PASSIVE
+S 3,961 AIC ($39.61) | T 327 / 1,000 AIC ($3.27 / $10) - NEXT 2,000 AIC - PASSIVE
 ```
 
 `PASSIVE` makes that operating mode visible. Missing, malformed, stale,
