@@ -10,6 +10,10 @@ import {
 } from "./accounting.mjs";
 import { parseBudgetCommand } from "./budget-command.mjs";
 import {
+  formatBudgetHistory,
+  readHistoryRecords,
+} from "./history.mjs";
+import {
   getHistoryPath,
   readJsonIfExists,
   writeJsonAtomic,
@@ -37,7 +41,7 @@ const session = await joinSession({
   commands: [
     {
       name: "budget",
-      description: "Set the AI-credit cap for the next budget unit",
+      description: "Set the next cap or show turn prices",
       handler: handleBudgetCommand,
     },
   ],
@@ -180,12 +184,35 @@ async function handleBudgetCommand({ args }) {
     return;
   }
 
+  if (command.action === "history") {
+    return operations.enqueue(async () => {
+      try {
+        const records = await readHistoryRecords(
+          join(root, "history"),
+          session.sessionId,
+        );
+        await session.log(
+          formatBudgetHistory({
+            records,
+            openUnit: accounting.openUnit,
+            limit: command.limit,
+          }),
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        await session.log(`Budget history unavailable: ${message}`, {
+          level: "error",
+        });
+      }
+    });
+  }
+
   return operations.enqueue(async () => {
     await applyAccountingEvent({
       type: "budget.next",
       id: `budget-next-${randomUUID()}`,
       timestamp: new Date().toISOString(),
-      data: command,
+      data: { aiCredits: command.aiCredits },
     });
     await session.log(
       `Next budget set to ${aiCreditFormatter.format(command.aiCredits)} AIC`,

@@ -42,6 +42,27 @@ An explicit native cap consumes the pending override even though the native cap
 wins. This prevents an older override from unexpectedly applying to a later
 turn.
 
+## History
+
+Use `/budget history` to show current-session prices for the ten most recent
+completed budget units:
+
+```text
+/budget history
+```
+
+Pass a number from 1 through 50 to change the number of recent units shown:
+
+```text
+/budget history 25
+```
+
+The summary covers every completed unit in the session and reports total,
+median, average, maximum, and over-cap count. Each recent row shows its UTC end
+time, kind, AIC and USD usage against its cap, percentage used, outcome, and cap
+source. An open unit appears separately as `Active`; it is not included in the
+completed-unit summary.
+
 ## Status line
 
 `statusline.ps1` combines the CLI's session total with the extension's current
@@ -102,6 +123,11 @@ history record with `capSource: "next-override"`. A subsequent pending 5-AIC
 override was consumed by an explicit 30-AIC goal, whose history retained
 `capSource: "explicit-native"`. Invalid input displayed the command usage
 without faulting accounting.
+
+The history command was exercised against CLI `1.0.84-3` on 2026-09-09. It
+reported an empty session, then priced a completed turn, honored an explicit
+row limit, rejected an out-of-range limit without faulting accounting, and
+preserved the record across restart and resume.
 
 ## Data
 
@@ -260,6 +286,6 @@ for subsequent work.
 The reducer uses Node's built-in test runner and has no package dependencies:
 
 ```powershell
-node --test copilot\extensions\turn-budget\tests\accounting.test.mjs copilot\extensions\turn-budget\tests\budget-command.test.mjs copilot\extensions\turn-budget\tests\operation-queue.test.mjs copilot\extensions\turn-budget\tests\persistence.test.mjs
+node --test copilot\extensions\turn-budget\tests\accounting.test.mjs copilot\extensions\turn-budget\tests\budget-command.test.mjs copilot\extensions\turn-budget\tests\history.test.mjs copilot\extensions\turn-budget\tests\operation-queue.test.mjs copilot\extensions\turn-budget\tests\persistence.test.mjs
 pwsh -NoLogo -NoProfile -File copilot\extensions\turn-budget\tests\statusline.Tests.ps1
 ```
