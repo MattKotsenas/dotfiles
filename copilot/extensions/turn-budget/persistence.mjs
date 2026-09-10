@@ -1,4 +1,5 @@
 import {
+  link,
   mkdir,
   open,
   readFile,
@@ -31,6 +32,30 @@ export async function writeJsonAtomic(path, value, instanceId) {
   const temporaryPath = `${path}.${instanceId}.tmp`;
   await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
   await retryTransientFileLock(() => rename(temporaryPath, path));
+}
+
+export async function writeJsonExclusive(path, value, instanceId) {
+  await mkdir(dirname(path), { recursive: true });
+  const temporaryPath = `${path}.${instanceId}.tmp`;
+  await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+
+  try {
+    await retryTransientFileLock(() => link(temporaryPath, path));
+    return true;
+  } catch (error) {
+    if (error?.code === "EEXIST") {
+      return false;
+    }
+    throw error;
+  } finally {
+    try {
+      await retryTransientFileLock(() => rm(temporaryPath, { force: true }));
+    } catch (error) {
+      if (!isTransientFileLock(error)) {
+        throw error;
+      }
+    }
+  }
 }
 
 export async function readLatestState(root) {
@@ -145,6 +170,30 @@ export function getHistoryPath(root, recordId) {
   }
 
   return join(root, "history", `${recordId}.json`);
+}
+
+export function getHistoryCandidatePath(
+  root,
+  recordId,
+  usedNanoAiu,
+  instanceId,
+) {
+  if (
+    !/^[A-Za-z0-9._-]+$/.test(recordId) ||
+    !Number.isSafeInteger(usedNanoAiu) ||
+    usedNanoAiu < 0 ||
+    !/^[A-Za-z0-9._-]+$/.test(instanceId)
+  ) {
+    throw new TypeError("History candidate requires a valid identity");
+  }
+
+  return join(
+    root,
+    "history",
+    ".candidates",
+    recordId,
+    `${String(usedNanoAiu).padStart(16, "0")}.${instanceId}.json`,
+  );
 }
 
 export async function retryTransientFileLock(

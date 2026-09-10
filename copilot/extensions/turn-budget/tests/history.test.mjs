@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
@@ -165,6 +165,21 @@ test("validates persisted history records", () => {
       ),
     /unsupported values/,
   );
+  assert.deepEqual(
+    validateHistoryRecord(
+      { ...record({ recordId: "provisional" }), provisional: true },
+      sessionId,
+    ).provisional,
+    true,
+  );
+  assert.throws(
+    () =>
+      validateHistoryRecord(
+        { ...record({ recordId: "false-provisional" }), provisional: false },
+        sessionId,
+      ),
+    /unsupported values/,
+  );
 });
 
 test("loads only JSON history files and rejects malformed records", async () => {
@@ -186,6 +201,60 @@ test("loads only JSON history files and rejects malformed records", async () => 
     await assert.rejects(
       readHistoryRecords(directory, sessionId),
       /Invalid history record broken\.json/,
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("selects the highest immutable completion candidate", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "turn-budget-history-"));
+  try {
+    const provisional = {
+      ...record({
+        recordId: "promoted",
+        usedAiCredits: 100,
+        outcome: "interrupted",
+      }),
+      provisional: true,
+    };
+    await writeFile(
+      join(directory, "promoted.json"),
+      JSON.stringify(provisional),
+      "utf8",
+    );
+    const candidateDirectory = join(
+      directory,
+      ".candidates",
+      "promoted",
+    );
+    await mkdir(candidateDirectory, { recursive: true });
+    await writeFile(
+      join(candidateDirectory, "0000500000000000.instance-1.json"),
+      JSON.stringify(
+        record({
+          recordId: "promoted",
+          usedAiCredits: 500,
+          outcome: "completed",
+        }),
+      ),
+      "utf8",
+    );
+    await writeFile(
+      join(candidateDirectory, "0001200000000000.instance-2.json"),
+      JSON.stringify(
+        record({
+          recordId: "promoted",
+          usedAiCredits: 1200,
+          outcome: "completed",
+        }),
+      ),
+      "utf8",
+    );
+
+    assert.equal(
+      (await readHistoryRecords(directory, sessionId))[0].usedNanoAiu,
+      1_200_000_000_000,
     );
   } finally {
     await rm(directory, { recursive: true, force: true });

@@ -80,6 +80,89 @@ test("does not accept usage without an open budget unit", () => {
   );
 });
 
+test("preserves the last known usage when an active unit is interrupted", () => {
+  const active = run([
+    {
+      type: "user.message",
+      id: "root",
+      timestamp: "2026-09-07T00:00:00.000Z",
+      data: { delivery: "idle" },
+    },
+    {
+      type: "assistant.usage",
+      id: "usage",
+      timestamp: "2026-09-07T00:00:01.000Z",
+      data: { totalNanoAiu: 123 },
+    },
+  ]);
+
+  const recovered = run(
+    [
+      {
+        type: "session.shutdown",
+        id: "restart",
+        timestamp: "2026-09-07T00:00:02.000Z",
+        data: {},
+      },
+    ],
+    restoreAccountingState(active.state),
+  );
+
+  assert.equal(recovered.state.openUnit, null);
+  assert.deepEqual(project(recovered.completedUnits[0]), {
+    kind: "ordinary",
+    usedNanoAiu: 123,
+    capAiCredits: 1000,
+    capSource: "ordinary-default",
+    outcome: "interrupted",
+    endedAt: "2026-09-07T00:00:02.000Z",
+    endEventId: "restart",
+  });
+});
+
+test("starts a new autopilot unit after interrupted recovery", () => {
+  const active = run([
+    {
+      type: "session.mode_changed",
+      id: "mode-on",
+      timestamp: "2026-09-07T00:00:00.000Z",
+      data: { previousMode: "interactive", newMode: "autopilot" },
+    },
+    {
+      type: "session.autopilot_objective_changed",
+      id: "objective",
+      timestamp: "2026-09-07T00:00:01.000Z",
+      data: { operation: "create", id: 1, status: "active" },
+    },
+  ]);
+  const interrupted = run(
+    [
+      {
+        type: "session.shutdown",
+        id: "restart",
+        timestamp: "2026-09-07T00:00:02.000Z",
+        data: {},
+      },
+    ],
+    active.state,
+  );
+  const continued = run(
+    [
+      {
+        type: "user.message",
+        id: "continuation",
+        timestamp: "2026-09-07T00:00:03.000Z",
+        data: { source: "autopilot", delivery: "idle" },
+      },
+    ],
+    interrupted.state,
+  );
+
+  assert.equal(interrupted.state.objective.status, "active");
+  assert.equal(continued.state.openUnit.kind, "autopilot");
+  assert.equal(continued.state.openUnit.startEventId, "continuation");
+});
+
 test("keeps steering messages inside the active autopilot unit", () => {
   const result = run([
     {

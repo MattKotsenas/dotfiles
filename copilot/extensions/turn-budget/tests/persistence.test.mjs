@@ -10,6 +10,7 @@ import {
   readJsonIfExists,
   retryTransientFileLock,
   writeJsonAtomic,
+  writeJsonExclusive,
   writeStateSnapshot,
 } from "../persistence.mjs";
 
@@ -23,6 +24,25 @@ test("atomically replaces a generic JSON file", async (context) => {
   await writeJsonAtomic(path, { revision: 2 }, "test");
 
   assert.deepEqual(JSON.parse(await readFile(path, "utf8")), { revision: 2 });
+});
+
+test("creates a JSON file without replacing an existing value", async (context) => {
+  const root = await mkdtemp(join(tmpdir(), "turn-budget-"));
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const path = join(root, "history.json");
+
+  assert.equal(
+    await writeJsonExclusive(path, { outcome: "completed" }, "first"),
+    true,
+  );
+  assert.equal(
+    await writeJsonExclusive(path, { outcome: "interrupted" }, "second"),
+    false,
+  );
+  assert.deepEqual(
+    JSON.parse(await readFile(path, "utf8")),
+    { outcome: "completed" },
+  );
 });
 
 test("writes immutable state snapshots and reads the latest revision", async (context) => {

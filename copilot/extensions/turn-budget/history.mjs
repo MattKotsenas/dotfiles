@@ -1,5 +1,6 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
+import { selectAuthoritativeHistoryRecord } from "./recovery.mjs";
 
 const KINDS = new Set(["ordinary", "autopilot"]);
 const CAP_SOURCES = new Set([
@@ -86,7 +87,63 @@ export async function readHistoryRecords(historyPath, sessionId) {
   );
 
   assertUniqueRecordIds(records);
-  return records;
+  return Promise.all(
+    records.map((record) =>
+      readHistoryRecord(historyPath, sessionId, record.recordId),
+    ),
+  );
+}
+
+export async function readHistoryRecord(historyPath, sessionId, recordId) {
+  const canonicalPath = join(historyPath, `${recordId}.json`);
+  const canonical = validateHistoryRecord(
+    JSON.parse(await readFile(canonicalPath, "utf8")),
+    sessionId,
+  );
+  if (canonical.recordId !== recordId) {
+    throw new TypeError("history filename does not match its record ID");
+  }
+
+  const candidatePath = join(
+    historyPath,
+    ".candidates",
+    recordId,
+  );
+  let entries;
+  try {
+    entries = await readdir(candidatePath, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      return canonical;
+    }
+    throw error;
+  }
+
+  const candidates = await Promise.all(
+    entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
+      .map(async (entry) => {
+        const match = /^(\d{16})\.([A-Za-z0-9._-]+)\.json$/.exec(entry.name);
+        if (!match) {
+          throw new TypeError(`Invalid history candidate ${entry.name}`);
+        }
+        const record = validateHistoryRecord(
+          JSON.parse(await readFile(join(candidatePath, entry.name), "utf8")),
+          sessionId,
+        );
+        if (
+          record.recordId !== recordId ||
+          String(record.usedNanoAiu).padStart(16, "0") !== match[1]
+        ) {
+          throw new TypeError(
+            `History candidate ${entry.name} does not match its contents`,
+          );
+        }
+        return record;
+      }),
+  );
+
+  return selectAuthoritativeHistoryRecord([canonical, ...candidates]);
 }
 
 export function validateHistoryRecord(value, sessionId) {
@@ -111,6 +168,7 @@ export function validateHistoryRecord(value, sessionId) {
     value.capAiCredits <= 0 ||
     !CAP_SOURCES.has(value.capSource) ||
     !OUTCOMES.has(value.outcome) ||
+    (value.provisional !== undefined && value.provisional !== true) ||
     Date.parse(value.endedAt) < Date.parse(value.startedAt)
   ) {
     if (

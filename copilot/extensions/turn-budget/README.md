@@ -140,6 +140,16 @@ it. Each extension atomically reserves an increasing session-local generation,
 so a new instance wins during a reload overlap and after a machine restart even
 when two instances publish the same revision. Existing legacy `state.json` data
 is read during migration and ignored after the first snapshot succeeds.
+When an idle reload finds a non-quiescent unit left by a stopped extension, it
+preserves the last known usage as an interrupted history record and resumes
+with healthy accounting. The record is partial because usage emitted after the
+prior extension stopped cannot be reconstructed. Its end time is the last
+persisted accounting observation, not the later recovery attempt. An existing
+completion record wins over a synthesized interruption. If an overlapping old
+instance completes later, it publishes an immutable completion candidate.
+Readers select the matching candidate with the greatest known usage, and the
+new instance reconciles that result into its next heartbeat. Read-only history
+remains available when accounting is unhealthy.
 
 ## Data
 
@@ -151,6 +161,9 @@ The extension writes only beneath its current session:
   state.<extension-generation>.<revision>.<extension-instance>.json
   history\
     <budget-unit-id>.json
+    .candidates\
+      <budget-unit-id>\
+        <used-nano-aiu>.<extension-instance>.json
 ```
 
 The latest state snapshot contains the extension instance, heartbeat, health,
@@ -299,6 +312,6 @@ for subsequent work.
 The reducer uses Node's built-in test runner and has no package dependencies:
 
 ```powershell
-node --test copilot\extensions\turn-budget\tests\accounting.test.mjs copilot\extensions\turn-budget\tests\budget-command.test.mjs copilot\extensions\turn-budget\tests\history.test.mjs copilot\extensions\turn-budget\tests\operation-queue.test.mjs copilot\extensions\turn-budget\tests\persistence.test.mjs
+node --test copilot\extensions\turn-budget\tests\accounting.test.mjs copilot\extensions\turn-budget\tests\budget-command.test.mjs copilot\extensions\turn-budget\tests\history.test.mjs copilot\extensions\turn-budget\tests\operation-queue.test.mjs copilot\extensions\turn-budget\tests\persistence.test.mjs copilot\extensions\turn-budget\tests\recovery.test.mjs
 pwsh -NoLogo -NoProfile -File copilot\extensions\turn-budget\tests\statusline.Tests.ps1
 ```

@@ -81,6 +81,27 @@ function Test-IsJsonNumber {
     $Value -is [decimal]
 }
 
+function Test-IsIsoTimestamp {
+    param([object] $Value)
+
+    if (
+        $Value -isnot [string] -or
+        $Value -notmatch '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$'
+    ) {
+        return $false
+    }
+
+    $parsed = [datetimeoffset]::MinValue
+    [datetimeoffset]::TryParseExact(
+        $Value,
+        "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
+        [System.Globalization.CultureInfo]::InvariantCulture,
+        [System.Globalization.DateTimeStyles]::AssumeUniversal -bor
+            [System.Globalization.DateTimeStyles]::AdjustToUniversal,
+        [ref] $parsed
+    )
+}
+
 function Format-AiCredits {
     param([decimal] $Value)
 
@@ -237,6 +258,246 @@ function Read-LatestState {
     throw 'State snapshots changed too quickly to read'
 }
 
+function Read-MatchingHistoryUnit {
+    param(
+        [string] $Path,
+        [object] $Unit,
+        [string] $SessionId,
+        [Nullable[decimal]] $ExpectedUsedNanoAiu = $null
+    )
+
+    $unitId = Get-Property $Unit 'id'
+    if ($unitId -isnot [string] -or $unitId -notmatch '^[A-Za-z0-9._-]+$') {
+        throw 'Invalid latest budget unit ID'
+    }
+
+    $record = [System.IO.File]::ReadAllText($Path) |
+        ConvertFrom-Json -DateKind String
+    if ((Get-Property $record 'schemaVersion') -ne 1) {
+        throw 'Unsupported history schema'
+    }
+
+    foreach ($comparison in @(
+        @('sessionId', $SessionId),
+        @('recordId', $unitId),
+        @('kind', (Get-Property $Unit 'kind')),
+        @('startEventId', (Get-Property $Unit 'startEventId')),
+        @('capSource', (Get-Property $Unit 'capSource'))
+    )) {
+        $value = Get-Property $record $comparison[0]
+        $expected = [string] $comparison[1]
+        if (
+            $value -isnot [string] -or
+            -not [string]::Equals(
+                $value,
+                $expected,
+                [System.StringComparison]::Ordinal
+            )
+        ) {
+            throw "History record conflicts with provisional state at '$($comparison[0])'"
+        }
+    }
+
+    $recordKind = Get-Property $record 'kind'
+    $recordOutcome = Get-Property $record 'outcome'
+    $recordEndEventId = Get-Property $record 'endEventId'
+    $recordStartEventId = Get-Property $record 'startEventId'
+    $recordStartInteractionId = Get-Property $record 'startInteractionId'
+    $recordObjectiveId = Get-Property $record 'objectiveId'
+    $recordCapSource = Get-Property $record 'capSource'
+    $recordStartedAt = Get-Property $record 'startedAt'
+    $recordEndedAt = Get-Property $record 'endedAt'
+    if (
+        $recordKind -cnotin @('ordinary', 'autopilot') -or
+        $recordCapSource -cnotin @(
+            'explicit-native',
+            'next-override',
+            'autopilot-default',
+            'ordinary-default'
+        ) -or
+        $recordOutcome -cnotin @(
+            'completed',
+            'interrupted',
+            'mode-exit',
+            'native-cap',
+            'objective-deleted',
+            'paused',
+            'superseded'
+        ) -or
+        $recordEndEventId -isnot [string] -or
+        [string]::IsNullOrEmpty($recordEndEventId) -or
+        $recordStartEventId -isnot [string] -or
+        [string]::IsNullOrEmpty($recordStartEventId) -or
+        ($null -ne $recordStartInteractionId -and
+            ($recordStartInteractionId -isnot [string] -or
+                [string]::IsNullOrEmpty($recordStartInteractionId))) -or
+        ($null -ne $recordObjectiveId -and
+            (-not (Test-IsJsonNumber $recordObjectiveId) -or
+                [decimal] $recordObjectiveId -ne
+                    [decimal]::Truncate([decimal] $recordObjectiveId) -or
+                [decimal] $recordObjectiveId -gt 9007199254740991d -or
+                [decimal] $recordObjectiveId -lt -9007199254740991d)) -or
+        -not (Test-IsIsoTimestamp $recordStartedAt) -or
+        -not (Test-IsIsoTimestamp $recordEndedAt) -or
+        [datetimeoffset] $recordEndedAt -lt [datetimeoffset] $recordStartedAt
+    ) {
+        throw 'History record contains unsupported values'
+    }
+
+    if (
+        [datetimeoffset] $recordStartedAt -ne
+        [datetimeoffset] (Get-Property $Unit 'startedAt')
+    ) {
+        throw "History record conflicts with provisional state at 'startedAt'"
+    }
+
+    foreach ($name in @('startInteractionId', 'objectiveId')) {
+        $recordValue = Get-Property $record $name
+        $unitValue = Get-Property $Unit $name
+        if ($null -eq $recordValue -and $null -eq $unitValue) {
+            continue
+        }
+        if (
+            $recordValue -is [string] -and
+            $unitValue -is [string] -and
+            [string]::Equals(
+                $recordValue,
+                $unitValue,
+                [System.StringComparison]::Ordinal
+            )
+        ) {
+            continue
+        }
+        if (
+            (Test-IsJsonNumber $recordValue) -and
+            (Test-IsJsonNumber $unitValue) -and
+            [decimal] $recordValue -eq [decimal] $unitValue
+        ) {
+            continue
+        }
+        throw 'History record conflicts with provisional state'
+    }
+
+    $recordUsedValue = Get-Property $record 'usedNanoAiu'
+    $recordCapValue = Get-Property $record 'capAiCredits'
+    if (
+        -not (Test-IsJsonNumber $recordUsedValue) -or
+        -not (Test-IsJsonNumber $recordCapValue)
+    ) {
+        throw 'History usage and cap must be JSON numbers'
+    }
+    $recordUsed = ConvertTo-NonNegativeDecimal $recordUsedValue 'history.usedNanoAiu'
+    $recordCap = ConvertTo-NonNegativeDecimal $recordCapValue 'history.capAiCredits'
+    $unitCap = ConvertTo-NonNegativeDecimal (Get-Property $Unit 'capAiCredits') 'unit.capAiCredits'
+    if (
+        $recordUsed -ne [decimal]::Truncate($recordUsed) -or
+        $recordUsed -gt 9007199254740991d -or
+        $recordCap -le 0 -or
+        $recordCap -ne $unitCap -or
+        ($null -ne $ExpectedUsedNanoAiu -and $recordUsed -ne $ExpectedUsedNanoAiu)
+    ) {
+        throw 'History record conflicts with provisional state'
+    }
+
+    $recordProvisionalProperty = $record.PSObject.Properties['provisional']
+    $recordProvisional = $false
+    if ($null -ne $recordProvisionalProperty) {
+        if (
+            $recordProvisionalProperty.Value -isnot [bool] -or
+            -not $recordProvisionalProperty.Value
+        ) {
+            throw 'Invalid provisional history record'
+        }
+        $recordProvisional = $true
+    }
+
+    [pscustomobject]@{
+        usedNanoAiu = $recordUsed
+        capAiCredits = $recordCap
+        provisional = $recordProvisional
+        completionKey = @(
+            [string] $recordOutcome,
+            ([datetimeoffset] $recordEndedAt).ToUniversalTime().ToString('O'),
+            [string] $recordEndEventId
+        ) -join '|'
+    }
+}
+
+function Resolve-LatestUnit {
+    param(
+        [object] $Unit,
+        [string] $StateDirectory,
+        [string] $SessionId
+    )
+
+    $unitId = Get-Property $Unit 'id'
+    if ($unitId -isnot [string] -or $unitId -notmatch '^[A-Za-z0-9._-]+$') {
+        throw 'Invalid latest budget unit ID'
+    }
+
+    $records = @(
+        Read-MatchingHistoryUnit `
+            -Path (Join-Path $StateDirectory "history\$unitId.json") `
+            -Unit $Unit `
+            -SessionId $SessionId
+    )
+    $candidateDirectory = Join-Path $StateDirectory "history\.candidates\$unitId"
+    if (Test-Path -LiteralPath $candidateDirectory) {
+        foreach ($candidate in Get-ChildItem -LiteralPath $candidateDirectory -File -Filter '*.json') {
+            if ($candidate.Name -notmatch '^(\d{16})\.[A-Za-z0-9._-]+\.json$') {
+                throw "Invalid history candidate '$($candidate.Name)'"
+            }
+            $candidateUsed = [decimal] $Matches[1]
+            $records += Read-MatchingHistoryUnit `
+                -Path $candidate.FullName `
+                -Unit $Unit `
+                -SessionId $SessionId `
+                -ExpectedUsedNanoAiu $candidateUsed
+        }
+    }
+
+    $provisionalFloor = (
+        $records |
+            Where-Object provisional |
+            Measure-Object usedNanoAiu -Maximum
+    ).Maximum
+    if ($null -eq $provisionalFloor) {
+        $provisionalFloor = 0d
+    }
+    foreach ($record in $records) {
+        if (
+            -not $record.provisional -and
+            $record.usedNanoAiu -lt $provisionalFloor
+        ) {
+            throw 'History record loses known usage'
+        }
+    }
+
+    $selected = $records[0]
+    foreach ($record in $records | Select-Object -Skip 1) {
+        if (
+            $record.usedNanoAiu -gt $selected.usedNanoAiu -or
+            ($record.usedNanoAiu -eq $selected.usedNanoAiu -and
+                $selected.provisional -and -not $record.provisional)
+        ) {
+            $selected = $record
+        } elseif (
+            $record.usedNanoAiu -eq $selected.usedNanoAiu -and
+            $record.provisional -eq $selected.provisional -and
+            $record.completionKey -ne $selected.completionKey
+        ) {
+            throw 'History record has conflicting completions'
+        }
+    }
+
+    $unitUsed = ConvertTo-NonNegativeDecimal (Get-Property $Unit 'usedNanoAiu') 'unit.usedNanoAiu'
+    if ($selected.usedNanoAiu -lt $unitUsed) {
+        throw 'History record loses known usage'
+    }
+
+    $selected
+}
+
 function Read-TurnState {
     param(
         [object] $Payload,
@@ -341,6 +602,35 @@ function Read-TurnState {
     $unit = Get-OptionalProperty $accounting 'openUnit'
     if ($null -eq $unit) {
         $unit = Get-OptionalProperty $accounting 'latestUnit'
+        if ($null -ne $unit) {
+            $provisionalProperty = $unit.PSObject.Properties['provisional']
+            $provisional = $false
+            if ($null -ne $provisionalProperty) {
+                if (
+                    $provisionalProperty.Value -isnot [bool] -or
+                    -not $provisionalProperty.Value
+                ) {
+                    throw 'Invalid provisional budget unit'
+                }
+                $provisional = $true
+            }
+            $unitId = Get-OptionalProperty $unit 'id'
+            $candidateDirectory = if ($unitId -is [string]) {
+                Join-Path $stateDirectory "history\.candidates\$unitId"
+            } else {
+                $null
+            }
+            if (
+                $provisional -or
+                ($null -ne $candidateDirectory -and
+                    (Test-Path -LiteralPath $candidateDirectory))
+            ) {
+                $unit = Resolve-LatestUnit `
+                    -Unit $unit `
+                    -StateDirectory $stateDirectory `
+                    -SessionId $sessionId
+            }
+        }
     }
 
     if ($null -ne $unit) {

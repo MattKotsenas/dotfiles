@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { joinSession } from "@github/copilot-sdk/extension";
 import {
   createAccountingState,
@@ -11,15 +12,26 @@ import {
 import { parseBudgetCommand } from "./budget-command.mjs";
 import {
   formatBudgetHistory,
+  readHistoryRecord,
   readHistoryRecords,
 } from "./history.mjs";
 import {
   allocateStateGeneration,
+  getHistoryCandidatePath,
   getHistoryPath,
   readLatestState,
-  writeJsonAtomic,
+  readJsonIfExists,
+  writeJsonExclusive,
   writeStateSnapshot,
 } from "./persistence.mjs";
+import {
+  hasPrimaryAccountingTimestamp,
+  isSameBudgetUnit,
+  reconcileRecoveryRecord,
+  reconcileLatestUnit,
+  selectAccountingTimestamp,
+  toCompletedUnit,
+} from "./recovery.mjs";
 import { createOperationQueue } from "./operation-queue.mjs";
 
 const STATE_SCHEMA_VERSION = 1;
@@ -61,6 +73,7 @@ const policy = validatePolicy(config);
 let accounting = createAccountingState();
 let revision = 0;
 let heartbeat;
+let accountingAt = null;
 
 operations.enqueue(initialize);
 
@@ -77,6 +90,7 @@ async function initialize() {
     session.rpc.metadata.activity(),
     readCurrentObjective(),
   ]);
+  let recoveredUnit = false;
 
   if (saved) {
     if (
@@ -88,6 +102,7 @@ async function initialize() {
 
     accounting = restoreAccountingState(saved.accounting);
     revision = saved.revision;
+    accountingAt = await resolveAccountingTimestamp(saved);
   } else {
     accounting = createAccountingState({
       mode,
@@ -107,9 +122,22 @@ async function initialize() {
       accounting.openUnit &&
       accounting.openUnit.phase !== "quiescent"
     ) {
-      throw new Error(
-        "Turn budget restarted after an active unit lost event continuity",
+      const recovery = reduceAccounting(
+        accounting,
+        {
+          type: "session.shutdown",
+          id: `restart-${instanceId}`,
+          timestamp: accountingAt,
+          data: {},
+        },
+        policy,
       );
+      const record = await writeRecoveryRecord(recovery.completedUnits[0]);
+      accounting = {
+        ...recovery.state,
+        latestUnit: toCompletedUnit(record),
+      };
+      recoveredUnit = true;
     }
 
     if (
@@ -124,7 +152,11 @@ async function initialize() {
       );
     }
 
-    if (!accounting.openUnit && objective?.status === "active") {
+    if (
+      !accounting.openUnit &&
+      objective?.status === "active" &&
+      !recoveredUnit
+    ) {
       throw new Error(
         "Turn budget has no open unit for the active objective",
       );
@@ -146,6 +178,12 @@ async function initialize() {
   }
 
   await persistState();
+  if (recoveredUnit) {
+    await session.log(
+      "Recovered the last known partial budget unit as interrupted",
+      { level: "warning" },
+    );
+  }
   heartbeat = setInterval(
     () => operations.enqueue(persistState),
     config.heartbeatSeconds * 1000,
@@ -165,15 +203,12 @@ async function processEvent(event) {
 async function applyAccountingEvent(event) {
   const result = reduceAccounting(accounting, event, policy);
 
-  for (const unit of result.completedUnits) {
-    await writeJsonAtomic(
-      getHistoryPath(root, unit.id),
-      toHistoryRecord(unit),
-      instanceId,
-    );
-  }
-
+  const completedRecords = await writeCompletedUnits(result.completedUnits);
   accounting = result.state;
+  if (completedRecords.length > 0) {
+    accounting.latestUnit = toCompletedUnit(completedRecords.at(-1));
+  }
+  accountingAt = event.timestamp;
   await persistState();
 }
 
@@ -187,7 +222,7 @@ async function handleBudgetCommand({ args }) {
   }
 
   if (command.action === "history") {
-    return operations.enqueue(async () => {
+    return operations.enqueueRead(async () => {
       try {
         const records = await readHistoryRecords(
           join(root, "history"),
@@ -311,6 +346,9 @@ async function readCurrentObjective() {
 }
 
 async function persistState() {
+  await refreshLatestUnit();
+  const heartbeatAt = new Date().toISOString();
+  accountingAt ??= heartbeatAt;
   revision += 1;
   await writeStateSnapshot(
     root,
@@ -320,12 +358,112 @@ async function persistState() {
       extensionInstanceId: instanceId,
       extensionGeneration,
       revision,
-      heartbeatAt: new Date().toISOString(),
+      heartbeatAt,
+      accountingAt,
       health: { status: "ok" },
       accounting,
     },
     instanceId,
     extensionGeneration,
+  );
+}
+
+async function refreshLatestUnit() {
+  const latestUnit = accounting.latestUnit;
+  if (!latestUnit) {
+    return;
+  }
+
+  const record = await readHistoryRecord(
+    join(root, "history"),
+    session.sessionId,
+    latestUnit.id,
+  );
+  accounting.latestUnit = reconcileLatestUnit(latestUnit, record);
+}
+
+async function writeCompletedUnits(units) {
+  const records = [];
+  for (const unit of units) {
+    const record = toHistoryRecord(unit);
+    const existing = await writeHistoryRecord(record);
+    if (isDeepStrictEqual(existing, record)) {
+      records.push(record);
+      continue;
+    }
+    if (
+      isSameBudgetUnit(existing, record) &&
+      existing.usedNanoAiu >= record.usedNanoAiu &&
+      existing.provisional !== true
+    ) {
+      records.push(existing);
+      continue;
+    }
+
+    await writeJsonExclusive(
+      getHistoryCandidatePath(
+        root,
+        record.recordId,
+        record.usedNanoAiu,
+        instanceId,
+      ),
+      record,
+      instanceId,
+    );
+    const authoritative = await readHistoryRecord(
+      join(root, "history"),
+      session.sessionId,
+      record.recordId,
+    );
+    if (
+      authoritative.provisional === true ||
+      authoritative.usedNanoAiu < record.usedNanoAiu
+    ) {
+      throw new Error(
+        `History record ${record.recordId} did not retain completed usage`,
+      );
+    }
+    records.push(authoritative);
+  }
+  return records;
+}
+
+async function writeRecoveryRecord(unit) {
+  const record = toHistoryRecord(unit, { provisional: true });
+  const existing = await writeHistoryRecord(record);
+  if (
+    isSameBudgetUnit(existing, record) &&
+    existing.usedNanoAiu < record.usedNanoAiu
+  ) {
+    await writeJsonExclusive(
+      getHistoryCandidatePath(
+        root,
+        record.recordId,
+        record.usedNanoAiu,
+        instanceId,
+      ),
+      record,
+      instanceId,
+    );
+    return readHistoryRecord(
+      join(root, "history"),
+      session.sessionId,
+      record.recordId,
+    );
+  }
+  return reconcileRecoveryRecord(record, existing);
+}
+
+async function writeHistoryRecord(record) {
+  const path = getHistoryPath(root, record.recordId);
+  if (await writeJsonExclusive(path, record, instanceId)) {
+    return record;
+  }
+
+  return readHistoryRecord(
+    join(root, "history"),
+    session.sessionId,
+    record.recordId,
   );
 }
 
@@ -342,6 +480,7 @@ async function reportFailure(error) {
       extensionGeneration,
       revision: revision + 1,
       heartbeatAt: new Date().toISOString(),
+      accountingAt,
       health: { status: "fault", message },
       accounting,
     },
@@ -351,7 +490,7 @@ async function reportFailure(error) {
   await session.log(`Turn budget stopped: ${message}`, { level: "error" });
 }
 
-function toHistoryRecord(unit) {
+function toHistoryRecord(unit, { provisional = false } = {}) {
   return {
     schemaVersion: STATE_SCHEMA_VERSION,
     recordId: unit.id,
@@ -367,7 +506,17 @@ function toHistoryRecord(unit) {
     capAiCredits: unit.capAiCredits,
     capSource: unit.capSource,
     outcome: unit.outcome,
+    ...(provisional ? { provisional: true } : {}),
   };
+}
+
+async function resolveAccountingTimestamp(saved) {
+  if (hasPrimaryAccountingTimestamp(saved)) {
+    return selectAccountingTimestamp(saved, null, session.sessionId);
+  }
+
+  const legacy = await readJsonIfExists(join(root, "state.json"));
+  return selectAccountingTimestamp(saved, legacy, session.sessionId);
 }
 
 function parseConfig(value) {

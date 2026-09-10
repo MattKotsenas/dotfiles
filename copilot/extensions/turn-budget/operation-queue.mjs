@@ -24,6 +24,12 @@ export function createOperationQueue(onFailure) {
       return chain;
     },
 
+    enqueueRead(operation) {
+      const result = chain.then(operation, operation);
+      chain = result.catch(() => {});
+      return result;
+    },
+
     flush() {
       return chain;
     },

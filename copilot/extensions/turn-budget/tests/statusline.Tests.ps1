@@ -132,6 +132,170 @@ try {
         ($output -eq 'S 3,961 AIC ($39.61) | T 900 / 1,000 AIC ($9 / $10) - PASSIVE') $output
     Remove-Item -LiteralPath $snapshotPath, $newGenerationPath -Force
 
+    $historyDirectory = Join-Path $stateDirectory 'history'
+    New-Item -ItemType Directory -Force -Path $historyDirectory | Out-Null
+    $provisionalUnit = [ordered]@{
+        id = 'ordinary-recovered'
+        kind = 'ordinary'
+        phase = 'completed'
+        startedAt = '2026-09-10T00:00:00.000Z'
+        startEventId = 'root'
+        startInteractionId = 'interaction'
+        objectiveId = $null
+        usedNanoAiu = 100000000000
+        capAiCredits = 1000
+        capSource = 'ordinary-default'
+        endedAt = '2026-09-10T01:00:00.000Z'
+        endEventId = 'restart'
+        outcome = 'interrupted'
+        provisional = $true
+    }
+    Write-State (New-State -LatestUnit $provisionalUnit)
+    [ordered]@{
+        schemaVersion = 1
+        recordId = 'ordinary-recovered'
+        sessionId = $sessionId
+        kind = 'ordinary'
+        startedAt = '2026-09-10T00:00:00.000Z'
+        endedAt = '2026-09-10T01:00:00.000Z'
+        startEventId = 'root'
+        endEventId = 'restart'
+        startInteractionId = 'interaction'
+        objectiveId = $null
+        usedNanoAiu = 100000000000
+        capAiCredits = 1000
+        capSource = 'ordinary-default'
+        outcome = 'interrupted'
+        provisional = $true
+    } |
+        ConvertTo-Json -Depth 8 |
+        Set-Content -LiteralPath (Join-Path $historyDirectory 'ordinary-recovered.json')
+    $candidateDirectory = Join-Path $historyDirectory '.candidates\ordinary-recovered'
+    New-Item -ItemType Directory -Force -Path $candidateDirectory | Out-Null
+    [ordered]@{
+        schemaVersion = 1
+        recordId = 'ordinary-recovered'
+        sessionId = $sessionId
+        kind = 'ordinary'
+        startedAt = '2026-09-10T00:00:00.000Z'
+        endedAt = '2026-09-10T01:01:00.000Z'
+        startEventId = 'root'
+        endEventId = 'idle'
+        startInteractionId = 'interaction'
+        objectiveId = $null
+        usedNanoAiu = 150000000000
+        capAiCredits = 1000
+        capSource = 'ordinary-default'
+        outcome = 'completed'
+    } |
+        ConvertTo-Json -Depth 8 |
+        Set-Content -LiteralPath (
+            Join-Path $candidateDirectory '0000150000000000.old-instance.json'
+        )
+    Set-Content -LiteralPath (
+        Join-Path $candidateDirectory '0000200000000000.writer.json.writer.tmp'
+    ) -Value '{'
+    $output = Invoke-Renderer
+    Check 'promoted history supersedes provisional state' `
+        ($output -eq 'S 3,961 AIC ($39.61) | T 150 / 1,000 AIC ($1.5 / $10) - PASSIVE') $output
+
+    $invalidCandidatePath = Join-Path $candidateDirectory '0000200000000000.invalid.json'
+    [ordered]@{
+        schemaVersion = 1
+        recordId = 'ordinary-recovered'
+        sessionId = $sessionId
+        kind = 'ordinary'
+        startedAt = '2026-09-10T00:00:00.000Z'
+        endedAt = '2026-09-10T01:02:00.000Z'
+        startEventId = 'root'
+        endEventId = ''
+        startInteractionId = 'interaction'
+        objectiveId = $null
+        usedNanoAiu = 200000000000
+        capAiCredits = 1000
+        capSource = 'ordinary-default'
+        outcome = 'unsupported'
+    } |
+        ConvertTo-Json -Depth 8 |
+        Set-Content -LiteralPath $invalidCandidatePath
+    $output = Invoke-Renderer
+    Check 'invalid completion candidate fails visibly' `
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
+    Remove-Item -LiteralPath $invalidCandidatePath -Force
+
+    $stringCandidatePath = Join-Path $candidateDirectory '0000200000000000.string.json'
+    [ordered]@{
+        schemaVersion = 1
+        recordId = 'ordinary-recovered'
+        sessionId = $sessionId
+        kind = 'ordinary'
+        startedAt = '2026-09-10T00:00:00.000Z'
+        endedAt = '2026-09-10T01:02:00.000Z'
+        startEventId = 'root'
+        endEventId = 'idle'
+        startInteractionId = 'interaction'
+        objectiveId = $null
+        usedNanoAiu = '200000000000'
+        capAiCredits = '1000'
+        capSource = 'ordinary-default'
+        outcome = 'completed'
+    } |
+        ConvertTo-Json -Depth 8 |
+        Set-Content -LiteralPath $stringCandidatePath
+    $output = Invoke-Renderer
+    Check 'string completion numbers fail visibly' `
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
+    Remove-Item -LiteralPath $stringCandidatePath -Force
+
+    $caseCandidatePath = Join-Path $candidateDirectory '0000200000000000.case.json'
+    [ordered]@{
+        schemaVersion = 1
+        recordId = 'ordinary-recovered'
+        sessionId = $sessionId
+        kind = 'ordinary'
+        startedAt = '2026-09-10T00:00:00.000Z'
+        endedAt = '2026-09-10T01:02:00.000Z'
+        startEventId = 'root'
+        endEventId = 'idle'
+        startInteractionId = 'interaction'
+        objectiveId = $null
+        usedNanoAiu = 200000000000
+        capAiCredits = 1000
+        capSource = 'ordinary-default'
+        outcome = 'Completed'
+    } |
+        ConvertTo-Json -Depth 8 |
+        Set-Content -LiteralPath $caseCandidatePath
+    $output = Invoke-Renderer
+    Check 'case-mismatched completion outcome fails visibly' `
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
+    Remove-Item -LiteralPath $caseCandidatePath -Force
+
+    $nullCandidatePath = Join-Path $candidateDirectory '0000200000000000.null.json'
+    [ordered]@{
+        schemaVersion = 1
+        recordId = 'ordinary-recovered'
+        sessionId = $sessionId
+        kind = 'ordinary'
+        startedAt = '2026-09-10T00:00:00.000Z'
+        endedAt = '2026-09-10T01:02:00.000Z'
+        startEventId = 'root'
+        endEventId = 'idle'
+        startInteractionId = 'interaction'
+        objectiveId = $null
+        usedNanoAiu = 200000000000
+        capAiCredits = 1000
+        capSource = 'ordinary-default'
+        outcome = 'completed'
+        provisional = $null
+    } |
+        ConvertTo-Json -Depth 8 |
+        Set-Content -LiteralPath $nullCandidatePath
+    $output = Invoke-Renderer
+    Check 'null provisional marker fails visibly' `
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
+    Remove-Item -LiteralPath $historyDirectory -Recurse -Force
+
     $invalidSnapshotIdentities = @(
         [ordered]@{
             Name = 'snapshot instance mismatch'
@@ -195,6 +359,13 @@ try {
     $output = Invoke-Renderer
     Check 'idle state uses latest completed unit' `
         ($output -eq 'S 3,961 AIC ($39.61) | T 842 / 1,000 AIC ($8.42 / $10) - PASSIVE') $output
+
+    $nullProvisionalUnit = New-Unit -UsedNanoAiu 842000000000
+    $nullProvisionalUnit.provisional = $null
+    Write-State (New-State -LatestUnit $nullProvisionalUnit)
+    $output = Invoke-Renderer
+    Check 'null latest-unit provisional marker fails visibly' `
+        ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
 
     Write-State (New-State)
     $output = Invoke-Renderer -SessionNanoAiu 0
