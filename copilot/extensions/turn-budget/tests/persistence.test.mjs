@@ -104,7 +104,7 @@ test("allocates generations above persisted state across concurrent starts", asy
   ]);
 });
 
-test("reads legacy state until the first snapshot is written", async (context) => {
+test("ignores retained legacy state after the first snapshot is written", async (context) => {
   const root = await mkdtemp(join(tmpdir(), "turn-budget-state-"));
   context.after(() => rm(root, { recursive: true, force: true }));
   await writeFile(
@@ -132,7 +132,7 @@ test("reads legacy state until the first snapshot is written", async (context) =
   });
   assert.equal(
     (await readdir(root)).includes("state.json"),
-    false,
+    true,
   );
 });
 

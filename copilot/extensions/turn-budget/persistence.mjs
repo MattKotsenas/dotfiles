@@ -166,10 +166,9 @@ export async function retryTransientFileLock(
 
 async function removeOldStateFiles(root) {
   const snapshots = (await listStateSnapshots(root)) ?? [];
-  const obsolete = [
-    ...snapshots.slice(RETAINED_STATE_SNAPSHOTS).map((entry) => entry.name),
-    "state.json",
-  ];
+  const obsolete = snapshots
+    .slice(RETAINED_STATE_SNAPSHOTS)
+    .map((entry) => entry.name);
 
   for (const name of obsolete) {
     try {

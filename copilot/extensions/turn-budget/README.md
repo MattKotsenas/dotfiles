@@ -13,7 +13,7 @@ defines the caps that the state and history records report:
   "schemaVersion": 1,
   "ordinaryAiCredits": 1000,
   "autopilotAiCredits": 1000,
-  "heartbeatSeconds": 2
+  "heartbeatSeconds": 10
 }
 ```
 
@@ -139,8 +139,7 @@ three; a locked obsolete snapshot remains until a later heartbeat can remove
 it. Each extension atomically reserves an increasing session-local generation,
 so a new instance wins during a reload overlap and after a machine restart even
 when two instances publish the same revision. Existing legacy `state.json` data
-is read during migration and becomes eligible for cleanup after the first
-snapshot succeeds.
+is read during migration and ignored after the first snapshot succeeds.
 
 ## Data
 
