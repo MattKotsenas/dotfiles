@@ -46,20 +46,61 @@ test("formats session prices, active usage, and bounded recent history", () => {
   assert.equal(
     formatBudgetHistory({ records, openUnit, limit: 3, timeZone: "UTC" }),
     [
-      "Budget history: 3 completed | over cap 1",
-      "Total: 1,800 AIC ($18.00)",
-      "Typical: median 500 AIC ($5.00) | average 600 AIC ($6.00)",
-      "Maximum: 1,200 AIC ($12.00)",
-      "Active: T | $0.25 | 25 / 1,000 AIC | 3% | DEF",
-      "Recent price trend: ▁▄█  $1.00 - $12.00 (oldest -> newest)",
-      "Recent 3 (local time, newest first):",
+      "Budget history  3 completed · 1 over cap · $18.00 total · 1,800 AIC",
+      "Cost            min $1.00 · q1 $3.00 · median $5.00 · q3 $8.50 · max $12.00",
+      "Active          T · $0.25 · 25 / 1,000 AIC · 3% · DEF",
+      "Trend           ▁▄█ · $1.00-$12.00 · oldest to newest",
+      "",
+      "Recent          3 shown · local time · newest first",
       "When         M    Cost  Used AIC  Cap AIC     %  End    Limit",
       "01-03 12:00  A  $12.00     1,200    1,000  120%  CAP    GOAL",
       "01-02 12:00  A   $5.00       500    1,000   50%  PAUSE  NEXT",
       "01-01 12:00  T   $1.00       100    1,000   10%  OK     DEF",
-      "M: T turn, A autopilot | Limit: DEF default, NEXT one-shot, GOAL explicit",
-      "End: OK completed, INT interrupted, EXIT mode exit, CAP cap, DEL deleted, PAUSE paused, NEW superseded",
+      "M      T turn · A autopilot    Limit  DEF default · NEXT one-shot · GOAL explicit",
+      "End    OK completed · INT interrupted · EXIT mode exit · CAP cap · DEL deleted · PAUSE paused · NEW superseded",
     ].join("\n"),
+  );
+});
+
+test("uses inclusive linear interpolation for the five-number summary", () => {
+  assert.equal(
+    costDistribution([100]),
+    "Cost            min $1.00 · q1 $1.00 · median $1.00 · q3 $1.00 · max $1.00",
+  );
+  assert.equal(
+    costDistribution([100, 500]),
+    "Cost            min $1.00 · q1 $2.00 · median $3.00 · q3 $4.00 · max $5.00",
+  );
+  assert.equal(
+    costDistribution([100, 200, 300, 400, 500]),
+    "Cost            min $1.00 · q1 $2.00 · median $3.00 · q3 $4.00 · max $5.00",
+  );
+  assert.equal(
+    costDistribution([100, 200, 300, 400]),
+    "Cost            min $1.00 · q1 $1.75 · median $2.50 · q3 $3.25 · max $4.00",
+  );
+  assert.equal(
+    costDistribution([250, 250, 250, 250]),
+    "Cost            min $2.50 · q1 $2.50 · median $2.50 · q3 $2.50 · max $2.50",
+  );
+});
+
+test("keeps an unbounded history count outside the summary rail", () => {
+  const records = Array.from({ length: 10_000 }, (_, index) =>
+    record({
+      recordId: `bounded-${index}`,
+      usedAiCredits: index + 1,
+    }),
+  );
+
+  assert.equal(
+    formatBudgetHistory({
+      records,
+      openUnit: null,
+      limit: 2,
+      timeZone: "UTC",
+    }).split("\n")[5],
+    "Recent          2/10000 shown · local time · newest first",
   );
 });
 
@@ -71,7 +112,7 @@ test("formats an empty history without inventing prices", () => {
       limit: 10,
       timeZone: "UTC",
     }),
-    "Budget history: no completed units\nActive: none",
+    "Budget history  no completed units\nActive          none",
   );
 });
 
@@ -314,4 +355,20 @@ function record({
     capSource,
     outcome,
   };
+}
+
+function costDistribution(usedAiCredits) {
+  const records = usedAiCredits.map((value, index) =>
+    record({
+      recordId: `distribution-${index}`,
+      usedAiCredits: value,
+    }),
+  );
+
+  return formatBudgetHistory({
+    records,
+    openUnit: null,
+    limit: records.length,
+    timeZone: "UTC",
+  }).split("\n")[1];
 }

@@ -57,12 +57,17 @@ Pass a number from 1 through 50 to change the number of recent units shown:
 /budget history 25
 ```
 
-The summary covers every completed unit in the session and reports total,
-median, average, maximum, and over-cap count. A sparkline shows recent prices
-from oldest to newest. The aligned table uses local `MM-DD HH:mm` timestamps
-and short codes for mode, outcome, and cap source; its legend explains each
-code. An open unit appears separately as `Active`; it is not included in the
-completed-unit summary.
+The summary covers every completed unit in the session and reports the sample
+size, total, over-cap count, and five-number cost distribution. Quartiles use
+inclusive linear interpolation. A sparkline shows recent prices from oldest to
+newest. The aligned table uses local `MM-DD HH:mm` timestamps and short codes
+for mode, outcome, and cap source; its legend explains each code. An open unit
+appears separately as `Active`; it is not included in the completed-unit
+summary.
+
+History is aligned plain text. The extension log API does not provide a
+supported Markdown-rendering or arbitrary-color contract; warning and error
+colors remain reserved for actual warning and error messages.
 
 ## Status line
 

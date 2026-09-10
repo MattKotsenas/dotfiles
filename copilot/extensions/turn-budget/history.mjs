@@ -53,6 +53,7 @@ const CAP_SOURCE_CODES = {
   "autopilot-default": "DEF",
   "ordinary-default": "DEF",
 };
+const SUMMARY_LABEL_WIDTH = 14;
 
 export async function readHistoryRecords(historyPath, sessionId) {
   let entries;
@@ -200,8 +201,10 @@ export function formatBudgetHistory({
 
   if (records.length === 0) {
     return [
-      "Budget history: no completed units",
-      openUnit ? formatActiveUnit(openUnit) : "Active: none",
+      formatSummaryLine("Budget history", "no completed units"),
+      openUnit
+        ? formatSummaryLine("Active", formatActiveUnit(openUnit))
+        : formatSummaryLine("Active", "none"),
     ].join("\n");
   }
 
@@ -212,35 +215,37 @@ export function formatBudgetHistory({
     .map((record) => toAiCredits(record.usedNanoAiu))
     .toSorted((left, right) => left - right);
   const total = usage.reduce((sum, value) => sum + value, 0);
-  const average = total / usage.length;
-  const median =
-    usage.length % 2 === 1
-      ? usage[(usage.length - 1) / 2]
-      : (usage[usage.length / 2 - 1] + usage[usage.length / 2]) / 2;
-  const maximum = usage.at(-1);
   const overCap = records.filter(
     (record) => toAiCredits(record.usedNanoAiu) > record.capAiCredits,
   ).length;
   const recent = newestFirst.slice(0, limit);
 
   return [
-    `Budget history: ${records.length} completed | over cap ${overCap}`,
-    `Total: ${formatPrice(total)}`,
-    `Typical: median ${formatPrice(median)} | average ${formatPrice(average)}`,
-    `Maximum: ${formatPrice(maximum)}`,
-    openUnit ? formatActiveUnit(openUnit) : "Active: none",
-    formatSparkline(recent),
-    `Recent ${recent.length}${recent.length < records.length ? ` of ${records.length}` : ""} (local time, newest first):`,
+    formatSummaryLine(
+      "Budget history",
+      `${records.length} completed · ${overCap} over cap · ${formatUsd(total)} total · ${formatAic(total)} AIC`,
+    ),
+    formatSummaryLine("Cost", formatFiveNumberSummary(usage)),
+    formatSummaryLine(
+      "Active",
+      openUnit ? formatActiveUnit(openUnit) : "none",
+    ),
+    formatSummaryLine("Trend", formatSparkline(recent)),
+    "",
+    formatSummaryLine(
+      "Recent",
+      `${recent.length}${recent.length < records.length ? `/${records.length}` : ""} shown · local time · newest first`,
+    ),
     ...formatHistoryTable(recent, timeZone),
-    "M: T turn, A autopilot | Limit: DEF default, NEXT one-shot, GOAL explicit",
-    "End: OK completed, INT interrupted, EXIT mode exit, CAP cap, DEL deleted, PAUSE paused, NEW superseded",
+    "M      T turn · A autopilot    Limit  DEF default · NEXT one-shot · GOAL explicit",
+    "End    OK completed · INT interrupted · EXIT mode exit · CAP cap · DEL deleted · PAUSE paused · NEW superseded",
   ].join("\n");
 }
 
 function formatActiveUnit(unit) {
   const used = toAiCredits(unit.usedNanoAiu);
   const percentage = (used / unit.capAiCredits) * 100;
-  return `Active: ${MODE_CODES[unit.kind]} | ${formatUsd(used)} | ${formatAic(used)} / ${formatAic(unit.capAiCredits)} AIC | ${percentFormatter.format(percentage)}% | ${CAP_SOURCE_CODES[unit.capSource]}`;
+  return `${MODE_CODES[unit.kind]} · ${formatUsd(used)} · ${formatAic(used)} / ${formatAic(unit.capAiCredits)} AIC · ${percentFormatter.format(percentage)}% · ${CAP_SOURCE_CODES[unit.capSource]}`;
 }
 
 function formatHistoryTable(records, timeZone) {
@@ -283,6 +288,27 @@ function formatHistoryTable(records, timeZone) {
   return [formatRow(columns.map((column) => column.header)), ...rows.map(formatRow)];
 }
 
+function formatFiveNumberSummary(sortedUsage) {
+  return [
+    ["min", quantile(sortedUsage, 0)],
+    ["q1", quantile(sortedUsage, 0.25)],
+    ["median", quantile(sortedUsage, 0.5)],
+    ["q3", quantile(sortedUsage, 0.75)],
+    ["max", quantile(sortedUsage, 1)],
+  ]
+    .map(([label, value]) => `${label} ${formatUsd(value)}`)
+    .join(" · ");
+}
+
+function quantile(sortedValues, percentile) {
+  const index = (sortedValues.length - 1) * percentile;
+  const lowerIndex = Math.floor(index);
+  const upperIndex = Math.ceil(index);
+  const lower = sortedValues[lowerIndex];
+  const upper = sortedValues[upperIndex];
+  return lower + (upper - lower) * (index - lowerIndex);
+}
+
 function formatSparkline(records) {
   const prices = records
     .toReversed()
@@ -303,13 +329,13 @@ function formatSparkline(records) {
   const range =
     minimum === maximum
       ? formatUsd(minimum)
-      : `${formatUsd(minimum)} - ${formatUsd(maximum)}`;
+      : `${formatUsd(minimum)}-${formatUsd(maximum)}`;
 
-  return `Recent price trend: ${sparkline}  ${range} (oldest -> newest)`;
+  return `${sparkline} · ${range} · oldest to newest`;
 }
 
-function formatPrice(aiCredits) {
-  return `${formatAic(aiCredits)} AIC (${formatUsd(aiCredits)})`;
+function formatSummaryLine(label, value) {
+  return `${label.padEnd(SUMMARY_LABEL_WIDTH)}  ${value}`;
 }
 
 function formatAic(value) {
