@@ -35,7 +35,10 @@ function New-State {
         [string] $Health = 'ok',
         [string] $Heartbeat = '',
         [string] $StateSessionId = $sessionId,
-        [object] $PendingOverride = $null
+        [object] $PendingOverride = $null,
+        [string] $ExtensionGeneration = '00000000000000000100',
+        [string] $ExtensionInstanceId = 'instance',
+        [long] $Revision = 1
     )
 
     if ([string]::IsNullOrWhiteSpace($Heartbeat)) {
@@ -45,6 +48,9 @@ function New-State {
     [ordered]@{
         schemaVersion = 1
         sessionId = $StateSessionId
+        extensionGeneration = $ExtensionGeneration
+        extensionInstanceId = $ExtensionInstanceId
+        revision = $Revision
         heartbeatAt = $Heartbeat
         health = [ordered]@{ status = $Health }
         accounting = [ordered]@{
@@ -104,6 +110,86 @@ try {
     $output = Invoke-Renderer
     Check 'active unit uses open accounting' `
         ($output -eq 'S 3,961 AIC ($39.61) | T 327 / 1,000 AIC ($3.27 / $10) - PASSIVE') $output
+
+    Write-State (New-State -OpenUnit (New-Unit -UsedNanoAiu 1000000000))
+    $snapshotPath = Join-Path $stateDirectory 'state.00000000000000000100.0000000000000002.instance.json'
+    New-State -OpenUnit (New-Unit -UsedNanoAiu 327123400000) -Revision 2 |
+        ConvertTo-Json -Depth 8 |
+        Set-Content -LiteralPath $snapshotPath
+    $output = Invoke-Renderer
+    Check 'versioned snapshot takes precedence over legacy state' `
+        ($output -eq 'S 3,961 AIC ($39.61) | T 327 / 1,000 AIC ($3.27 / $10) - PASSIVE') $output
+
+    $newGenerationPath = Join-Path $stateDirectory 'state.00000000000000000200.0000000000000002.instance.json'
+    New-State `
+        -OpenUnit (New-Unit -UsedNanoAiu 900000000000) `
+        -ExtensionGeneration '00000000000000000200' `
+        -Revision 2 |
+        ConvertTo-Json -Depth 8 |
+        Set-Content -LiteralPath $newGenerationPath
+    $output = Invoke-Renderer
+    Check 'newer generation wins an equal revision race' `
+        ($output -eq 'S 3,961 AIC ($39.61) | T 900 / 1,000 AIC ($9 / $10) - PASSIVE') $output
+    Remove-Item -LiteralPath $snapshotPath, $newGenerationPath -Force
+
+    $invalidSnapshotIdentities = @(
+        [ordered]@{
+            Name = 'snapshot instance mismatch'
+            Path = 'state.00000000000000000300.0000000000000003.filename.json'
+            State = New-State `
+                -OpenUnit (New-Unit -UsedNanoAiu 900000000000) `
+                -ExtensionGeneration '00000000000000000300' `
+                -ExtensionInstanceId 'payload' `
+                -Revision 3
+        },
+        [ordered]@{
+            Name = 'snapshot instance case mismatch'
+            Path = 'state.00000000000000000301.0000000000000003.INSTANCE.json'
+            State = New-State `
+                -OpenUnit (New-Unit -UsedNanoAiu 900000000000) `
+                -ExtensionGeneration '00000000000000000301' `
+                -ExtensionInstanceId 'instance' `
+                -Revision 3
+        },
+        [ordered]@{
+            Name = 'snapshot array generation'
+            Path = 'state.00000000000000000302.0000000000000003.instance.json'
+            State = New-State `
+                -OpenUnit (New-Unit -UsedNanoAiu 900000000000) `
+                -ExtensionGeneration '00000000000000000302' `
+                -Revision 3
+        },
+        [ordered]@{
+            Name = 'snapshot array revision'
+            Path = 'state.00000000000000000303.0000000000000003.instance.json'
+            State = New-State `
+                -OpenUnit (New-Unit -UsedNanoAiu 900000000000) `
+                -ExtensionGeneration '00000000000000000303' `
+                -Revision 3
+        },
+        [ordered]@{
+            Name = 'snapshot array instance'
+            Path = 'state.00000000000000000304.0000000000000003.instance.json'
+            State = New-State `
+                -OpenUnit (New-Unit -UsedNanoAiu 900000000000) `
+                -ExtensionGeneration '00000000000000000304' `
+                -Revision 3
+        }
+    )
+    $invalidSnapshotIdentities[2].State.extensionGeneration = @('00000000000000000302')
+    $invalidSnapshotIdentities[3].State.revision = @(3)
+    $invalidSnapshotIdentities[4].State.extensionInstanceId = @('instance')
+
+    foreach ($case in $invalidSnapshotIdentities) {
+        $path = Join-Path $stateDirectory $case.Path
+        $case.State |
+            ConvertTo-Json -Depth 8 |
+            Set-Content -LiteralPath $path
+        $output = Invoke-Renderer
+        Check "$($case.Name) fails visibly" `
+            ($output -eq 'S 3,961 AIC ($39.61) | T ? - PASSIVE') $output
+        Remove-Item -LiteralPath $path -Force
+    }
 
     Write-State (New-State -LatestUnit (New-Unit -UsedNanoAiu 842000000000))
     $output = Invoke-Renderer

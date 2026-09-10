@@ -32,6 +32,26 @@ const usdFormatter = new Intl.NumberFormat("en-US", {
 const percentFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
+const SPARKLINE_LEVELS = [..."▁▂▃▄▅▆▇█"];
+const MODE_CODES = {
+  ordinary: "T",
+  autopilot: "A",
+};
+const OUTCOME_CODES = {
+  completed: "OK",
+  interrupted: "INT",
+  "mode-exit": "EXIT",
+  "native-cap": "CAP",
+  "objective-deleted": "DEL",
+  paused: "PAUSE",
+  superseded: "NEW",
+};
+const CAP_SOURCE_CODES = {
+  "explicit-native": "GOAL",
+  "next-override": "NEXT",
+  "autopilot-default": "DEF",
+  "ordinary-default": "DEF",
+};
 
 export async function readHistoryRecords(historyPath, sessionId) {
   let entries;
@@ -108,7 +128,12 @@ export function validateHistoryRecord(value, sessionId) {
   return structuredClone(value);
 }
 
-export function formatBudgetHistory({ records, openUnit, limit }) {
+export function formatBudgetHistory({
+  records,
+  openUnit,
+  limit,
+  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone,
+}) {
   if (!Number.isInteger(limit) || limit <= 0) {
     throw new TypeError("history limit must be a positive integer");
   }
@@ -146,23 +171,83 @@ export function formatBudgetHistory({ records, openUnit, limit }) {
     `Typical: median ${formatPrice(median)} | average ${formatPrice(average)}`,
     `Maximum: ${formatPrice(maximum)}`,
     openUnit ? formatActiveUnit(openUnit) : "Active: none",
-    `Recent ${recent.length}${recent.length < records.length ? ` of ${records.length}` : ""} (newest first):`,
-    ...recent.map(formatCompletedUnit),
+    formatSparkline(recent),
+    `Recent ${recent.length}${recent.length < records.length ? ` of ${records.length}` : ""} (local time, newest first):`,
+    ...formatHistoryTable(recent, timeZone),
+    "M: T turn, A autopilot | Limit: DEF default, NEXT one-shot, GOAL explicit",
+    "End: OK completed, INT interrupted, EXIT mode exit, CAP cap, DEL deleted, PAUSE paused, NEW superseded",
   ].join("\n");
 }
 
 function formatActiveUnit(unit) {
-  return `Active: ${unit.kind} | ${formatUsage(unit)} | ${unit.capSource}`;
-}
-
-function formatCompletedUnit(record) {
-  return `${formatTimestamp(record.endedAt)} | ${record.kind} | ${formatUsage(record)} | ${record.outcome} | ${record.capSource}`;
-}
-
-function formatUsage(unit) {
   const used = toAiCredits(unit.usedNanoAiu);
   const percentage = (used / unit.capAiCredits) * 100;
-  return `${formatAic(used)} / ${formatAic(unit.capAiCredits)} AIC (${formatUsd(used)} / ${formatUsd(unit.capAiCredits)}) | ${percentFormatter.format(percentage)}%`;
+  return `Active: ${MODE_CODES[unit.kind]} | ${formatUsd(used)} | ${formatAic(used)} / ${formatAic(unit.capAiCredits)} AIC | ${percentFormatter.format(percentage)}% | ${CAP_SOURCE_CODES[unit.capSource]}`;
+}
+
+function formatHistoryTable(records, timeZone) {
+  const rows = records.map((record) => {
+    const used = toAiCredits(record.usedNanoAiu);
+    return [
+      formatTimestamp(record.endedAt, timeZone),
+      MODE_CODES[record.kind],
+      formatUsd(used),
+      formatAic(used),
+      formatAic(record.capAiCredits),
+      `${percentFormatter.format((used / record.capAiCredits) * 100)}%`,
+      OUTCOME_CODES[record.outcome],
+      CAP_SOURCE_CODES[record.capSource],
+    ];
+  });
+  const columns = [
+    { header: "When", align: "left" },
+    { header: "M", align: "left" },
+    { header: "Cost", align: "right" },
+    { header: "Used AIC", align: "right" },
+    { header: "Cap AIC", align: "right" },
+    { header: "%", align: "right" },
+    { header: "End", align: "left" },
+    { header: "Limit", align: "left" },
+  ];
+  const widths = columns.map((column, index) =>
+    Math.max(column.header.length, ...rows.map((row) => row[index].length)),
+  );
+  const formatRow = (row) =>
+    row
+      .map((value, index) =>
+        columns[index].align === "right"
+          ? value.padStart(widths[index])
+          : value.padEnd(widths[index]),
+      )
+      .join("  ")
+      .trimEnd();
+
+  return [formatRow(columns.map((column) => column.header)), ...rows.map(formatRow)];
+}
+
+function formatSparkline(records) {
+  const prices = records
+    .toReversed()
+    .map((record) => toAiCredits(record.usedNanoAiu));
+  const minimum = Math.min(...prices);
+  const maximum = Math.max(...prices);
+  const sparkline =
+    minimum === maximum
+      ? SPARKLINE_LEVELS[3].repeat(prices.length)
+      : prices
+          .map((price) => {
+            const ratio = (price - minimum) / (maximum - minimum);
+            return SPARKLINE_LEVELS[
+              Math.round(ratio * (SPARKLINE_LEVELS.length - 1))
+            ];
+          })
+          .join("");
+  const range =
+    minimum === maximum
+      ? formatUsd(minimum)
+      : `${formatUsd(minimum)} - ${formatUsd(maximum)}`;
+
+  return `Recent price trend: ${sparkline}  ${range} (oldest -> newest)`;
 }
 
 function formatPrice(aiCredits) {
@@ -177,8 +262,22 @@ function formatUsd(aiCredits) {
   return usdFormatter.format(aiCredits / 100);
 }
 
-function formatTimestamp(value) {
-  return `${new Date(value).toISOString().slice(0, 16).replace("T", " ")}Z`;
+function formatTimestamp(value, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .formatToParts(new Date(value))
+    .reduce((result, part) => {
+      result[part.type] = part.value;
+      return result;
+    }, {});
+
+  return `${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
 }
 
 function toAiCredits(nanoAiu) {

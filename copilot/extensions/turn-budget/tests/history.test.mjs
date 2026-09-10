@@ -21,8 +21,11 @@ test("formats session prices, active usage, and bounded recent history", () => {
     }),
     record({
       recordId: "middle",
+      kind: "autopilot",
       endedAt: "2026-01-02T12:00:00.000Z",
       usedAiCredits: 500,
+      capSource: "next-override",
+      outcome: "paused",
     }),
     record({
       recordId: "new",
@@ -30,6 +33,7 @@ test("formats session prices, active usage, and bounded recent history", () => {
       endedAt: "2026-01-03T12:00:00.000Z",
       usedAiCredits: 1200,
       capSource: "explicit-native",
+      outcome: "native-cap",
     }),
   ];
   const openUnit = {
@@ -40,23 +44,33 @@ test("formats session prices, active usage, and bounded recent history", () => {
   };
 
   assert.equal(
-    formatBudgetHistory({ records, openUnit, limit: 2 }),
+    formatBudgetHistory({ records, openUnit, limit: 3, timeZone: "UTC" }),
     [
       "Budget history: 3 completed | over cap 1",
       "Total: 1,800 AIC ($18.00)",
       "Typical: median 500 AIC ($5.00) | average 600 AIC ($6.00)",
       "Maximum: 1,200 AIC ($12.00)",
-      "Active: ordinary | 25 / 1,000 AIC ($0.25 / $10.00) | 3% | ordinary-default",
-      "Recent 2 of 3 (newest first):",
-      "2026-01-03 12:00Z | autopilot | 1,200 / 1,000 AIC ($12.00 / $10.00) | 120% | completed | explicit-native",
-      "2026-01-02 12:00Z | ordinary | 500 / 1,000 AIC ($5.00 / $10.00) | 50% | completed | ordinary-default",
+      "Active: T | $0.25 | 25 / 1,000 AIC | 3% | DEF",
+      "Recent price trend: ▁▄█  $1.00 - $12.00 (oldest -> newest)",
+      "Recent 3 (local time, newest first):",
+      "When         M    Cost  Used AIC  Cap AIC     %  End    Limit",
+      "01-03 12:00  A  $12.00     1,200    1,000  120%  CAP    GOAL",
+      "01-02 12:00  A   $5.00       500    1,000   50%  PAUSE  NEXT",
+      "01-01 12:00  T   $1.00       100    1,000   10%  OK     DEF",
+      "M: T turn, A autopilot | Limit: DEF default, NEXT one-shot, GOAL explicit",
+      "End: OK completed, INT interrupted, EXIT mode exit, CAP cap, DEL deleted, PAUSE paused, NEW superseded",
     ].join("\n"),
   );
 });
 
 test("formats an empty history without inventing prices", () => {
   assert.equal(
-    formatBudgetHistory({ records: [], openUnit: null, limit: 10 }),
+    formatBudgetHistory({
+      records: [],
+      openUnit: null,
+      limit: 10,
+      timeZone: "UTC",
+    }),
     "Budget history: no completed units\nActive: none",
   );
 });

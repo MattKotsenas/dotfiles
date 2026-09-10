@@ -45,7 +45,7 @@ export function restoreAccountingState(value) {
     !isUnitOrNull(value.openUnit) ||
     !isUnitOrNull(value.latestUnit)
   ) {
-    throw new TypeError("state.json contains an unsupported accounting state");
+    throw new TypeError("Persisted state contains an unsupported accounting state");
   }
 
   return {

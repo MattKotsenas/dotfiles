@@ -14,9 +14,11 @@ import {
   readHistoryRecords,
 } from "./history.mjs";
 import {
+  allocateStateGeneration,
   getHistoryPath,
-  readJsonIfExists,
+  readLatestState,
   writeJsonAtomic,
+  writeStateSnapshot,
 } from "./persistence.mjs";
 import { createOperationQueue } from "./operation-queue.mjs";
 
@@ -53,7 +55,7 @@ if (!session.workspacePath) {
 
 const instanceId = randomUUID();
 const root = join(session.workspacePath, "files", "turn-budget");
-const statePath = join(root, "state.json");
+const extensionGeneration = await allocateStateGeneration(root);
 const policy = validatePolicy(config);
 
 let accounting = createAccountingState();
@@ -70,7 +72,7 @@ session.on((event) => {
 
 async function initialize() {
   const [saved, mode, activity, objective] = await Promise.all([
-    readJsonIfExists(statePath),
+    readLatestState(root),
     session.rpc.mode.get(),
     session.rpc.metadata.activity(),
     readCurrentObjective(),
@@ -81,7 +83,7 @@ async function initialize() {
       saved.schemaVersion !== STATE_SCHEMA_VERSION ||
       saved.sessionId !== session.sessionId
     ) {
-      throw new Error("state.json belongs to another schema or session");
+      throw new Error("Persisted state belongs to another schema or session");
     }
 
     accounting = restoreAccountingState(saved.accounting);
@@ -310,18 +312,20 @@ async function readCurrentObjective() {
 
 async function persistState() {
   revision += 1;
-  await writeJsonAtomic(
-    statePath,
+  await writeStateSnapshot(
+    root,
     {
       schemaVersion: STATE_SCHEMA_VERSION,
       sessionId: session.sessionId,
       extensionInstanceId: instanceId,
+      extensionGeneration,
       revision,
       heartbeatAt: new Date().toISOString(),
       health: { status: "ok" },
       accounting,
     },
     instanceId,
+    extensionGeneration,
   );
 }
 
@@ -329,18 +333,20 @@ async function reportFailure(error) {
   clearInterval(heartbeat);
   const message = error instanceof Error ? error.message : String(error);
 
-  await writeJsonAtomic(
-    statePath,
+  await writeStateSnapshot(
+    root,
     {
       schemaVersion: STATE_SCHEMA_VERSION,
       sessionId: session.sessionId,
       extensionInstanceId: instanceId,
+      extensionGeneration,
       revision: revision + 1,
       heartbeatAt: new Date().toISOString(),
       health: { status: "fault", message },
       accounting,
     },
     instanceId,
+    extensionGeneration,
   );
   await session.log(`Turn budget stopped: ${message}`, { level: "error" });
 }

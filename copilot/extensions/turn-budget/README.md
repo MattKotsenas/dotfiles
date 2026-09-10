@@ -58,9 +58,10 @@ Pass a number from 1 through 50 to change the number of recent units shown:
 ```
 
 The summary covers every completed unit in the session and reports total,
-median, average, maximum, and over-cap count. Each recent row shows its UTC end
-time, kind, AIC and USD usage against its cap, percentage used, outcome, and cap
-source. An open unit appears separately as `Active`; it is not included in the
+median, average, maximum, and over-cap count. A sparkline shows recent prices
+from oldest to newest. The aligned table uses local `MM-DD HH:mm` timestamps
+and short codes for mode, outcome, and cap source; its legend explains each
+code. An open unit appears separately as `Active`; it is not included in the
 completed-unit summary.
 
 ## Status line
@@ -90,11 +91,11 @@ plausible total. Set
 `TURN_BUDGET_STATUSLINE_DEBUG=1` when invoking the script directly to print the
 rejected-state reason to stderr.
 
-The renderer locates `state.json` beneath the CLI-provided `transcript_path`,
-then verifies its schema, session ID, health, heartbeat, and accounting fields.
-Despite its name, `transcript_path` contains the session workspace directory in
-CLI `1.0.84-1`, not the `events.jsonl` path. The renderer does not use
-process-global state.
+The renderer locates the latest versioned state snapshot beneath the
+CLI-provided `transcript_path`, then verifies its schema, session ID, health,
+heartbeat, and accounting fields. Despite its name, `transcript_path` contains
+the session workspace directory in CLI `1.0.84-1`, not the `events.jsonl` path.
+The renderer does not use process-global state.
 The Windows command status line drops `│` and `·` from script output in this
 CLI build, so the rendered contract uses visible ASCII separators. ANSI color
 sequences are preserved.
@@ -129,21 +130,34 @@ reported an empty session, then priced a completed turn, honored an explicit
 row limit, rejected an out-of-range limit without faulting accounting, and
 preserved the record across restart and resume.
 
+## Persistence
+
+Windows may deny replacement of a state file while another process scans or
+reads it. State heartbeats therefore publish immutable, versioned snapshots
+instead of replacing a hot destination. Cleanup normally retains the latest
+three; a locked obsolete snapshot remains until a later heartbeat can remove
+it. Each extension atomically reserves an increasing session-local generation,
+so a new instance wins during a reload overlap and after a machine restart even
+when two instances publish the same revision. Existing legacy `state.json` data
+is read during migration and becomes eligible for cleanup after the first
+snapshot succeeds.
+
 ## Data
 
 The extension writes only beneath its current session:
 
 ```text
 <session workspace>\files\turn-budget\
-  state.json
+  generation.<extension-generation>.claim
+  state.<extension-generation>.<revision>.<extension-instance>.json
   history\
     <budget-unit-id>.json
 ```
 
-`state.json` contains the extension instance, heartbeat, health, reducer state,
-pending override, open budget unit, and latest completed budget unit. Each
-completed unit gets one deterministic history file. Rewriting the same record
-is idempotent.
+The latest state snapshot contains the extension instance, heartbeat, health,
+reducer state, pending override, open budget unit, and latest completed budget
+unit. Each completed unit gets one deterministic history file. Rewriting the
+same record is idempotent.
 
 History contains event identifiers, timestamps, objective and interaction
 identifiers, nano-AIU usage, cap, cap source, and outcome. It does not copy

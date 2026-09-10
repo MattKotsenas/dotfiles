@@ -169,6 +169,74 @@ function Read-Configuration {
     $result
 }
 
+function Read-LatestState {
+    param([string] $StateDirectory)
+
+    $sawSnapshots = $false
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        $snapshots = @(
+            Get-ChildItem -LiteralPath $StateDirectory -File -Filter 'state.*.json' |
+                ForEach-Object {
+                    if ($_.Name -match '^state\.(\d{20})\.(\d{16})\.([A-Za-z0-9._-]+)\.json$') {
+                        [pscustomobject]@{
+                            Path = $_.FullName
+                            Name = $_.Name
+                            Generation = $Matches[1]
+                            Revision = [decimal] $Matches[2]
+                            InstanceId = $Matches[3]
+                        }
+                    }
+                } |
+                Sort-Object Generation, Revision, Name -Descending
+        )
+
+        if ($snapshots.Count -eq 0) {
+            if (-not $sawSnapshots) {
+                $legacyPath = Join-Path $StateDirectory 'state.json'
+                return [System.IO.File]::ReadAllText($legacyPath) | ConvertFrom-Json
+            }
+            continue
+        }
+
+        $sawSnapshots = $true
+        foreach ($snapshot in $snapshots) {
+            try {
+                $state = [System.IO.File]::ReadAllText($snapshot.Path) | ConvertFrom-Json
+                $stateGeneration = Get-Property $state 'extensionGeneration'
+                $stateRevision = Get-Property $state 'revision'
+                $stateInstanceId = Get-Property $state 'extensionInstanceId'
+                if (
+                    $stateGeneration -isnot [string] -or
+                    -not [string]::Equals(
+                        $stateGeneration,
+                        $snapshot.Generation,
+                        [System.StringComparison]::Ordinal
+                    ) -or
+                    -not (Test-IsJsonNumber $stateRevision) -or
+                    [decimal] $stateRevision -ne [decimal]::Truncate([decimal] $stateRevision) -or
+                    [decimal] $stateRevision -lt 0 -or
+                    [decimal] $stateRevision -gt 9007199254740991d -or
+                    [decimal] $stateRevision -ne $snapshot.Revision -or
+                    $stateInstanceId -isnot [string] -or
+                    -not [string]::Equals(
+                        $stateInstanceId,
+                        $snapshot.InstanceId,
+                        [System.StringComparison]::Ordinal
+                    )
+                ) {
+                    throw 'State snapshot identity does not match its contents'
+                }
+                return $state
+            }
+            catch [System.IO.FileNotFoundException] {
+                continue
+            }
+        }
+    }
+
+    throw 'State snapshots changed too quickly to read'
+}
+
 function Read-TurnState {
     param(
         [object] $Payload,
@@ -181,8 +249,8 @@ function Read-TurnState {
         throw 'Missing session identity'
     }
 
-    $statePath = Join-Path $transcriptPath 'files\turn-budget\state.json'
-    $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+    $stateDirectory = Join-Path $transcriptPath 'files\turn-budget'
+    $state = Read-LatestState $stateDirectory
     if ((Get-Property $state 'schemaVersion') -ne 1) {
         throw 'Unsupported state schema'
     }
