@@ -14,6 +14,8 @@
       recursive: true
     ~/Documents/PowerShell:
       recursive: true
+    ~/.pi:
+      recursive: true
     ~/.psmux:
       recursive: true
     ~/.copilot/instructions:
@@ -54,6 +56,7 @@
     ~/.psmux/scripts:
       path: psmux/scripts
       glob: false
+    ~/.pi/agent: pi/agent/**
     ~/.config/wpm: wpm/**
     ~/.config/kanata: kanata/**
     ~/.config/mousemaster: mousemaster/**

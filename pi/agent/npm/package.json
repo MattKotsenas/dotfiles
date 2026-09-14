@@ -1,0 +1,8 @@
+{
+  "name": "pi-extensions",
+  "private": true,
+  "dependencies": {
+    "@tintinweb/pi-subagents": "^0.19.0",
+    "pi-pwsh-native": "^0.1.4"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "defaultModel": "qwen3-coder:30b-a3b-q4_K_M",
+  "defaultProvider": "ollama",
+  "lastChangelogVersion": "0.85.1",
+  "packages": [
+    "https://github.com/monotykamary/pi-retry",
+    "npm:@tintinweb/pi-subagents"
+  ],
+  "piRetry": {
+    "baseDelayMs": 10000,
+    "maxDelayMs": 3600000,
+    "multiplier": 2,
+    "maxRetriesAtMaxDelay": 8
+  },
+  "skills": [
+    "~/.copilot/installed-plugins/grove",
+    "~/.copilot/installed-plugins/agent-plugins/git-good/skills",
+    "~/.copilot/installed-plugins/agent-plugins/prune/skills",
+    "~/.copilot/installed-plugins/agent-plugins/tuicr/skills",
+    "~/.copilot/installed-plugins/dotnet-skills/dotnet-skills/skills"
+  ]
+}
