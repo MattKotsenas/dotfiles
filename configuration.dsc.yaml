@@ -304,14 +304,6 @@ properties:
           $null = New-Item -ItemType File -Force -Path $sentinel
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
-        description: Install yt-dlp (media downloader)
-        allowPrerelease: true
-      settings:
-        id: yt-dlp.yt-dlp
-        source: winget
-        version: '2026.07.04'
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
-      directives:
         # DevToys is a Microsoft Store app; winget reports its version as
         # "Unknown" and can't pin or compare it.
         description: Install DevToys (developer utility toolbox)
@@ -319,27 +311,33 @@ properties:
       settings:
         id: '9PGCV4V3BK4W'
         source: winget
-    - resource: Microsoft.WinGet.DSC/WinGetPackage
+    - resource: CargoGit/CargoGitInstall
       id: install-komorebi
+      dependsOn:
+        - install-rustup
       directives:
-        description: Install komorebi (tiling window manager)
+        description: Install komorebi
         allowPrerelease: true
       settings:
-        id: LGUG2Z.komorebi
-        source: winget
-        version: '0.1.41'
+        Url: https://github.com/LGUG2Z/komorebi.git
+        Rev: e0709f02bfae4e503bf4640f58ee75ecbbfdbb97
+        Crates:
+          - komorebi
+          - komorebic
+          - komorebic-no-console
+          - komorebi-gui
+          - komorebi-bar
+          - komorebi-shortcuts
     - resource: CargoGit/CargoGitInstall
       id: install-psmux
       dependsOn:
         - install-rustup
       directives:
-        # MattKotsenas fork (integration branch) for in-flight copy/paste and
-        # warm-pane fixes; revert to winget marlocarlo.psmux once upstreamed.
-        description: Install psmux (tmux clone; fork, pinned rev)
+        description: Install psmux
         allowPrerelease: true
       settings:
-        Url: https://github.com/MattKotsenas/psmux.git
-        Rev: fbaf0f2a9555dc47a2706383bd85e6f87a98a706
+        Url: https://github.com/psmux/psmux.git
+        Rev: ce3142cbd2837c41784f83f58eebf5bb16207b90
         Crates:
           - psmux
     - resource: CargoGit/CargoGitInstall
