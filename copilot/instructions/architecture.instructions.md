@@ -19,10 +19,11 @@ anti-corruption layer; short of that, use the native API. See Stannard, ["When D
 
 ## Don't pave the lava layer
 
-A lava layer is a second way of doing something added without retiring the first: two ORMs, three date types, a
-half-finished rename left beside the old code. An abandoned migration is the common cause, but the helper you add
-next to the one it was meant to replace is the same thing. Each multiplies how much of the past a reader must
-hold in their head. When you add a way, finish removing the old one or flag it; don't pour a fresh layer and leave.
+A lava layer leaves two mechanisms for one responsibility: an unfinished migration or a replacement beside its
+predecessor. Before refactoring, name that responsibility, what should retire, and the invariants to preserve.
+Before completion, verify those invariants and removal of the old path and any callers, configuration, or tests
+made obsolete. Justify required coexistence; if temporary, name what ends it. For additions that replace nothing,
+explain the distinct capability they provide.
 
 ## Prefer a type to a primitive
 
