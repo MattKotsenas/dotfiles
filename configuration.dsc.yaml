@@ -213,7 +213,7 @@ properties:
       settings:
         id: dandavison.delta
         source: winget
-        version: '0.19.2'
+        version: '0.20.1'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install less (terminal pager)
@@ -221,7 +221,7 @@ properties:
       settings:
         id: jftuga.less
         source: winget
-        version: '704'
+        version: '710'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install lazygit (terminal UI for git)
@@ -229,7 +229,7 @@ properties:
       settings:
         id: JesseDuffield.lazygit
         source: winget
-        version: '0.63.0'
+        version: '0.65.1'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install pstop (htop clone for Windows)
@@ -253,7 +253,7 @@ properties:
       settings:
         id: junegunn.fzf
         source: winget
-        version: '0.74.0'
+        version: '0.74.4'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install eza (modern ls replacement)
@@ -269,7 +269,7 @@ properties:
       settings:
         id: sharkdp.fd
         source: winget
-        version: '10.4.2'
+        version: '10.5.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-bat
       directives:
@@ -337,7 +337,7 @@ properties:
         allowPrerelease: true
       settings:
         Url: https://github.com/psmux/psmux.git
-        Rev: ce3142cbd2837c41784f83f58eebf5bb16207b90
+        Rev: 83a69a9d6a427d78bc4b9adf7a0269a3b6ec04cd
         Crates:
           - psmux
     - resource: CargoGit/CargoGitInstall
@@ -426,7 +426,7 @@ properties:
       settings:
         id: astral-sh.uv
         source: winget
-        version: '0.11.28'
+        version: '0.12.23'
     - resource: PSDscResources/Script
       id: install-uv-python
       dependsOn:
