@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/LGUG2Z/komorebi/v0.1.39/schema.bar.json",
   "monitor": {
-    "index": 0,
+    "index": 1,
     "work_area_offset": {
       "left": -5,
       "top": 40,
@@ -10,6 +10,7 @@
     }
   },
   "font_family": "Segoe UI Semilight",
+  "font_size": 16,
   "theme": {
     "palette": "Catppuccin",
     "name": "Mocha",

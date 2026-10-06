@@ -40,14 +40,6 @@
       "workspaces": [
         {
           "name": "main",
-          "layout": "RightMainVerticalStack"
-        }
-      ]
-    },
-    {
-      "workspaces": [
-        {
-          "name": "main",
           "layout": "BSP",
           "workspace_rules": [
             {
@@ -71,6 +63,14 @@
               "matching_strategy": "Equals"
             }
           ]
+        }
+      ]
+    },
+    {
+      "workspaces": [
+        {
+          "name": "main",
+          "layout": "BSP"
         }
       ]
     }
