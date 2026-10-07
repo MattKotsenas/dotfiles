@@ -1,8 +1,11 @@
 {
-  "defaultModel": "qwen3-coder:30b-a3b-q4_K_M",
-  "defaultProvider": "ollama",
+  "defaultModel": "gpt-6.1-sol",
+  "defaultProvider": "github-copilot",
+  "defaultThinkingLevel": "medium",
   "lastChangelogVersion": "0.99.1",
-  "packages": [],
+  "packages": [
+    "npm:@firstpick/pi-extension-cd"
+  ],
   "piRetry": {
     "baseDelayMs": 10000,
     "maxDelayMs": 3600000,
@@ -15,5 +18,9 @@
     "~/.copilot/installed-plugins/agent-plugins/prune/skills",
     "~/.copilot/installed-plugins/agent-plugins/tuicr/skills",
     "~/.copilot/installed-plugins/dotnet-skills/dotnet-skills/skills"
-  ]
+  ],
+  "terminal": {
+    "showTerminalProgress": true
+  },
+  "tuiMode": "fullscreen"
 }
