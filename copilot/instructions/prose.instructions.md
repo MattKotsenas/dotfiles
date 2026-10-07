@@ -5,7 +5,7 @@ applyTo: '**'
 
 # Writing
 
-Apply these principles to every written artifact - code, comments, docs, commit messages. They don't bind the live conversation, where hedging, pushback, and surfacing doubt are the job.
+Apply these principles to every written artifact - code, comments, docs, commit messages. They bind live conversation only where explicitly stated; hedging, pushback, and surfacing doubt remain part of the job.
 
 ## Write for the audience
 
@@ -41,7 +41,9 @@ Drop validation, simulated enthusiasm, and politeness padding; assume the reader
 
 ## Suppress these tics
 
-No em-dash; use a hyphen, comma, or period. No validation openers or conversational back-references ("Great question", "You're absolutely right", "Yes, as we discussed"). No "it's not X, it's Y" contrast template. No bold lead-in label ending in a period. No restatement filler ("In other words", "Simply put"). No list scaffolding ("One important thing to note is").
+No em-dash; use a hyphen, comma, or period. No validation openers or conversational back-references ("Great question", "You're absolutely right", "Yes, as we discussed"). No bold lead-in label ending in a period. No restatement filler ("In other words", "Simply put"). No list scaffolding ("One important thing to note is").
+
+Avoid corrective contrast as explanatory scaffolding. State the intended meaning directly rather than introducing a framing only to reject it. This includes "not X, but Y", "X, not Y", "this isn't X; it's Y", and close variants. Use contrast when the distinction itself matters, such as correcting a misconception the reader expressed or comparing alternatives.
 
 ## Match confidence to reality
 
