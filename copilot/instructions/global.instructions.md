@@ -122,29 +122,27 @@ blocked.
 
 ## Self-Review Before Completion
 
-Start with one review from `mallard` (correctness) and one from `iron-shrike` (taste and craft) on any work
-product you'll commit or hand back as a deliverable. Run each review as a fresh, independent, one-shot
-invocation; reviewers do not receive each other's findings. Choose reasoning effort commensurate to the change.
-Use stronger reasoning for deep reviews and work that is hard to reason about or costly to get wrong. Large
-diffs often qualify, but a one-line change can too, like a tenth condition bolted onto an `if`. What stays
-ephemeral is exempt: ordinary conversation, session scratch, and uncommitted planning notes.
+Before committing or handing back a coherent unit of work, check the goal, preserved contracts, deterministic
+verification, and simplicity yourself. Ordinary conversation, session scratch, and uncommitted planning notes
+need no external review.
 
-Give reviewers the task requirements, existing contracts the change must preserve, applicable written rules,
-and the load-bearing claim. Ask them to falsify that claim and name the violated constraint, including any
-pre-existing contract they discover. Adjudicate the complete review before editing. A finding earns a code
-change only when it demonstrates that the change violates one of those constraints. If it only falsifies the
-claim, correct the claim instead. Otherwise it proposes a new guarantee; ask the user before implementing it.
-Batch qualifying fixes. A finding identifies a violation, not its remedy. Choose the simplest remedy that
-satisfies the constraints, weighing the prevented failure against the cognitive complexity the remedy adds. If
-the smallest sound fix materially expands the agreed solution, reassess whether the approach remains right; ask
-the user only when a genuine product or design choice remains.
+Invoke `mallard` for material changes to public, wire, or persistence contracts; concurrency or shared state;
+trust boundaries; compatibility or migrations; runtime or deployment semantics; or cross-module architecture.
+Judge changed behavior and consequences, not file paths or diff size. Invoke `iron-shrike` for final PR
+descriptions, docs, or user-facing prose, and material code-shape changes where simplicity or craft is central.
+Either reviewer also runs on explicit request; neither triggers the other.
 
-Manage review effort yourself. Use the fewest review rounds and subagents that can test the load-bearing claim.
-If the work grows larger than expected, reassess the approach instead of asking the user for permission to
-continue.
+Match review effort to risk and keep initial assessments independent. Give reviewers the requirements,
+preserved contracts, applicable rules, and load-bearing claim. Ask them to falsify the claim and name the
+violated constraint, including any pre-existing contract they discover. Adjudicate all findings before editing.
+Fix demonstrated constraint violations; if only the claim is false, correct it. A proposed new guarantee
+requires the user's decision. Batch warranted fixes and choose the simplest sound remedy, weighing the
+prevented failure against added complexity. If that remedy materially expands the agreed solution, stop
+automatic review and reassess; ask the user when a product or design choice remains.
 
-After fixes, re-review only the affected risk. Stop reviewing when no qualifying findings remain. Before another
-review-and-fix cycle, reassess the original goal and the change's shape; reassess sooner when findings repeat or
-oscillate, remedies expand the design, or risk is not decreasing. Continue only when the current approach
-remains the simplest one and the next pass targets a specific unresolved violation. Otherwise simplify, roll
-back, or re-plan.
+Allow one initial invocation and at most one automatic targeted re-review per selected reviewer per coherent
+unit. A targeted re-review may resume the existing reviewer session. Check only risks affected by fixes; skip
+re-review when deterministic evidence settles them. Fixes and revised drafts do not reset the allowance;
+acknowledge a genuine scope change before starting a new review. Stop earlier if findings repeat or oscillate
+or risk is not decreasing. Resolve remaining qualifying findings with deterministic
+evidence, simplify or re-plan, or bring the unresolved decision to the user before declaring completion.

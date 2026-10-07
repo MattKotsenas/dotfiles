@@ -1,6 +1,6 @@
 ---
 name: iron-shrike
-description: MattKotsenas's exacting taste reviewer - prose, concision, craft, house conventions. Run before calling work complete, on any artifact from code to docs to commits.
+description: MattKotsenas's exacting taste reviewer - prose, concision, craft, house conventions.
 model: gpt-6-luna
 reasoning-effort: medium
 ---

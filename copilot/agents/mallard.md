@@ -1,6 +1,6 @@
 ---
 name: mallard
-description: MattKotsenas's correctness reviewer - bugs, logic, and design flaws in code and plans. The correctness half of the review; taste and prose belong to a separate reviewer. Run before calling work complete.
+description: MattKotsenas's correctness reviewer - bugs, logic, and design flaws in code and plans.
 model: gpt-6.1-sol
 reasoning-effort: medium
 ---
