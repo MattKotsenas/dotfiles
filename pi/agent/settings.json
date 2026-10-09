@@ -6,8 +6,51 @@
   "defaultTools": ["+codemode"],
   "lastChangelogVersion": "0.99.1",
   "packages": [
-    "npm:@firstpick/pi-extension-cd"
+    "npm:pi-powerline-footer",
+    "git:github.com/otahontas/pi-coding-agent-catppuccin"
   ],
+  "powerline": {
+    "preset": "default",
+    "model": {
+      "display": "qualified",
+      "showThinkingLevel": true
+    },
+    "disabledSegments": [
+      "thinking"
+    ],
+    "layout": {
+      "left": [
+        "model",
+        "shell_mode",
+        "path",
+        "git",
+        "queue",
+        "context_pct",
+        "context_total",
+        "cache_read",
+        "cost"
+      ]
+    },
+    "path": {
+      "mode": "abbreviated",
+      "maxLength": 30
+    },
+    "context": {
+      "format": "percent"
+    },
+    "cache_read": {
+      "format": "percent"
+    },
+    "welcome": false,
+    "queue": {
+      "compactPromptMode": "native"
+    },
+    "cost": {
+      "subscriptionDisplay": "reported-cost",
+      "currency": "USD"
+    }
+  },
+  "workingVibe": "off",
   "piRetry": {
     "baseDelayMs": 10000,
     "maxDelayMs": 3600000,
@@ -24,5 +67,6 @@
   "terminal": {
     "showTerminalProgress": true
   },
-  "tuiMode": "fullscreen"
+  "tuiMode": "fullscreen",
+  "theme": "catppuccin-mocha"
 }
