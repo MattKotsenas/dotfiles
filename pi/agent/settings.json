@@ -3,8 +3,10 @@
   "defaultProvider": "github-copilot",
   "defaultThinkingLevel": "medium",
   "cacheWarming": "idle",
-  "defaultTools": ["+codemode"],
-  "lastChangelogVersion": "0.99.1",
+  "defaultTools": [
+    "+codemode"
+  ],
+  "lastChangelogVersion": "1.0.4",
   "packages": [
     "npm:pi-powerline-footer",
     "git:github.com/otahontas/pi-coding-agent-catppuccin"
@@ -51,12 +53,6 @@
     }
   },
   "workingVibe": "off",
-  "piRetry": {
-    "baseDelayMs": 10000,
-    "maxDelayMs": 3600000,
-    "multiplier": 2,
-    "maxRetriesAtMaxDelay": 8
-  },
   "skills": [
     "~/.copilot/installed-plugins/grove",
     "~/.copilot/installed-plugins/agent-plugins/git-good/skills",
@@ -68,5 +64,13 @@
     "showTerminalProgress": true
   },
   "tuiMode": "fullscreen",
-  "theme": "catppuccin-mocha"
+  "treeFilterMode": "default",
+  "theme": "catppuccin-mocha",
+  "hideThinkingBlock": true,
+  "enabledModels": [
+    "github-copilot/gpt-6-luna",
+    "github-copilot/gpt-6.1-sol",
+    "openai/gpt-6-luna",
+    "openai/gpt-6.1-sol"
+  ]
 }
