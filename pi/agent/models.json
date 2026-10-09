@@ -3,6 +3,7 @@
     "github-copilot": {
       "modelOverrides": {
         "gpt-6.1-sol": {
+          "contextWindow": 266384,
           "promptCache": {
             "short": 1800
           }
