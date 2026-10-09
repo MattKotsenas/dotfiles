@@ -75,7 +75,7 @@
 
 - shell:
   # --module-path points winget at the repo-local dsc/ dir (via %CD%, the repo
-  # root dotbot runs from) so it loads the custom CargoGit resource; winget
+  # root dotbot runs from) so it loads the custom DSC resources; winget
   # requires an absolute path here, and it's quoted in case the path has spaces.
   - command: winget configure --module-path "%CD%\dsc" configuration.dsc.yaml
     description: Running winget configure
