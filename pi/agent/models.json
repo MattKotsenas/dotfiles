@@ -1,0 +1,13 @@
+{
+  "providers": {
+    "github-copilot": {
+      "modelOverrides": {
+        "gpt-6.1-sol": {
+          "promptCache": {
+            "short": 1800
+          }
+        }
+      }
+    }
+  }
+}
