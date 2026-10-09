@@ -132,6 +132,27 @@ properties:
           $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
           gh extension install xirzec/gh-notifications
           if ($LASTEXITCODE -ne 0) { throw "gh extension install xirzec/gh-notifications failed (exit $LASTEXITCODE)" }
+    - resource: PSDscResources/Script
+      dependsOn:
+        - install-gh
+      directives:
+        description: Install the gh-stack CLI extension
+        allowPrerelease: true
+      settings:
+        GetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          @{ Result = (gh extension list 2>&1 | Out-String) }
+        TestScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          $expected = 'github/gh-stack'
+          $installed = @(gh extension list 2>&1 | ForEach-Object {
+            if ($_ -match '^\S+\s+\S+\s+(\S+)') { $matches[1] }
+          })
+          $LASTEXITCODE -eq 0 -and $expected -in $installed
+        SetScript: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+          gh extension install github/gh-stack
+          if ($LASTEXITCODE -ne 0) { throw "gh extension install github/gh-stack failed (exit $LASTEXITCODE)" }
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-copilot
       directives:
