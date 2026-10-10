@@ -369,7 +369,7 @@ properties:
         allowPrerelease: true
       settings:
         Url: https://github.com/MattKotsenas/grove.git
-        Rev: a4d39c4de78d7feff3385b01ec99e528e9ca8ef6
+        Rev: d5a2194d93b63ae17d4b0f20265bf1a1b009b1e2
         Crates:
           - grove
     - resource: PSDscResources/Script
