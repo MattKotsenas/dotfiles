@@ -25,6 +25,17 @@ properties:
         allowPrerelease: true
       settings:
         Ensure: Present
+    - resource: PSDscResources/Registry
+      directives:
+        description: Enable Windows sudo in Input Closed mode
+        allowPrerelease: true
+      settings:
+        Key: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Sudo
+        ValueName: Enabled
+        ValueData: [2]
+        ValueType: Dword
+        Force: true
+        Ensure: Present
     - resource: PSDscResources/Script
       directives:
         # Scoop isn't in winget, so install via its official installer
