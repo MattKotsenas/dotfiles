@@ -53,6 +53,7 @@ properties:
         SetScript: |
           Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
           Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)}"
+    # TODO: Install Meslo NF 3.5.1 or newer.
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       directives:
         description: Install PowerShell 7 (cross-platform shell)
