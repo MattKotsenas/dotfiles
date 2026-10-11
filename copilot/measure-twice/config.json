@@ -1,4 +1,4 @@
 {
-  "defaultMode": "on",
+  "defaultMode": "off",
   "prompt": "A review gate is active. If this turn will hand back a deliverable, apply Self-Review Before Completion now, including its falsification step; otherwise skip the review. Don't narrate the gate or announce the review."
 }
