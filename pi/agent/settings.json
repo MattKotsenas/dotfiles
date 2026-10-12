@@ -13,35 +13,48 @@
   ],
   "powerline": {
     "preset": "default",
-    "model": {
-      "display": "qualified",
-      "showThinkingLevel": true
-    },
+    "customItems": [
+      {
+        "id": "compact-model",
+        "color": "#d787af"
+      },
+      {
+        "id": "compact-context",
+        "color": "dim"
+      },
+      {
+        "id": "compact-context-warn",
+        "color": "warning"
+      },
+      {
+        "id": "compact-context-error",
+        "color": "error"
+      }
+    ],
     "disabledSegments": [
-      "thinking"
+      "model",
+      "thinking",
+      "context_pct",
+      "context_total",
+      "cache_read",
+      "cache_write"
     ],
     "layout": {
       "left": [
-        "model",
+        "custom:compact-model",
         "shell_mode",
         "path",
         "git",
         "queue",
-        "context_pct",
-        "context_total",
-        "cache_read",
+        "custom:compact-context",
+        "custom:compact-context-warn",
+        "custom:compact-context-error",
         "cost"
       ]
     },
     "path": {
       "mode": "abbreviated",
       "maxLength": 30
-    },
-    "context": {
-      "format": "percent"
-    },
-    "cache_read": {
-      "format": "percent"
     },
     "welcome": false,
     "queue": {
