@@ -4,6 +4,7 @@
 if (-not [Console]::IsOutputRedirected) { [Console]::Write("`e[6 q") }
 
 # Pi
+$env:PI_CLIPBOARD_OSC52 = '1'
 # TODO: Remove after upgrading pi-powerline-footer to detect Nerd Fonts in Windows Terminal/psmux.
 # https://github.com/nicobailon/pi-powerline-footer/blob/9ed2915d49db81354e516540c9ef49354992cf4f/icons.ts#L166-L179
 $env:POWERLINE_NERD_FONTS = '1'
