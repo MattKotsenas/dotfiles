@@ -1,0 +1,6 @@
+{
+  "tui.altScreen.pageUp": [],
+  "tui.altScreen.pageDown": [],
+  "tui.altScreen.halfPageUp": "pageUp",
+  "tui.altScreen.halfPageDown": "pageDown"
+}
