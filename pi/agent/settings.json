@@ -63,7 +63,8 @@
     "cost": {
       "subscriptionDisplay": "reported-cost",
       "currency": "USD"
-    }
+    },
+    "placement": "above"
   },
   "workingVibe": "off",
   "skills": [
