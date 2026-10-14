@@ -9,7 +9,7 @@ param(
 
 $ErrorActionPreference = 'SilentlyContinue'
 $first = (($Command -split '\s+', 2)[0] -split '[\\/]' | Select-Object -Last 1) -replace '\.exe$', ''
-if ($first -notin @('copilot', 'node')) { Write-Output $Command; return }
+if ($first -notin @('copilot', 'node', 'clod')) { Write-Output $Command; return }
 $panePidInt = 0
 if (-not [int]::TryParse($PanePid, [ref]$panePidInt) -or $panePidInt -le 0) { Write-Output $Command; return }
 

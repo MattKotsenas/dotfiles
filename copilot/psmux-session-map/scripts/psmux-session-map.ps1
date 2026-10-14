@@ -3,7 +3,7 @@
 # psmux-session-map: Copilot CLI hook
 #
 # Writes a pid -> session-id mapping so psmux-resurrect's copilot save strategy
-# can save a `clod` pane as `clod --resume=<session-id>` and restore the real
+# can save a Copilot pane as `copilot --resume=<session-id>` and restore the real
 # session after a reboot.
 #
 #   sessionStart : write ~/.copilot/psmux-sessions/<copilot-pid> = <session-id>,

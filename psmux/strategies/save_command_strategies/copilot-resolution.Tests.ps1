@@ -26,6 +26,8 @@ try {
     Set-Content (Join-Path $maps '101') $idB
     $actual=Resolve
     Check 'current hook mapping overrides launch argument' ($actual -ceq "copilot --resume=$idB") $actual
+    $actual = & $strategy 'clod --resume=old' '100' $root
+    Check 'personal clod input saves the canonical Copilot launcher' ($actual -ceq "copilot --resume=$idB") $actual
     Set-Content (Join-Path $maps '101') 'unreadable-or-incomplete-id'
     $actual=Resolve
     Check 'unusable current mapping falls back to captured command, not stale launch argument' ($actual -ceq 'copilot') $actual

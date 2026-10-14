@@ -2,8 +2,8 @@
 
 A Copilot CLI plugin (hook only) that records each session's id keyed by its
 process id, so [psmux-resurrect](https://github.com/MattKotsenas/psmux-plugins)
-can save a copilot pane as `clod --resume=<session-id>` and restore the real
-session after a reboot -- instead of launching a fresh `clod`.
+can save a Copilot pane as `copilot --resume=<session-id>` and restore its
+session after a reboot.
 
 ## How it works
 
@@ -21,9 +21,13 @@ strategy matches on:
 The psmux-resurrect `copilot` save-command strategy
 (`~/.psmux/strategies/save_command_strategies/copilot.ps1`) walks a pane's
 process descendants at save time, finds the copilot pid, and persists
-`clod --resume=<id>` -- resolving the id from the mapping (primary) or, for a
-just-restored pane whose sessionStart has not fired yet, the process's own
-`--resume=<id>` argument (fallback).
+`copilot --resume=<id>`. A valid current mapping supplies the id; before the first
+mapping or when it predates the process, the process's own resume argument does.
+Ambiguous process ownership or an unusable current mapping preserves the captured
+command.
+
+The personal `copilot_clod` restore strategy converts the saved launcher to
+`clod`, preserving its arguments. The `relaunch` menu uses the same conversion.
 
 Crash safety: a non-graceful exit never fires `sessionEnd`, so its file lingers
 until the next session's start prunes it (its pid is dead). PID reuse is

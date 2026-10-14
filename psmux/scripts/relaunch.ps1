@@ -4,7 +4,7 @@ Reopen a recently-closed Copilot pane as a psmux window.
 
 .DESCRIPTION
 psmux-continuum snapshots (~/.psmux/resurrect/psmux_resurrect_<ts>.json) already
-record every Copilot pane as `clod --resume=<session-id>`, tagged with the window
+record resumable Copilot panes as `copilot --resume=<session-id>`, tagged with the window
 name you gave it and its directory. Those snapshots are the raw log; a task is
 "closed" when its session id is in an older snapshot but not the newest (the current
 open set).
@@ -51,7 +51,7 @@ param(
 # sets TMUX. Either means "inside psmux", which gates the display-* calls below.
 $inPsmux = [bool]($env:PSMUX_TARGET_SESSION -or $env:TMUX)
 
-# The id the continuum copilot save-strategy persists: `clod --resume=<guid>`.
+# The session id is the same in canonical and older clod commands.
 $resumeRe = '--resume[=\s]+([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})'
 
 # Parse a snapshot file. Returns the parsed JSON, or $null if it can't be read
@@ -177,7 +177,8 @@ $i = 0
 foreach ($t in $closed) {
     $i++
     $key = if ($i -le 9) { "$i" } elseif ($i -le 35) { [char](87 + $i) } else { '' }  # 1-9 then a-z
-    $action = "new-window -n $(Quote $t.Name) -c $(Quote $t.Dir) $(Quote $t.Command)"
+    $launchCommand = & (Join-Path $PSScriptRoot '..\strategies\copilot_clod.ps1') $t.Command $t.Dir
+    $action = "new-window -n $(Quote $t.Name) -c $(Quote $t.Dir) $(Quote $launchCommand)"
     $menu.Add($t.Name); $menu.Add($key); $menu.Add($action)
 }
 
