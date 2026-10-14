@@ -67,7 +67,10 @@
     },
     "placement": "above"
   },
-  "workingVibe": "off",
+  "workingVibe": "dry wit",
+  "workingVibeMode": "generate",
+  "workingVibeModel": "github-copilot/gpt-6-luna:medium",
+  "workingVibePrompt": "Write one short loading message in dry British understatement,\r\nwith occasional gentle sarcasm.\r\n\r\nContext excerpt (automatically clipped from a longer conversation):\r\n{task}\r\n\r\nFind a recognisable inconvenience, contradiction, or absurdity in\r\nthe context and quietly understate it. Prefer natural phrasing\r\nover clever wordplay.\r\n\r\nAim the humour at the situation, never the user.\r\nAvoid British props such as tea, invented jargon, and strained\r\nmetaphors. Do not merely rearrange words from the context.\r\nThe excerpt may end mid-sentence. This is an input limitation, not part\r\nof the task. Never mention or joke about clipping, missing context,\r\nincomplete sentences, the prompt, or needing more information.\r\nUse only the task or situation visible in the excerpt. If it is unclear,\r\nuse a general understated observation about work proceeding.\r\nDo not imply the user wrote something incomplete or unclear.\r\n\r\nStyle examples:\r\n- Dependencies, marginally less prehistoric...\r\n- Compatibility, not strictly essential...\r\n- Renegotiating yesterday's permanence...\r\n- Footer's taking liberties...\r\n\r\nUse 3–8 words, at most 65 characters, ending in \"...\".\r\n{exclude}\r\nOutput only the message.",
   "skills": [
     "~/.copilot/installed-plugins/grove",
     "~/.copilot/installed-plugins/agent-plugins/git-good/skills",
