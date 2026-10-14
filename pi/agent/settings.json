@@ -6,7 +6,7 @@
   "defaultTools": [
     "+codemode"
   ],
-  "lastChangelogVersion": "1.0.4",
+  "lastChangelogVersion": "1.2.0",
   "packages": [
     "./extensions/powerline-chrome.ts",
     "npm:pi-powerline-footer",
