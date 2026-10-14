@@ -63,12 +63,12 @@ function Kill-Tree($info) {
 
 $guid = [guid]::NewGuid().ToString()
 try {
-    # 1. copilot descendant + valid mapping -> clod --resume=<id>
+    # 1. copilot descendant + valid mapping -> copilot --resume=<id>
     $i = Spawn-Under-Pane $copilotExe
     Check "spawned copilot stand-in under a pane process (pane=$($i.Pane) copilot=$($i.Child))" ($i.Child -gt 0)
     Seed $i.Child $guid
-    Check "copilot pane with a mapping -> 'clod --resume=<id>'" `
-        ((Run-Strategy 'clod' $i.Pane) -eq "clod --resume=$guid") "got: [$(Run-Strategy 'clod' $i.Pane)]"
+    Check "copilot pane with a mapping -> 'copilot --resume=<id>'" `
+        ((Run-Strategy 'copilot' $i.Pane) -eq "copilot --resume=$guid") "got: [$(Run-Strategy 'copilot' $i.Pane)]"
     Kill-Tree $i
 
     # 2. non-copilot command -> passes through untouched (cheap guard, no walk)
@@ -76,7 +76,7 @@ try {
 
     # 3. copilot descendant but NO mapping -> bare
     $i = Spawn-Under-Pane $copilotExe
-    Check "copilot pane with no mapping -> bare 'clod'" ((Run-Strategy 'clod' $i.Pane) -eq 'clod') "got: [$(Run-Strategy 'clod' $i.Pane)]"
+    Check "copilot pane with no mapping -> bare 'copilot'" ((Run-Strategy 'copilot' $i.Pane) -eq 'copilot') "got: [$(Run-Strategy 'copilot' $i.Pane)]"
     Kill-Tree $i
 
     # 4. mapping keyed to a NON-copilot descendant -> ignored (pid-reuse guard)
@@ -84,13 +84,13 @@ try {
     Check "spawned non-copilot stand-in (notcop=$($i.Child))" ($i.Child -gt 0)
     Seed $i.Child $guid
     Check "mapping on a non-copilot process is ignored (name-validated) -> bare" `
-        ((Run-Strategy 'clod' $i.Pane) -eq 'clod') "got: [$(Run-Strategy 'clod' $i.Pane)]"
+        ((Run-Strategy 'copilot' $i.Pane) -eq 'copilot') "got: [$(Run-Strategy 'copilot' $i.Pane)]"
     Kill-Tree $i
 
     # 5. copilot descendant but mapping is not a guid -> bare
     $i = Spawn-Under-Pane $copilotExe
     Seed $i.Child 'not-a-valid-guid'
-    Check "non-guid mapping is rejected -> bare 'clod'" ((Run-Strategy 'clod' $i.Pane) -eq 'clod') "got: [$(Run-Strategy 'clod' $i.Pane)]"
+    Check "non-guid mapping is rejected -> bare 'copilot'" ((Run-Strategy 'copilot' $i.Pane) -eq 'copilot') "got: [$(Run-Strategy 'copilot' $i.Pane)]"
     Kill-Tree $i
 
     # 6. copilot descendant, NO mapping, but --resume=<id> on its command line ->
@@ -98,8 +98,8 @@ try {
     #    sessionStart hook has fired).
     $fg = [guid]::NewGuid().ToString()
     $i = Spawn-Under-Pane $copilotExe "--resume=$fg"
-    Check "copilot pane, no mapping, --resume arg -> fallback 'clod --resume=<id>'" `
-        ((Run-Strategy 'clod' $i.Pane) -eq "clod --resume=$fg") "got: [$(Run-Strategy 'clod' $i.Pane)]"
+    Check "copilot pane, no mapping, --resume arg -> fallback 'copilot --resume=<id>'" `
+        ((Run-Strategy 'copilot' $i.Pane) -eq "copilot --resume=$fg") "got: [$(Run-Strategy 'copilot' $i.Pane)]"
     Kill-Tree $i
 
     # 7. mapping (current) beats a stale --resume argument.
@@ -107,8 +107,16 @@ try {
     $i = Spawn-Under-Pane $copilotExe "--resume=$stale"
     Seed $i.Child $current
     Check "mapping (current) wins over a stale --resume arg" `
-        ((Run-Strategy 'clod' $i.Pane) -eq "clod --resume=$current") "got: [$(Run-Strategy 'clod' $i.Pane)]"
+        ((Run-Strategy 'copilot' $i.Pane) -eq "copilot --resume=$current") "got: [$(Run-Strategy 'copilot' $i.Pane)]"
     Kill-Tree $i
+
+    $i = Spawn-Under-Pane $copilotExe "--resume=$stale"
+    Seed $i.Child $current
+    $locked = [IO.File]::Open((Join-Path $sess "$($i.Child)"), [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+    try {
+        Check "locked current mapping preserves bare command instead of stale launch session" `
+            ((Run-Strategy 'copilot' $i.Pane) -eq 'copilot')
+    } finally { $locked.Dispose(); Kill-Tree $i }
 
     # 8. a mapping written before the copilot process started (a stale file left
     #    on a reused pid) is ignored; the --resume argument wins.
@@ -118,7 +126,7 @@ try {
     $created = (Get-CimInstance Win32_Process -Filter "ProcessId=$($i.Child)" -EA SilentlyContinue).CreationDate
     (Get-Item (Join-Path $sess "$($i.Child)")).LastWriteTime = $created.AddMinutes(-5)
     Check "mapping older than the process is ignored -> --resume fallback wins" `
-        ((Run-Strategy 'clod' $i.Pane) -eq "clod --resume=$freshArg") "got: [$(Run-Strategy 'clod' $i.Pane)]"
+        ((Run-Strategy 'copilot' $i.Pane) -eq "copilot --resume=$freshArg") "got: [$(Run-Strategy 'copilot' $i.Pane)]"
     Kill-Tree $i
 
     # 9. no psmux-sessions directory at all -> the command-line fallback still works.
@@ -126,7 +134,7 @@ try {
     $noDirArg = [guid]::NewGuid().ToString()
     $i = Spawn-Under-Pane $copilotExe "--resume=$noDirArg"
     Check "no psmux-sessions dir -> --resume fallback still works" `
-        ((Run-Strategy 'clod' $i.Pane) -eq "clod --resume=$noDirArg") "got: [$(Run-Strategy 'clod' $i.Pane)]"
+        ((Run-Strategy 'copilot' $i.Pane) -eq "copilot --resume=$noDirArg") "got: [$(Run-Strategy 'copilot' $i.Pane)]"
     Kill-Tree $i
     New-Item -ItemType Directory -Force -Path $sess | Out-Null
 }

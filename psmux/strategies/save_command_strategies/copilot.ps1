@@ -1,20 +1,6 @@
 #!/usr/bin/env pwsh
-# =============================================================================
-# @resurrect-save-command-strategy: 'copilot'
-#
-# Global save-command strategy (see psmux-resurrect/scripts/save_strategy.ps1).
-# For a pane running the Copilot CLI, emit `clod --resume=<session-id>` so
-# restore brings the actual session back instead of launching a fresh `clod`.
-# Every other pane -- and any copilot pane we cannot map -- passes through
-# unchanged.
-#
-# Here we walk the pane's process descendants to find the copilot process and
-# resolve its session id from two sources: the hook's mapping file, then the
-# process's own `--resume=<id>` argument. The walk below explains which wins and
-# why. No psmux inuse.lock, no events.jsonl.
-#
-# Contract: print exactly one line to stdout = the command to persist.
-# =============================================================================
+# Resolve a Copilot pane to copilot --resume=<session-id>. Ambiguous or unavailable
+# session state preserves the captured command.
 param(
     [Parameter(Position = 0)] [AllowEmptyString()] [string] $Command,
     [Parameter(Position = 1)] [AllowEmptyString()] [string] $PanePid,
@@ -22,79 +8,57 @@ param(
 )
 
 $ErrorActionPreference = 'SilentlyContinue'
-
-# Cheap guard: only copilot-looking panes are worth a process-tree walk.
-# psmux reports copilot as the typed alias `clod`, or `copilot`/`node`.
 $first = (($Command -split '\s+', 2)[0] -split '[\\/]' | Select-Object -Last 1) -replace '\.exe$', ''
-if ($first -notin @('clod', 'copilot', 'node')) { Write-Output $Command; return }
-
-$sessionsDir = Join-Path $env:USERPROFILE '.copilot\psmux-sessions'
-
+if ($first -notin @('copilot', 'node')) { Write-Output $Command; return }
 $panePidInt = 0
 if (-not [int]::TryParse($PanePid, [ref]$panePidInt) -or $panePidInt -le 0) { Write-Output $Command; return }
 
-# Build a parent -> children index once, then breadth-first walk the pane's
-# descendants looking for the copilot process. Capture each pid's command line
-# (for the --resume fallback) and creation time (to reject a stale mapping left
-# on a reused pid).
 $byParent = @{}
-$nameByPid = @{}
-$cmdlineByPid = @{}
-$creationByPid = @{}
+$byPid = @{}
 foreach ($p in (Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)) {
     $procId = [int]$p.ProcessId
-    $ppid   = [int]$p.ParentProcessId
-    $nameByPid[$procId] = [string]$p.Name
-    $cmdlineByPid[$procId] = [string]$p.CommandLine
-    $creationByPid[$procId] = $p.CreationDate
-    if (-not $byParent.ContainsKey($ppid)) { $byParent[$ppid] = [System.Collections.Generic.List[int]]::new() }
-    $byParent[$ppid].Add($procId)
+    $parentId = [int]$p.ParentProcessId
+    $byPid[$procId] = $p
+    if (-not $byParent.ContainsKey($parentId)) { $byParent[$parentId] = [Collections.Generic.List[int]]::new() }
+    $byParent[$parentId].Add($procId)
 }
 
-$sessionId = $null
+$copilotPids = @()
 $seen = @{}
-$queue = [System.Collections.Queue]::new()
+$queue = [Collections.Queue]::new()
 $queue.Enqueue($panePidInt)
 while ($queue.Count -gt 0) {
     $cur = [int]$queue.Dequeue()
     if ($seen.ContainsKey($cur)) { continue }
     $seen[$cur] = $true
-
-    # Only trust a mapping/argument that belongs to a copilot process. Guards
-    # the PID-reuse window: a dead copilot's pid could be reclaimed by an
-    # unrelated live process before pruning catches it.
-    if (([string]$nameByPid[$cur]) -match 'copilot') {
-        # 1. PRIMARY: the hook's pid->id mapping. sessionStart rewrites it on
-        #    every session transition, so it names the current session rather than
-        #    the id the pane launched with. Trust it only if it was written during
-        #    this process's life -- a mapping older than the process is a stale
-        #    file left on a reused pid, so fall through to the argument instead.
-        $mapFile = Join-Path $sessionsDir "$cur"
-        $created = $creationByPid[$cur]
-        if ((Test-Path $mapFile) -and $created -and ((Get-Item $mapFile).LastWriteTime -ge $created)) {
-            $id = (Get-Content $mapFile -Raw -ErrorAction SilentlyContinue)
-            if (-not [string]::IsNullOrWhiteSpace($id)) {
-                $id = $id.Trim()
-                $parsed = [guid]::Empty
-                if ([guid]::TryParse($id, [ref]$parsed)) { $sessionId = $id; break }
-            }
-        }
-        # 2. FALLBACK: the process's own --resume=<id> argument, for a
-        #    just-restored pane whose sessionStart has not fired yet (it fires
-        #    lazily, on the first prompt). Accurate in that window -- a switch
-        #    would have written the mapping above, so this is never the stale
-        #    launch id.
-        $cl = [string]$cmdlineByPid[$cur]
-        if ($cl -match '(?:--resume|(?:^|\s)-r)[=\s]+([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})') {
-            $cand = $matches[1]
-            $parsed = [guid]::Empty
-            if ([guid]::TryParse($cand, [ref]$parsed)) { $sessionId = $cand; break }
-        }
-    }
-
+    if ([string]$byPid[$cur].Name -match '^copilot(?:app)?(?:\.exe)?$') { $copilotPids += $cur }
     if ($byParent.ContainsKey($cur)) {
         foreach ($child in $byParent[$cur]) { $queue.Enqueue($child) }
     }
 }
+# A shell can have multiple Copilot children. Neither traversal order nor the
+# presence of one mapping identifies which child owns the captured command.
+if ($copilotPids.Count -ne 1) { Write-Output $Command; return }
+$copilot = $byPid[$copilotPids[0]]
+$mapFile = Join-Path $env:USERPROFILE ".copilot\psmux-sessions\$($copilot.ProcessId)"
+if (Test-Path $mapFile) {
+    try {
+        $mapping = Get-Item $mapFile -ErrorAction Stop
+        if (-not $copilot.CreationDate) { Write-Output $Command; return }
+        if ($mapping.LastWriteTime -ge $copilot.CreationDate) {
+            # A current mapping supersedes the launch argument. If it cannot be
+            # read or validated, the launch session may already be obsolete.
+            $id = (Get-Content $mapFile -Raw -ErrorAction Stop).Trim()
+            $parsed = [guid]::Empty
+            if ([guid]::TryParse($id, [ref]$parsed)) { Write-Output "copilot --resume=$id" }
+            else { Write-Output $Command }
+            return
+        }
+    } catch { Write-Output $Command; return }
+}
 
-if ($sessionId) { Write-Output "clod --resume=$sessionId" } else { Write-Output $Command }
+# Before the first sessionStart hook, or with a mapping from an older process,
+# the process's own resume argument is the available session identifier.
+if ([string]$copilot.CommandLine -match '(?:--resume|(?:^|\s)-r)[=\s]+([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})') {
+    Write-Output "copilot --resume=$($matches[1])"
+} else { Write-Output $Command }
