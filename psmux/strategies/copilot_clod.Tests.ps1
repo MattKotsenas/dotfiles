@@ -48,6 +48,7 @@ if (`$args[0] -eq 'show-options' -and `$options.ContainsKey(`$args[-1])) {
 }
 exit 1
 "@ | Set-Content $fakePsmux
+    Copy-Item (Join-Path $PSScriptRoot 'save_command_strategies\save.ps1') $saveStrategies
     $saveSource = Join-Path $PSScriptRoot 'save_command_strategies\copilot.ps1'
     $quotedSave = [Management.Automation.Language.CodeGeneration]::EscapeSingleQuotedStringContent($saveSource)
     @"
@@ -66,7 +67,7 @@ function Get-CimInstance {
         $restored = Get-StrategyCommand -OriginalCommand $saved -Directory $root -PsmuxBin $fakePsmux -PluginDir $PluginDir -UserStrategiesDir $PSScriptRoot
         Check "$inputCommand input restores through clod with the same session id" ($restored -ceq "clod --resume=$id") $restored
     }
-    Check 'restore allowlist accepts canonical and older personal commands' ($options['@resurrect-processes'] -ceq '~copilot ~clod') $options['@resurrect-processes']
+    Check 'restore allowlist accepts canonical and older personal commands' ($options['@resurrect-processes'] -ceq '~copilot ~clod ~pi') $options['@resurrect-processes']
     $legacy = "clod --resume=$id"
     $actual = Get-StrategyCommand -OriginalCommand $legacy -Directory $root -PsmuxBin $fakePsmux -PluginDir $PluginDir -UserStrategiesDir $PSScriptRoot
     Check 'older clod snapshots retain their launcher and session' ($actual -ceq $legacy) $actual

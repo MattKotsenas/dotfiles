@@ -9,6 +9,7 @@
 #
 #   pwsh -File psmux/strategies/save_command_strategies/copilot.Tests.ps1
 # =============================================================================
+param([ValidateSet('copilot', 'save')] [string] $StrategyName = 'copilot')
 $ErrorActionPreference = 'Continue'
 
 $script:pass = 0; $script:fail = 0
@@ -17,7 +18,7 @@ function Check($name, $cond, $detail = '') {
     else { Write-Host "  FAIL: $name  $detail" -ForegroundColor Red; $script:fail++ }
 }
 
-$strategy = Join-Path $PSScriptRoot 'copilot.ps1'
+$strategy = Join-Path $PSScriptRoot "$StrategyName.ps1"
 Check "strategy script exists" (Test-Path $strategy) $strategy
 
 $cmdExe = Join-Path $env:WINDIR 'System32\cmd.exe'
