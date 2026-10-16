@@ -2,5 +2,6 @@
   "tui.altScreen.pageUp": [],
   "tui.altScreen.pageDown": [],
   "tui.altScreen.halfPageUp": "pageUp",
-  "tui.altScreen.halfPageDown": "pageDown"
+  "tui.altScreen.halfPageDown": "pageDown",
+  "tui.altScreen.searchPrevious": ["shift+enter", "ctrl+shift+g", "alt+enter"]
 }

@@ -31,7 +31,7 @@ export default function (pi: ExtensionAPI) {
     const id = model?.id.startsWith(`${provider}/`) ? model.id.slice(provider.length + 1) : model?.id;
     const level = ctx.thinkingLevel ?? pi.getThinkingLevel();
     const thinking = model?.reasoning && level !== "off"
-      ? ` · ${level === "minimal" ? "min" : level === "medium" ? "med" : level}`
+      ? ` ${level === "minimal" ? "min" : level === "medium" ? "med" : level}`
       : "";
     publish(ctx, "compact-model", `${providerLabel ? `${providerLabel} ` : ""}${id ?? "no-model"}${thinking}`);
 

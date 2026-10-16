@@ -9,12 +9,18 @@
   "lastChangelogVersion": "1.2.0",
   "packages": [
     "./extensions/powerline-chrome.ts",
+    "./extensions/vim-navigation.ts",
     "npm:pi-powerline-footer",
+    "npm:pi-vim-editor@0.4.0",
     "git:github.com/otahontas/pi-coding-agent-catppuccin"
   ],
   "powerline": {
     "preset": "default",
     "customItems": [
+      {
+        "id": "vim-mode",
+        "color": "accent"
+      },
       {
         "id": "compact-model",
         "color": "#d787af"
@@ -42,6 +48,7 @@
     ],
     "layout": {
       "left": [
+        "custom:vim-mode",
         "custom:compact-model",
         "shell_mode",
         "path",
@@ -82,6 +89,7 @@
     "showTerminalProgress": true
   },
   "tuiMode": "fullscreen",
+  "editorPaddingX": 2,
   "treeFilterMode": "default",
   "theme": "catppuccin-mocha",
   "hideThinkingBlock": true,

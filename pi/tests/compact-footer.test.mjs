@@ -40,13 +40,13 @@ function harness(mode = "tui", override = "1") {
 test("provider identity, model ID and inline thinking survive provider/model changes", () => {
   const h = harness();
   h.emit("session_start");
-  assert.equal(h.statuses.get("compact-model"), "\uEC81 gpt-6.1-sol · med");
+  assert.equal(h.statuses.get("compact-model"), "\uEC81 gpt-6.1-sol med");
   h.ctx.model = { provider: "github-copilot", id: "gpt-6-luna", reasoning: true };
   h.emit("model_select");
-  assert.equal(h.statuses.get("compact-model"), "\uF4B8 gpt-6-luna · med");
+  assert.equal(h.statuses.get("compact-model"), "\uF4B8 gpt-6-luna med");
   h.ctx.thinkingLevel = "max";
   h.emit("thinking_level_select");
-  assert.equal(h.statuses.get("compact-model"), "\uF4B8 gpt-6-luna · max");
+  assert.equal(h.statuses.get("compact-model"), "\uF4B8 gpt-6-luna max");
   for (const provider of ["custom-provider", "constructor", "toString"]) {
     h.ctx.model = { provider, id: `${provider}/my-model`, reasoning: false };
     h.emit("model_select");
@@ -60,13 +60,13 @@ test("provider identity, model ID and inline thinking survive provider/model cha
 test("ASCII mode retains the provider instead of emitting an unsupported glyph", () => {
   const h = harness("tui", "0");
   h.emit("session_start");
-  assert.equal(h.statuses.get("compact-model"), "openai gpt-6.1-sol · med");
+  assert.equal(h.statuses.get("compact-model"), "openai gpt-6.1-sol med");
 });
 
 test("this Meslo-configured footer keeps provider glyphs without an explicit override", () => {
   const h = harness("tui", null);
   h.emit("session_start");
-  assert.equal(h.statuses.get("compact-model"), "\uEC81 gpt-6.1-sol · med");
+  assert.equal(h.statuses.get("compact-model"), "\uEC81 gpt-6.1-sol med");
 });
 
 test("off and non-reasoning models hide thinking; the API supplies missing thinking state", () => {
@@ -76,7 +76,7 @@ test("off and non-reasoning models hide thinking; the API supplies missing think
   assert.equal(h.statuses.get("compact-model"), "\uEC81 gpt-6.1-sol");
   h.ctx.thinkingLevel = undefined;
   h.emit("thinking_level_select");
-  assert.equal(h.statuses.get("compact-model"), "\uEC81 gpt-6.1-sol · low");
+  assert.equal(h.statuses.get("compact-model"), "\uEC81 gpt-6.1-sol low");
 });
 
 test("exactly one combined context segment follows the existing warning boundaries", () => {
@@ -179,7 +179,7 @@ test("configuration replaces native segments, removes cache ratio and preserves 
     assert.ok(powerline.disabledSegments.includes(native));
     assert.ok(!powerline.layout.left.includes(native));
   }
-  assert.equal(powerline.layout.left[0], "custom:compact-model");
+  assert.deepEqual(powerline.layout.left.slice(0, 2), ["custom:vim-mode", "custom:compact-model"]);
   assert.ok(powerline.layout.left.includes("git"));
   assert.deepEqual(powerline.path, { mode: "abbreviated", maxLength: 30 });
   assert.equal(powerline.layout.secondary, undefined, "retain upstream aggregate extension statuses");

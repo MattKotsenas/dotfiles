@@ -93,7 +93,8 @@ test("configured package order loads chrome before Powerline exactly once", asyn
   const { SettingsManager, DefaultPackageManager } = await import(pathToFileURL(join(hostRoot, "dist/index.js")));
   const settings = JSON.parse(readFileSync(new URL("../agent/settings.json", import.meta.url), "utf8"));
   assert.equal(settings.packages[0], "./extensions/powerline-chrome.ts");
-  assert.equal(settings.packages[1], "npm:pi-powerline-footer");
+  assert.equal(settings.packages[1], "./extensions/vim-navigation.ts");
+  assert.equal(settings.packages[2], "npm:pi-powerline-footer");
   const previous = process.env.PI_OFFLINE;
   process.env.PI_OFFLINE = "1";
   try {
@@ -106,8 +107,13 @@ test("configured package order loads chrome before Powerline exactly once", asyn
     const paths = resources.extensions.filter((entry) => entry.enabled).map((entry) => entry.path.replaceAll(String.fromCharCode(92), "/"));
     const chromeIndex = paths.findIndex((path) => path.endsWith("/extensions/powerline-chrome.ts"));
     const powerlineIndex = paths.findIndex((path) => path.endsWith("/pi-powerline-footer/index.ts"));
+    const navigationIndex = paths.findIndex((path) => path.endsWith("/vim-navigation.ts"));
+    const vimIndex = paths.findIndex((path) => path.endsWith("/pi-vim-editor/src/index.ts"));
     assert.ok(chromeIndex >= 0 && powerlineIndex > chromeIndex, JSON.stringify(paths));
-    assert.equal(paths.filter((path) => path.endsWith("/powerline-chrome.ts")).length, 1);
+    assert.ok(navigationIndex > chromeIndex && powerlineIndex > navigationIndex && vimIndex > powerlineIndex, JSON.stringify(paths));
+    for (const suffix of ["/powerline-chrome.ts", "/vim-navigation.ts", "/pi-vim-editor/src/index.ts"]) {
+      assert.equal(paths.filter((path) => path.endsWith(suffix)).length, 1);
+    }
   } finally {
     if (previous === undefined) delete process.env.PI_OFFLINE;
     else process.env.PI_OFFLINE = previous;
@@ -288,6 +294,49 @@ test("multiline or oversized status output falls back instead of changing input 
     assert.deepEqual(plain(h.editor.render(40)), plain(h.editor.unframedRender(40)));
     assert.deepEqual(h.widgets.get("powerline-top").component.render(40), status);
   }
+});
+
+test("native-frame fallback and recovery preserve content, cursor and completion rows", () => {
+  const h = harness();
+  let changedLayout = false;
+  h.ui.setEditorComponent((tui, theme) => {
+    const editor = new BashModeEditor(tui, theme);
+    editor.focused = true;
+    editor.setPaddingX(2);
+    editor[Symbol.for("dotfiles.vim-native-frame")] = true;
+    editor.unframedRender = editor.render.bind(editor);
+    editor.render = (width) => changedLayout ? ["unrecognized layout"] : editor.unframedRender(width);
+    return editor;
+  });
+  let status = [" model "];
+  h.installPrimary(() => status);
+  h.editor.setText("界 café");
+  h.editor.autocompleteState = {};
+  h.editor.autocompleteList = { render: () => ["\x1b[32m/completion\x1b[0m"] };
+  const original = h.editor.unframedRender(40);
+  const cursor = h.editor.getCursor();
+  const assertFramed = () => {
+    const lines = h.editor.render(40);
+    assert.ok(plain(lines)[0].startsWith("╭"));
+    assert.deepEqual(lines.slice(1, -2), original.slice(1, -2), "content and cursor marker are unchanged");
+    assert.deepEqual(lines.slice(-1), original.slice(-1), "completion ANSI remains outside the frame");
+    assert.deepEqual(h.widgets.get("powerline-top").component.render(40), []);
+  };
+  assertFramed();
+  for (const unsupported of [["unpadded"], [" first ", " second "], [" " + "x".repeat(40) + " "]]) {
+    status = unsupported;
+    assert.deepEqual(h.editor.render(40), original);
+    assert.deepEqual(h.widgets.get("powerline-top").component.render(40), unsupported);
+    status = [" model "];
+    assertFramed();
+  }
+  changedLayout = true;
+  assert.deepEqual(h.editor.render(40), ["unrecognized layout"]);
+  assert.deepEqual(h.widgets.get("powerline-top").component.render(40), status);
+  changedLayout = false;
+  assertFramed();
+  assert.equal(h.editor.getText(), "界 café");
+  assert.deepEqual(h.editor.getCursor(), cursor);
 });
 
 for (const mode of ["print", "json", "rpc"]) {
