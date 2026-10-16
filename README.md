@@ -23,6 +23,23 @@ git submodule update --init --recursive
 
 ## Per tool notes
 
+### Git
+
+Configure HTTPS credentials in your global Git config for each authenticated host:
+
+```sh
+gh auth setup-git --hostname <host>
+```
+
+Git uses GitHub CLI's native credential helper; SSH uses existing keys.
+Commit identity follows remote URLs through Git's conditional includes, with
+repo-local settings taking precedence. Work identity belongs in ignored
+`git/user.ghe.gitconfig`; Azure DevOps uses ignored `git/user.azdo.gitconfig`.
+Supply these private files before installing with Dotbot.
+
+Check the selected identity with `git config --show-origin --get user.email`.
+Run the isolated configuration checks with `python -B tests/test_git_config.py`.
+
 ### VS
 
 Captures extensions and keyboard shortcuts for Visual Studio.

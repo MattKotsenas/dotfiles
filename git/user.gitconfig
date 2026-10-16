@@ -31,18 +31,26 @@
         useConfigOnly = true
 [includeIf "hasconfig:remote.*.url:https://github.com/**"]
         path = ./user.github.gitconfig
-[includeIf "hasconfig:remote.*.url:git@github.com:**"]
+[includeIf "hasconfig:remote.*.url:git@github.com:*/**"]
         path = ./user.github.gitconfig
+[includeIf "hasconfig:remote.*.url:https://gist.github.com/**"]
+        path = ./user.github.gitconfig
+[includeIf "hasconfig:remote.*.url:git@gist.github.com:*/**"]
+        path = ./user.github.gitconfig
+[includeIf "hasconfig:remote.*.url:https://codeberg.org/**"]
+        path = ./user.codeberg.gitconfig
+[includeIf "hasconfig:remote.*.url:git@codeberg.org:*/**"]
+        path = ./user.codeberg.gitconfig
 [includeIf "hasconfig:remote.*.url:https://dev.azure.com/**"]
         path = ./user.azdo.gitconfig
 [includeIf "hasconfig:remote.*.url:https://*@dev.azure.com/**"]
         path = ./user.azdo.gitconfig
-[includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com:**"]
+[includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com:*/**"]
         path = ./user.azdo.gitconfig
-[includeIf "hasconfig:remote.*.url:https://codeberg.org/**"]
-        path = ./user.codeberg.gitconfig
-[includeIf "hasconfig:remote.*.url:git@codeberg.org:**"]
-        path = ./user.codeberg.gitconfig
+[includeIf "hasconfig:remote.*.url:https://*.ghe.com/**"]
+        path = ./user.ghe.gitconfig
+[includeIf "hasconfig:remote.*.url:git@*.ghe.com:*/**"]
+        path = ./user.ghe.gitconfig
 [merge]
         conflictstyle = zdiff3
         tool = bc5
