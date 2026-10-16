@@ -326,8 +326,9 @@ properties:
         description: Install komorebi
         allowPrerelease: true
       settings:
-        Url: https://github.com/LGUG2Z/komorebi.git
-        Rev: e0709f02bfae4e503bf4640f58ee75ecbbfdbb97
+        # fix/stale-rdp-monitors: https://github.com/LGUG2Z/komorebi/pull/1761
+        Url: https://github.com/MattKotsenas/komorebi.git
+        Rev: f98ddf946a78ebd6a8314e7b42c076d380f5343d
         Crates:
           - komorebi
           - komorebic
