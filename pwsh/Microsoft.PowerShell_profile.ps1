@@ -4,7 +4,16 @@
 if (-not [Console]::IsOutputRedirected) { [Console]::Write("`e[6 q") }
 
 # Pi
+# Send clipboard text to attached clients even without SSH detection.
+# https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/environment-variables.md#pi-process-configuration
 $env:PI_CLIPBOARD_OSC52 = '1'
+# https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/terminal-setup.md#program-status
+# TODO: Remove when automatic detection passes through psmux's default ConPTY.
+# https://github.com/microsoft/terminal/pull/17510
+# https://github.com/microsoft/terminal/pull/17741
+if ($env:PSMUX_SESSION) {
+    $env:PI_PROGRAM_STATUS = '1'
+}
 # TODO: Remove after upgrading pi-powerline-footer to detect Nerd Fonts in Windows Terminal/psmux.
 # https://github.com/nicobailon/pi-powerline-footer/blob/9ed2915d49db81354e516540c9ef49354992cf4f/icons.ts#L166-L179
 $env:POWERLINE_NERD_FONTS = '1'

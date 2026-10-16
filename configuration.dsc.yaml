@@ -343,8 +343,9 @@ properties:
         description: Install psmux
         allowPrerelease: true
       settings:
+        # Program-status aggregation: https://github.com/psmux/psmux/pull/834
         Url: https://github.com/psmux/psmux.git
-        Rev: 83a69a9d6a427d78bc4b9adf7a0269a3b6ec04cd
+        Rev: 6cfec91f612de932d2123c27d3ec676d7657748d
         Crates:
           - psmux
     - resource: CargoGit/CargoGitInstall
