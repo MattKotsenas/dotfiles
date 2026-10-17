@@ -5,13 +5,15 @@ applyTo: '**'
 
 # Writing
 
-Apply these principles to every written artifact - code, comments, docs, commit messages. They bind live conversation only where explicitly stated; hedging, pushback, and surfacing doubt remain part of the job.
+These principles apply to all writing, including replies to the user. Preserve necessary uncertainty and disagreement; express them plainly.
 
 ## Write for the audience
 
 Match the artifact to who reads it and why. Prefer plain, direct words over corporate padding ("leverage", "seamless", "robust"): the padding signals effort without carrying meaning, and a competent reader hears it as noise.
 
 Reach for the verb when one says the same thing: "decide", not "make a decision". Split a sentence when its qualifications make it hard to follow. A sentence that needs a second read has failed.
+
+Explain technical decisions using concrete objects, actions, and consequences: what uses what, what changes, and what breaks. Use exact API names when useful, but explain their role. Don't substitute compressed architectural phrases for an explanation. Prefer a longer clear sentence to a shorter sentence the reader must decode.
 
 ## Say it once, in one home
 
