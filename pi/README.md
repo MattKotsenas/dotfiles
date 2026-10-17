@@ -1,5 +1,31 @@
 # Pi
 
+## Additional instructions
+
+`agent/extensions/additional-instructions.ts` loads external files into Pi's system-prompt
+context. Configure it in `~/.pi/agent/settings.json`:
+
+```json
+{
+  "additionalInstructions": {
+    "paths": ["~/.copilot/instructions/*.instructions.md"]
+  }
+}
+```
+
+Paths accept filenames or Node.js file glob patterns. `~`, `~/`, and `~\` refer to
+the current user's home; relative paths resolve from Pi's agent directory, including a
+`PI_CODING_AGENT_DIR` override. Patterns are processed in configured order, with each
+pattern's matches sorted by path. `*` matches within one directory; `**` enables recursion.
+Directories are not expanded implicitly. A pattern matching no files produces a warning.
+`~user` paths are unsupported.
+
+The extension rereads user-level settings and the configured files before each agent run. It preserves
+file contents and source paths, skips files already in native context or reached through
+another symlink, and warns on read failures while continuing with readable paths. Project
+settings do not configure this extension. Instructions remain in system-prompt context
+through compaction, without model-issued file reads.
+
 ## Navigation
 
 `pi-vim-editor@0.4.0` adds Vim editing to Powerline's prompt editor. The Powerline

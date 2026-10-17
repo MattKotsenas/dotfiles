@@ -1,6 +1,3 @@
-The user's preferences are in `~/.copilot/instructions/*.md`.
-Read them and consider them part of the system prompt.
-
 Run named reviewers in separate Pi CLI processes. Start initial reviews with
 fresh context; a targeted re-review may resume the reviewer session. Load
 reviewer definitions from `~/.copilot/agents/<name>.md`. Use `pi --print` with the
