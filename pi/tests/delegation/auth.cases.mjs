@@ -1,13 +1,10 @@
 // SDK compatibility checks for the production auth adapter.
 import assert from "node:assert/strict";
-import { mkdtemp, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { test } from "node:test";
 import { ai, sdk } from "./sdk.mjs";
 import { getParentCredentials, inheritParentAuth, trackModelRefreshes } from "./auth-adapter.mjs";
+import { credentialStore, jsonFile, registeredRuntime, inheritingRuntime, refreshModels } from "./resources.mjs";
 
-const fixtures = process.env.PI_DELEGATION_AUTH_FIXTURES;
-if (!fixtures) throw new Error("Run through pi/tests/delegation.auth.test.mjs.");
 const id = "composition-test";
 const savedKey = { type: "api_key", key: "saved-key" };
 const savedOAuth = () => ({ type: "oauth", access: "saved-access", refresh: "saved-refresh", expires: Date.now() + 3600000 });
@@ -19,7 +16,7 @@ function providerConfig(role) {
   };
 }
 
-function provider(role, requests = [], logins = []) {
+function testProvider(role, requests = [], logins = []) {
   const fake = ai.fauxProvider({ provider: id, models: [{ id: "model" }], tokensPerSecond: 0 });
   return { ...fake.provider, auth: {
     apiKey: {
@@ -42,43 +39,25 @@ function provider(role, requests = [], logins = []) {
   } };
 }
 
-async function fixture({ credential = savedKey, parentConfig = providerConfig("parent"), parentProvider } = {}) {
-  const root = await mkdtemp(join(fixtures, "composition-"));
-  const credentials = new ai.InMemoryCredentialStore();
-  await credentials.modify(id, () => credential);
-  const runtimes = {};
-  const waits = {};
+for (const oauth of [false, true]) test(`${oauth ? "OAuth" : "key"}: parent auth and child provider/model headers coexist across refresh`, async () => {
   const requests = [];
   const logins = [];
-  for (const role of ["parent", "child"]) {
-    const config = role === "parent" ? parentConfig : providerConfig(role);
-    const modelsPath = config ? join(root, `${role}.models.json`) : null;
-    if (config) await writeFile(modelsPath, JSON.stringify({ providers: { [id]: config } }));
-    const runtime = await sdk.ModelRuntime.create({
-      credentials: role === "parent" ? credentials : getParentCredentials(new sdk.ModelRegistry(runtimes.parent)),
-      modelsPath, refreshOnCreate: false,
-    });
-    runtimes[role] = runtime;
-    if (role === "child") await inheritParentAuth(runtime, new sdk.ModelRegistry(runtimes.parent));
-    waits[role] = trackModelRefreshes(runtime);
-    runtime.registerNativeProvider(role === "parent" && parentProvider ? parentProvider : provider(role, requests, logins));
-    await runtime.refresh({ allowNetwork: false });
-    await waits[role]();
-  }
-  async function request() {
-    return runtimes.child.completeSimple(runtimes.child.getModel(id, "model"), { messages: [] });
-  }
-  return { id, ...runtimes, waits, requests, logins, request, provider: (role) => provider(role, requests, logins) };
-}
-
-for (const oauth of [false, true]) test(`${oauth ? "OAuth" : "key"}: parent auth and child provider/model headers coexist across refresh`, async () => {
-  const h = await fixture({ credential: oauth ? savedOAuth() : savedKey });
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(testProvider("parent", requests, logins), {
+    credentials: await credentialStore(id, oauth ? savedOAuth() : savedKey),
+    modelsPath: await jsonFile("models.json", { providers: { [id]: providerConfig("parent") } }),
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
   for (let round = 0; round < 2; round++) {
-    await h.child.refresh({ allowNetwork: false });
-    await h.waits.child();
-    const result = await h.request();
+    await child.refresh({ allowNetwork: false });
+    await waitChild();
+    const result = await child.completeSimple(child.getModel(id, "model"), { messages: [] });
     assert.equal(result.stopReason, "stop", result.errorMessage);
-    const { role, options } = h.requests.at(-1);
+    const { role, options } = requests.at(-1);
     assert.equal(role, "child");
     assert.equal(options.apiKey, oauth ? "saved-access" : "parent-resolved");
     assert.equal(options.headers["x-auth"], "parent");
@@ -93,118 +72,195 @@ for (const oauth of [false, true]) test(`${oauth ? "OAuth" : "key"}: parent auth
 });
 
 for (const oauth of [false, true]) test(`${oauth ? "OAuth" : "key"}: replacement and loss of parent auth take effect without recomposing the child`, async () => {
-  const h = await fixture({ credential: oauth ? savedOAuth() : savedKey });
-  assert.equal((await h.request()).stopReason, "stop");
-  const replacement = h.provider("parent");
+  const requests = [];
+  const logins = [];
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(testProvider("parent", requests, logins), {
+    credentials: await credentialStore(id, oauth ? savedOAuth() : savedKey),
+    modelsPath: await jsonFile("models.json", { providers: { [id]: providerConfig("parent") } }),
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
+  assert.equal((await child.completeSimple(child.getModel(id, "model"), { messages: [] })).stopReason, "stop");
+  const replacement = testProvider("parent", requests, logins);
   if (oauth) replacement.auth.oauth.toAuth = async () => ({ apiKey: "replacement", headers: { "x-auth": "replacement" } });
   else replacement.auth.apiKey.resolve = async () => ({ auth: { apiKey: "replacement", headers: { "x-auth": "replacement" } } });
-  h.parent.registerNativeProvider(replacement);
-  await h.parent.refresh({ allowNetwork: false });
-  await h.waits.parent();
-  assert.equal((await h.request()).stopReason, "stop");
-  assert.equal(h.requests.at(-1).options.apiKey, "replacement");
-  assert.equal(h.requests.at(-1).options.headers["x-owner"], "child");
-  h.parent.unregisterProvider(h.id);
-  await h.parent.refresh({ allowNetwork: false });
-  await h.waits.parent();
+  parent.registerNativeProvider(replacement);
+  await parent.refresh({ allowNetwork: false });
+  await waitParent();
+  assert.equal((await child.completeSimple(child.getModel(id, "model"), { messages: [] })).stopReason, "stop");
+  assert.equal(requests.at(-1).options.apiKey, "replacement");
+  assert.equal(requests.at(-1).options.headers["x-owner"], "child");
+  parent.unregisterProvider(id);
+  await parent.refresh({ allowNetwork: false });
+  await waitParent();
   // A header-only parent config can still resolve its saved API key after the
   // custom provider is removed. That is the parent's own valid auth path.
   if (!oauth) {
-    assert.equal((await h.parent.getAuth(h.id)).auth.apiKey, "saved-key");
-    assert.equal((await h.request()).stopReason, "stop");
-    assert.equal(h.requests.at(-1).options.apiKey, "saved-key");
-    await h.parent.logout(h.id);
+    assert.equal((await parent.getAuth(id)).auth.apiKey, "saved-key");
+    assert.equal((await child.completeSimple(child.getModel(id, "model"), { messages: [] })).stopReason, "stop");
+    assert.equal(requests.at(-1).options.apiKey, "saved-key");
+    await parent.logout(id);
   }
-  assert.equal(await h.parent.getAuth(h.id), undefined, "parent really is unconfigured");
-  const count = h.requests.length;
-  assert.equal((await h.request()).stopReason, "error");
-  assert.equal(h.requests.length, count, "removed parent handler must not reveal child auth");
+  assert.equal(await parent.getAuth(id), undefined, "parent really is unconfigured");
+  const count = requests.length;
+  assert.equal((await child.completeSimple(child.getModel(id, "model"), { messages: [] })).stopReason, "error");
+  assert.equal(requests.length, count, "removed parent handler must not reveal child auth");
 });
 
 for (const mode of ["absent", "fail"]) test(`parent ${mode} auth blocks an otherwise usable child resolver`, async () => {
-  const h = await fixture();
-  assert.equal((await h.request()).stopReason, "stop");
-  assert.equal(h.requests.length, 1);
-  const replacement = h.provider("parent");
+  const requests = [];
+  const logins = [];
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(testProvider("parent", requests, logins), {
+    credentials: await credentialStore(id, savedKey),
+    modelsPath: await jsonFile("models.json", { providers: { [id]: providerConfig("parent") } }),
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
+  assert.equal((await child.completeSimple(child.getModel(id, "model"), { messages: [] })).stopReason, "stop");
+  assert.equal(requests.length, 1);
+  const replacement = testProvider("parent", requests, logins);
   replacement.auth.apiKey.resolve = async () => {
     if (mode === "fail") throw new Error("parent auth rejected");
     return undefined;
   };
-  h.parent.registerNativeProvider(replacement);
-  await h.waits.parent();
-  const failed = await h.request();
+  parent.registerNativeProvider(replacement);
+  await waitParent();
+  const failed = await child.completeSimple(child.getModel(id, "model"), { messages: [] });
   assert.equal(failed.stopReason, "error");
-  assert.equal(h.requests.length, 1, "must not use child's working auth after parent failure");
+  assert.equal(requests.length, 1, "must not use child's working auth after parent failure");
 });
 
 for (const oauth of [false, true]) test(`${oauth ? "OAuth" : "key"} login uses current parent method and shared storage`, async () => {
-  const h = await fixture({ credential: oauth ? savedOAuth() : savedKey });
-  const replacement = h.provider("parent");
+  const requests = [];
+  const logins = [];
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(testProvider("parent", requests, logins), {
+    credentials: await credentialStore(id, oauth ? savedOAuth() : savedKey),
+    modelsPath: await jsonFile("models.json", { providers: { [id]: providerConfig("parent") } }),
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
+  const replacement = testProvider("parent", requests, logins);
   const method = oauth ? "oauth" : "apiKey";
   replacement.auth[method].login = async () => {
-    h.logins.push("replacement");
+    logins.push("replacement");
     return oauth
       ? { type: "oauth", access: "replacement-access", refresh: "replacement-refresh", expires: Date.now() + 3600000 }
       : { type: "api_key", key: "replacement-key" };
   };
-  h.parent.registerNativeProvider(replacement);
-  const credential = await h.child.login(h.id, oauth ? "oauth" : "api_key", { prompt: async () => { throw new Error("must not invent a generic login prompt"); }, notify() {} });
-  await h.waits.child();
-  assert.deepEqual(h.logins, ["replacement"]);
-  assert.deepEqual(await getParentCredentials(new sdk.ModelRegistry(h.parent)).read(h.id), credential);
+  parent.registerNativeProvider(replacement);
+  const credential = await child.login(id, oauth ? "oauth" : "api_key", { prompt: async () => { throw new Error("must not invent a generic login prompt"); }, notify() {} });
+  await waitChild();
+  assert.deepEqual(logins, ["replacement"]);
+  assert.deepEqual(await getParentCredentials(new sdk.ModelRegistry(parent)).read(id), credential);
 });
 
 test("an unsupported parent API-key login is not replaced with a generic prompt", async () => {
   // A configured parent would gain Pi's generic key-login prompt.
-  const parentProvider = provider("parent");
+  const parentProvider = testProvider("parent");
   delete parentProvider.auth.apiKey.login;
-  const h = await fixture({ parentConfig: null, parentProvider });
-  assert.equal(h.parent.getProvider(h.id).auth.apiKey.login, undefined, "parent has no supported key login");
+  const requests = [];
+  const logins = [];
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(parentProvider, {
+    credentials: await credentialStore(id, savedKey),
+    modelsPath: null,
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
+  assert.equal(parent.getProvider(id).auth.apiKey.login, undefined, "parent has no supported key login");
   // Without composition the normal child composer supplies a generic prompt.
-  await assert.rejects(h.child.login(h.id, "api_key", { prompt: async () => "must-not-be-saved", notify() {} }), /does not support api_key login/);
-  assert.equal((await getParentCredentials(new sdk.ModelRegistry(h.parent)).read(h.id)).key, "saved-key");
+  await assert.rejects(child.login(id, "api_key", { prompt: async () => "must-not-be-saved", notify() {} }), /does not support api_key login/);
+  assert.equal((await getParentCredentials(new sdk.ModelRegistry(parent)).read(id)).key, "saved-key");
 });
 
 test("adding parent OAuth support is visible without recomposing the child", async () => {
-  const parentProvider = provider("parent");
+  const parentProvider = testProvider("parent");
   delete parentProvider.auth.oauth;
-  const h = await fixture({ parentProvider });
-  assert.equal(h.parent.getProvider(h.id).auth.oauth, undefined);
-  assert.equal(h.child.getProvider(h.id).auth.oauth, undefined);
-  const replacement = h.provider("parent");
-  h.parent.registerNativeProvider(replacement);
-  await h.parent.login(h.id, "oauth", { prompt: async () => "unused", notify() {} });
-  assert.equal((await h.parent.getAuth(h.id)).auth.apiKey, "parent-login-access");
-  assert.equal((await h.child.getAuth(h.id)).auth.apiKey, "parent-login-access");
-  assert.equal((await h.request()).stopReason, "stop");
-  assert.equal(h.requests.at(-1).options.headers["x-auth"], "parent");
+  const requests = [];
+  const logins = [];
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(parentProvider, {
+    credentials: await credentialStore(id, savedKey),
+    modelsPath: await jsonFile("models.json", { providers: { [id]: providerConfig("parent") } }),
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
+  assert.equal(parent.getProvider(id).auth.oauth, undefined);
+  assert.equal(child.getProvider(id).auth.oauth, undefined);
+  const replacement = testProvider("parent", requests, logins);
+  parent.registerNativeProvider(replacement);
+  await parent.login(id, "oauth", { prompt: async () => "unused", notify() {} });
+  assert.equal((await parent.getAuth(id)).auth.apiKey, "parent-login-access");
+  assert.equal((await child.getAuth(id)).auth.apiKey, "parent-login-access");
+  assert.equal((await child.completeSimple(child.getModel(id, "model"), { messages: [] })).stopReason, "stop");
+  assert.equal(requests.at(-1).options.headers["x-auth"], "parent");
 });
 
 test("a short-lived refreshed OAuth token is derived once without another refresh", async () => {
-  const h = await fixture({ credential: savedOAuth() });
-  const credentials = getParentCredentials(new sdk.ModelRegistry(h.parent));
-  await credentials.modify(h.id, (current) => ({ ...current, expires: 0 }));
+  const requests = [];
+  const logins = [];
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(testProvider("parent", requests, logins), {
+    credentials: await credentialStore(id, savedOAuth()),
+    modelsPath: await jsonFile("models.json", { providers: { [id]: providerConfig("parent") } }),
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
+  const credentials = getParentCredentials(new sdk.ModelRegistry(parent));
+  await credentials.modify(id, (current) => ({ ...current, expires: 0 }));
   let refreshes = 0;
-  const replacement = h.provider("parent");
+  const replacement = testProvider("parent", requests, logins);
   replacement.auth.oauth.refresh = async (current) => {
     refreshes++;
     return { ...current, access: `short-lived-${refreshes}`, expires: Date.now() + 60000 };
   };
-  h.parent.registerNativeProvider(replacement);
-  await h.parent.refresh({ allowNetwork: false });
-  await h.waits.parent();
+  parent.registerNativeProvider(replacement);
+  await parent.refresh({ allowNetwork: false });
+  await waitParent();
   assert.equal(refreshes, 0, "offline catalog refresh must not exchange the token");
-  const childAuth = await h.child.getAuth(h.id);
+  const childAuth = await child.getAuth(id);
   assert.equal(childAuth.auth.apiKey, "short-lived-1");
   assert.equal(refreshes, 1, "the parent derivation must use the credential already refreshed by Pi");
-  assert.equal((await credentials.read(h.id)).access, "short-lived-1");
+  assert.equal((await credentials.read(id)).access, "short-lived-1");
 });
 
 test("parent auth resolution receives child cancellation", async () => {
-  const h = await fixture();
+  const requests = [];
+  const logins = [];
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(testProvider("parent", requests, logins), {
+    credentials: await credentialStore(id, savedKey),
+    modelsPath: await jsonFile("models.json", { providers: { [id]: providerConfig("parent") } }),
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
   let resolverEntered;
   const entered = new Promise((resolve) => { resolverEntered = resolve; });
-  const replacement = h.provider("parent");
+  const replacement = testProvider("parent", requests, logins);
   replacement.auth.apiKey.resolve = async ({ signal }) => {
     resolverEntered();
     await new Promise((_, reject) => {
@@ -212,33 +268,44 @@ test("parent auth resolution receives child cancellation", async () => {
       else signal.addEventListener("abort", () => reject(signal.reason), { once: true });
     });
   };
-  h.parent.registerNativeProvider(replacement);
+  parent.registerNativeProvider(replacement);
   const controller = new AbortController();
-  const resolution = h.child.getAuth(h.id, { signal: controller.signal });
+  const resolution = child.getAuth(id, { signal: controller.signal });
   await entered;
   controller.abort(new Error("cancel child auth"));
   await assert.rejects(resolution, /cancel child auth/);
-  assert.equal(h.requests.length, 0);
+  assert.equal(requests.length, 0);
 });
 
 test("different legacy provider headers survive later registration without replacing parent auth", async () => {
-  const h = await fixture();
-  for (const [role, runtime] of [["parent", h.parent], ["child", h.child]]) {
-    const provider = h.provider(role);
+  const requests = [];
+  const logins = [];
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(testProvider("parent", requests, logins), {
+    credentials: await credentialStore(id, savedKey),
+    modelsPath: await jsonFile("models.json", { providers: { [id]: providerConfig("parent") } }),
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
+  for (const [role, runtime] of [["parent", parent], ["child", child]]) {
+    const provider = testProvider(role, requests, logins);
     const model = provider.getModels()[0];
-    runtime.registerProvider(h.id, {
+    runtime.registerProvider(id, {
       api: model.api, apiKey: `${role}-configured`, baseUrl: model.baseUrl,
       headers: { "x-owner": `${role}-extension`, "x-extension": role, [`x-${role}-only-extension`]: role },
       models: [{ ...model, headers: { "x-legacy-model": role } }],
       streamSimple: provider.streamSimple,
     });
     await runtime.refresh({ allowNetwork: false });
-    await h.waits[role]();
+    await (role === "parent" ? waitParent : waitChild)();
   }
-  assert.equal((await h.request()).stopReason, "stop");
-  const { role, options } = h.requests.at(-1);
+  assert.equal((await child.completeSimple(child.getModel(id, "model"), { messages: [] })).stopReason, "stop");
+  const { role, options } = requests.at(-1);
   assert.equal(role, "child");
-  assert.equal(options.apiKey, (await h.parent.getAuth(h.id)).auth.apiKey);
+  assert.equal(options.apiKey, (await parent.getAuth(id)).auth.apiKey);
   assert.equal(options.headers["x-owner"], "child-extension");
   assert.equal(options.headers["x-extension"], "child");
   assert.equal(options.headers["x-child-only-extension"], "child");
@@ -249,11 +316,22 @@ test("different legacy provider headers survive later registration without repla
 });
 
 test("legacy OAuth account model projection remains child-owned", async () => {
-  const h = await fixture({ credential: savedOAuth() });
-  const provider = h.provider("child");
+  const requests = [];
+  const logins = [];
+  const { runtime: parent, waitForRefreshes: waitParent } = await registeredRuntime(testProvider("parent", requests, logins), {
+    credentials: await credentialStore(id, savedOAuth()),
+    modelsPath: await jsonFile("models.json", { providers: { [id]: providerConfig("parent") } }),
+  });
+  const { runtime: child, waitForRefreshes: waitChild } = await inheritingRuntime(
+    new sdk.ModelRegistry(parent),
+    await jsonFile("models.json", { providers: { [id]: providerConfig("child") } }),
+  );
+  child.registerNativeProvider(testProvider("child", requests, logins));
+  await refreshModels(child, waitChild);
+  const provider = testProvider("child", requests, logins);
   const model = provider.getModels()[0];
   const projections = [];
-  h.child.registerProvider(h.id, {
+  child.registerProvider(id, {
     api: model.api, baseUrl: model.baseUrl, models: [model],
     oauth: {
       name: "Child catalog OAuth",
@@ -267,19 +345,17 @@ test("legacy OAuth account model projection remains child-owned", async () => {
     },
     streamSimple: provider.streamSimple,
   });
-  await h.child.refresh({ allowNetwork: false });
-  await h.waits.child();
+  await child.refresh({ allowNetwork: false });
+  await waitChild();
   assert(projections.includes("saved-access"));
-  assert(h.child.getModel(h.id, "account-saved-access"));
-  assert.equal(h.parent.getModel(h.id, "account-saved-access"), undefined);
-  assert.equal((await h.request()).stopReason, "stop");
-  assert.equal(h.requests.at(-1).options.headers["x-auth"], "parent");
+  assert(child.getModel(id, "account-saved-access"));
+  assert.equal(parent.getModel(id, "account-saved-access"), undefined);
+  assert.equal((await child.completeSimple(child.getModel(id, "model"), { messages: [] })).stopReason, "stop");
+  assert.equal(requests.at(-1).options.headers["x-auth"], "parent");
 });
 
 test("actual GitHub Copilot availability must retain the saved account's allowed-model filter", async () => {
-  const root = await mkdtemp(join(fixtures, "copilot-filter-"));
-  const modelsPath = join(root, "models.json");
-  await writeFile(modelsPath, "{}");
+  const modelsPath = await jsonFile("models.json", {});
   const credentials = new ai.InMemoryCredentialStore();
   const parent = await sdk.ModelRuntime.create({ credentials, modelsPath: null, refreshOnCreate: false });
   const all = parent.getModels("github-copilot");

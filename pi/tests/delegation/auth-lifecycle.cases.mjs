@@ -1,14 +1,11 @@
 // Independent sessions, routing and auth compatibility on the supported SDK.
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { ai, sdk } from "./sdk.mjs";
-import { getParentCredentials, inheritParentAuth, trackModelRefreshes } from "./auth-adapter.mjs";
+import { getParentCredentials } from "./auth-adapter.mjs";
+import { jsonFile, unresolvedApiKey, refreshModels, createSession, inheritingSession } from "./resources.mjs";
 
-const fixtures = process.env.PI_DELEGATION_AUTH_FIXTURES;
-if (!fixtures) throw new Error("Run through pi/tests/delegation.auth.test.mjs.");
 const id = "delegation-auth-lifecycle";
 const savedOAuth = (account, expires = Date.now() + 3600000) => ({
   type: "oauth", account, access: `oauth-${account}`, refresh: `refresh-${account}`, expires,
@@ -42,293 +39,484 @@ function provider(role, service, responses) {
   } };
 }
 
-async function createSession(t, { root, role, runtime, model, extensions, tools }) {
-  const settingsManager = sdk.SettingsManager.inMemory({
-    compaction: { enabled: false }, retry: { enabled: false }, cacheWarming: "off", defaultTools: [],
-  });
-  const resourceLoader = new sdk.DefaultResourceLoader({
-    cwd: root, agentDir: root, settingsManager,
-    noExtensions: true, noSkills: true, noThemes: true, noPromptTemplates: true, noContextFiles: true,
-    extensionFactories: extensions, systemPrompt: `${role} instructions`,
-  });
-  await resourceLoader.reload();
-  const { session } = await sdk.createAgentSession({
-    cwd: root, agentDir: root, modelRuntime: runtime, settingsManager, resourceLoader,
-    model, thinkingLevel: "off", tools,
-    sessionManager: sdk.SessionManager.inMemory(root),
-  });
-  t.after(async () => { await session.abort(); session.dispose(); });
-  await session.bindExtensions({ mode: "print" });
-  return session;
+function observeSession(role, routes, hooks) {
+  return (pi) => {
+    pi.registerVirtualModel({ provider: id, id: "auto", thinkingLevels: ["off"], route(request, ctx) {
+      routes.push({ role, turn: request.state?.turn ?? 0 });
+      return { model: ctx.modelRegistry.find(id, "model"), thinkingLevel: "off", state: { turn: (request.state?.turn ?? 0) + 1 } };
+    } });
+    let count = 0;
+    pi.on("after_provider_response", () => hooks.push({ role, count: ++count }));
+  };
 }
 
-async function replaceParentAuth(h, resolve) {
-  const { provider, extension, runtime, waitForRefreshes } = h.parent;
-  extension.registerProvider({ ...provider, auth: {
-    apiKey: { name: "Replacement key", resolve },
-    oauth: { ...provider.auth.oauth, isSubscription: false, toAuth: async () => (await resolve()).auth },
-  } });
-  await runtime.refresh({ allowNetwork: false, providers: [id] });
-  await waitForRefreshes();
+function assertStopped(session, expectedText) {
+  const last = session.messages.findLast((message) => message.role === "assistant");
+  assert.equal(last.stopReason, "stop", last.errorMessage);
+  assert.equal(session.getLastAssistantText(), expectedText);
 }
 
-async function fixture(t, {
-  credential = { type: "api_key", key: "saved-a" }, runtimeApiKey,
-  expectedKey = runtimeApiKey ?? credential?.key ?? credential?.access,
-  childTools = [], childExtension, childResponses,
-} = {}) {
-  // The runner deletes these files after this process exits. SDK background
-  // refreshes have no public drain method and can recreate auth.json during rm().
-  const root = await mkdtemp(join(fixtures, "delegation-auth-lifecycle-"));
-  const authPath = join(root, "auth.json");
-  const modelsPath = join(root, "models.json");
-
-  const variable = `PI_UNSET_${randomUUID().replaceAll("-", "_")}`;
-  assert.equal(process.env[variable], undefined);
-  await writeFile(modelsPath, JSON.stringify({ providers: { [id]: { apiKey: `$${variable}` } } }));
-  await writeFile(authPath, JSON.stringify(credential ? { [id]: credential } : {}));
-  let parentRegistry;
-  const requests = [];
-  const routes = [];
-  const hooks = [];
-  const refreshes = [];
-  const service = { expectedKey, requests, refreshes };
-  async function create(role, credentials) {
-    const runtime = await sdk.ModelRuntime.create({
-      ...(credentials ? { credentials } : { authPath }), modelsPath, refreshOnCreate: false,
-    });
-    if (role === "child") await inheritParentAuth(runtime, parentRegistry);
-    const waitForRefreshes = trackModelRefreshes(runtime);
-    const registered = provider(role, service, role === "child" ? childResponses : undefined);
-    let extension;
-    const factory = (pi) => {
-      extension = pi;
-      pi.registerProvider(registered);
-      pi.registerVirtualModel({ provider: id, id: "auto", thinkingLevels: ["off"], route(request, ctx) {
-        routes.push({ role, turn: request.state?.turn ?? 0 });
-        return { model: ctx.modelRegistry.find(id, "model"), thinkingLevel: "off", state: { turn: (request.state?.turn ?? 0) + 1 } };
-      } });
-      let count = 0;
-      pi.on("after_provider_response", () => hooks.push({ role, count: ++count }));
-      if (role === "parent") {
-        pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
-      }
-    };
-    const session = await createSession(t, {
-      root, role, runtime, model: registered.getModels()[0],
-      extensions: [factory, ...(role === "child" && childExtension ? [childExtension] : [])],
-      tools: role === "child" ? childTools : [],
-    });
-    return { session, runtime, provider: registered, extension, waitForRefreshes };
-  }
-  const parent = await create("parent");
-  if (runtimeApiKey !== undefined) await parent.runtime.setRuntimeApiKey(id, runtimeApiKey);
-  await parent.runtime.refresh({ allowNetwork: false });
-  await parent.waitForRefreshes();
-  const child = await create("child", getParentCredentials(parentRegistry));
-  const prepare = async () => {
-    const result = await child.runtime.refresh({ allowNetwork: false });
-    assert.equal(result.errors.size, 0);
-    await child.waitForRefreshes();
-  };
-  await prepare();
-  await parent.session.setModel(parent.runtime.getModel(id, "auto"));
-  await child.session.setModel(child.runtime.getModel(id, "auto"));
-  async function success(target, prompt) {
-    await target.session.prompt(prompt);
-    const last = target.session.messages.findLast((message) => message.role === "assistant");
-    assert.equal(last.stopReason, "stop", last.errorMessage);
-    assert.equal(target.session.getLastAssistantText(), target === parent ? "parent-done" : "child-done");
-  }
-  async function failure(prompt) {
-    const before = requests.length;
-    let rejected;
-    try { await child.session.prompt(prompt); } catch (error) { rejected = error; }
-    if (rejected) assert.match(rejected.message, /auth|key|configured|resolver|refresh/i);
-    else assert.equal(child.session.messages.findLast((message) => message.role === "assistant").stopReason, "error");
-    assert.equal(requests.length, before, "auth failure must not reach the service");
-  }
-  return { parent, child, parentRegistry, prepare, success, failure, requests, routes, hooks, refreshes,
-    stored: async () => JSON.parse(await readFile(authPath, "utf8"))[id],
-    file: () => readFile(authPath, "utf8"),
-    service,
-  };
+async function assertAuthFailure(session, prompt, requests) {
+  const before = requests.length;
+  let rejected;
+  try { await session.prompt(prompt); } catch (error) { rejected = error; }
+  if (rejected) assert.match(rejected.message, /auth|key|configured|resolver|refresh/i);
+  else assert.equal(session.messages.findLast((message) => message.role === "assistant").stopReason, "error");
+  assert.equal(requests.length, before, "auth failure must not reach the service");
 }
 
 test("existing child sees temporary key rotation and removal despite an unresolved configured key", async (t) => {
-  const h = await fixture(t);
-  const saved = await h.file();
-  await h.success(h.child, "FIRST");
+  const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+  const authPath = await jsonFile("auth.json", { [id]: { type: "api_key", key: "saved-a" } });
+  const service = { expectedKey: "saved-a", requests: [], refreshes: [] };
+  const routes = [];
+  const hooks = [];
+  let parentRegistry;
+  const parentProvider = provider("parent", service);
+  const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+    authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+    extensionFactories: [
+      observeSession("parent", routes, hooks),
+      (pi) => {
+        pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+      },
+    ],
+  });
+  const parentRuntime = parent.modelRuntime;
+  const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+    modelsPath, systemPrompt: "child instructions",
+    provider: provider("child", service),
+    extensionFactories: [observeSession("child", routes, hooks)],
+  });
+  const childRuntime = child.modelRuntime;
+  await parent.setModel(parentRuntime.getModel(id, "auto"));
+  await child.setModel(childRuntime.getModel(id, "auto"));
+  const saved = await readFile(authPath, "utf8");
+  await child.prompt("FIRST");
+  assertStopped(child, "child-done");
   for (const key of ["runtime-a", "runtime-b"]) {
-    await h.parent.runtime.setRuntimeApiKey(id, key);
-    h.service.expectedKey = key;
-    await h.prepare();
-    assert.equal((await getParentCredentials(h.parentRegistry).read(id)).key, key);
-    await h.success(h.child, key);
+    await parentRuntime.setRuntimeApiKey(id, key);
+    service.expectedKey = key;
+    await refreshModels(childRuntime, waitChild);
+    assert.equal((await getParentCredentials(parentRegistry).read(id)).key, key);
+    await child.prompt(key);
+    assertStopped(child, "child-done");
   }
-  await h.parent.runtime.removeRuntimeApiKey(id);
-  h.service.expectedKey = "saved-a";
-  await h.prepare();
-  await h.success(h.child, "REMOVED");
-  assert.equal(await h.file(), saved, "runtime keys must not reach auth.json");
-  assert.match(JSON.stringify(h.requests.at(-1).context), /FIRST/);
+  await parentRuntime.removeRuntimeApiKey(id);
+  service.expectedKey = "saved-a";
+  await refreshModels(childRuntime, waitChild);
+  await child.prompt("REMOVED");
+  assertStopped(child, "child-done");
+  assert.equal(await readFile(authPath, "utf8"), saved, "runtime keys must not reach auth.json");
+  assert.match(JSON.stringify(service.requests.at(-1).context), /FIRST/);
 });
 
 test("OAuth, key override, removal, logout and another login retain history and correct status", async (t) => {
-  const h = await fixture(t, { credential: savedOAuth("a") });
-  await h.success(h.child, "FIRST");
-  assert(h.child.runtime.isUsingSubscription(id));
-  await h.parent.runtime.setRuntimeApiKey(id, "runtime-key");
-  h.service.expectedKey = "runtime-key";
-  await h.prepare();
-  assert.equal(h.child.runtime.isUsingOAuth(id), false, "temporary-key override must replace OAuth status");
-  await h.success(h.child, "OVERRIDE");
-  await h.parent.runtime.removeRuntimeApiKey(id);
-  h.service.expectedKey = "oauth-a";
-  await h.prepare();
-  assert(h.child.runtime.isUsingSubscription(id));
-  await h.success(h.child, "RESTORED");
-  await h.parent.runtime.logout(id);
-  await h.prepare();
-  assert.equal(await getParentCredentials(h.parentRegistry).read(id), undefined);
-  assert.equal(h.parent.runtime.hasConfiguredAuth(id), false, "parent availability must reflect logout");
-  assert.equal(h.child.runtime.hasConfiguredAuth(id), false, JSON.stringify({
-    error: h.child.runtime.getError(), auth: await h.child.runtime.checkAuth(id),
+  const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+  const authPath = await jsonFile("auth.json", { [id]: savedOAuth("a") });
+  const service = { expectedKey: "oauth-a", requests: [], refreshes: [] };
+  const routes = [];
+  const hooks = [];
+  let parentRegistry;
+  const parentProvider = provider("parent", service);
+  const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+    authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+    extensionFactories: [
+      observeSession("parent", routes, hooks),
+      (pi) => {
+        pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+      },
+    ],
+  });
+  const parentRuntime = parent.modelRuntime;
+  const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+    modelsPath, systemPrompt: "child instructions",
+    provider: provider("child", service),
+    extensionFactories: [observeSession("child", routes, hooks)],
+  });
+  const childRuntime = child.modelRuntime;
+  await parent.setModel(parentRuntime.getModel(id, "auto"));
+  await child.setModel(childRuntime.getModel(id, "auto"));
+  await child.prompt("FIRST");
+  assertStopped(child, "child-done");
+  assert(childRuntime.isUsingSubscription(id));
+  await parentRuntime.setRuntimeApiKey(id, "runtime-key");
+  service.expectedKey = "runtime-key";
+  await refreshModels(childRuntime, waitChild);
+  assert.equal(childRuntime.isUsingOAuth(id), false, "temporary-key override must replace OAuth status");
+  await child.prompt("OVERRIDE");
+  assertStopped(child, "child-done");
+  await parentRuntime.removeRuntimeApiKey(id);
+  service.expectedKey = "oauth-a";
+  await refreshModels(childRuntime, waitChild);
+  assert(childRuntime.isUsingSubscription(id));
+  await child.prompt("RESTORED");
+  assertStopped(child, "child-done");
+  await parentRuntime.logout(id);
+  await refreshModels(childRuntime, waitChild);
+  assert.equal(await getParentCredentials(parentRegistry).read(id), undefined);
+  assert.equal(parentRuntime.hasConfiguredAuth(id), false, "parent availability must reflect logout");
+  assert.equal(childRuntime.hasConfiguredAuth(id), false, JSON.stringify({
+    error: childRuntime.getError(), auth: await childRuntime.checkAuth(id),
   }));
-  await h.failure("LOGGED_OUT");
-  await h.parent.runtime.login(id, "oauth", { prompt: async () => "b", notify: () => {} });
-  h.service.expectedKey = "oauth-b";
-  await h.prepare();
-  await h.success(h.child, "NEW_ACCOUNT");
-  assert(h.child.runtime.isUsingSubscription(id));
-  assert.match(JSON.stringify(h.requests.at(-1).context), /FIRST/);
+  await assertAuthFailure(child, "LOGGED_OUT", service.requests);
+  await parentRuntime.login(id, "oauth", { prompt: async () => "b", notify: () => {} });
+  service.expectedKey = "oauth-b";
+  await refreshModels(childRuntime, waitChild);
+  await child.prompt("NEW_ACCOUNT");
+  assertStopped(child, "child-done");
+  assert(childRuntime.isUsingSubscription(id));
+  assert.match(JSON.stringify(service.requests.at(-1).context), /FIRST/);
 });
 
 test("OAuth refresh persists once and the parent reuses rotated tokens", async (t) => {
-  const h = await fixture(t, { credential: savedOAuth("a", 0), expectedKey: "rotated-a" });
-  await h.success(h.child, "CHILD_REFRESH");
-  assert.equal((await h.stored()).refresh, "rotated-refresh-a");
-  await h.success(h.parent, "PARENT_REUSES");
-  assert.equal(h.refreshes.length, 1);
-  assert.equal(h.refreshes[0].role, "parent", "the existing wrapper retains the parent's OAuth implementation");
+  const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+  const authPath = await jsonFile("auth.json", { [id]: savedOAuth("a", 0) });
+  const service = { expectedKey: "rotated-a", requests: [], refreshes: [] };
+  const routes = [];
+  const hooks = [];
+  let parentRegistry;
+  const parentProvider = provider("parent", service);
+  const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+    authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+    extensionFactories: [
+      observeSession("parent", routes, hooks),
+      (pi) => {
+        pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+      },
+    ],
+  });
+  const parentRuntime = parent.modelRuntime;
+  const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+    modelsPath, systemPrompt: "child instructions",
+    provider: provider("child", service),
+    extensionFactories: [observeSession("child", routes, hooks)],
+  });
+  const childRuntime = child.modelRuntime;
+  await parent.setModel(parentRuntime.getModel(id, "auto"));
+  await child.setModel(childRuntime.getModel(id, "auto"));
+  await child.prompt("CHILD_REFRESH");
+  assertStopped(child, "child-done");
+  assert.equal(JSON.parse(await readFile(authPath, "utf8"))[id].refresh, "rotated-refresh-a");
+  await parent.prompt("PARENT_REUSES");
+  assertStopped(parent, "parent-done");
+  assert.equal(service.refreshes.length, 1);
+  assert.equal(service.refreshes[0].role, "parent", "the existing wrapper retains the parent's OAuth implementation");
 });
 
 test("temporary-only credentials work without saving them, and removal blocks existing children", async (t) => {
-  const h = await fixture(t, { credential: null, runtimeApiKey: "temporary-only" });
-  assert.equal(await h.file(), "{}");
-  await h.success(h.child, "FIRST_TEMPORARY_TURN");
-  await h.parent.runtime.removeRuntimeApiKey(id);
-  await h.prepare();
-  await h.failure("OVERRIDE_REMOVED");
-  await h.parent.runtime.setRuntimeApiKey(id, "another-temporary-key");
-  h.service.expectedKey = "another-temporary-key";
-  await h.prepare();
-  await h.success(h.child, "KEY_RESTORED");
-  assert.match(JSON.stringify(h.requests.at(-1).context), /FIRST_TEMPORARY_TURN/);
-  assert.equal(await h.file(), "{}");
+  const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+  const authPath = await jsonFile("auth.json", {});
+  const service = { expectedKey: "temporary-only", requests: [], refreshes: [] };
+  const routes = [];
+  const hooks = [];
+  let parentRegistry;
+  const parentProvider = provider("parent", service);
+  const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+    authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+    extensionFactories: [
+      observeSession("parent", routes, hooks),
+      (pi) => {
+        pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+      },
+    ],
+  });
+  const parentRuntime = parent.modelRuntime;
+  await parentRuntime.setRuntimeApiKey(id, "temporary-only");
+  await refreshModels(parentRuntime, waitParent);
+  const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+    modelsPath, systemPrompt: "child instructions",
+    provider: provider("child", service),
+    extensionFactories: [observeSession("child", routes, hooks)],
+  });
+  const childRuntime = child.modelRuntime;
+  await parent.setModel(parentRuntime.getModel(id, "auto"));
+  await child.setModel(childRuntime.getModel(id, "auto"));
+  assert.equal(await readFile(authPath, "utf8"), "{}");
+  await child.prompt("FIRST_TEMPORARY_TURN");
+  assertStopped(child, "child-done");
+  await parentRuntime.removeRuntimeApiKey(id);
+  await refreshModels(childRuntime, waitChild);
+  await assertAuthFailure(child, "OVERRIDE_REMOVED", service.requests);
+  await parentRuntime.setRuntimeApiKey(id, "another-temporary-key");
+  service.expectedKey = "another-temporary-key";
+  await refreshModels(childRuntime, waitChild);
+  await child.prompt("KEY_RESTORED");
+  assertStopped(child, "child-done");
+  assert.match(JSON.stringify(service.requests.at(-1).context), /FIRST_TEMPORARY_TURN/);
+  assert.equal(await readFile(authPath, "utf8"), "{}");
 });
 
 test("a key changed during a child tool reaches the next request of the same invocation", async (t) => {
-  let h;
-  h = await fixture(t, {
-    childTools: ["rotate_key"],
-    childResponses: [
+  const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+  const authPath = await jsonFile("auth.json", { [id]: { type: "api_key", key: "saved-a" } });
+  const service = { expectedKey: "saved-a", requests: [], refreshes: [] };
+  const routes = [];
+  const hooks = [];
+  let parentRegistry;
+  const parentProvider = provider("parent", service);
+  const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+    authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+    extensionFactories: [
+      observeSession("parent", routes, hooks),
+      (pi) => {
+        pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+      },
+    ],
+  });
+  const parentRuntime = parent.modelRuntime;
+  const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+    modelsPath, systemPrompt: "child instructions",
+    provider: provider("child", service, [
       ai.fauxAssistantMessage(ai.fauxToolCall("rotate_key", {}), { stopReason: "toolUse" }),
       ai.fauxAssistantMessage("child-done"),
-    ],
-    childExtension(pi) {
-      pi.registerTool({
-        name: "rotate_key", label: "Rotate synthetic key", description: "Rotate the parent test key.", parameters: ai.Type.Object({}),
-        async execute() {
-          await h.parent.runtime.setRuntimeApiKey(id, "rotated-during-tool");
-          h.service.expectedKey = "rotated-during-tool";
-          return { content: [{ type: "text", text: "rotated" }], details: undefined };
-        },
-      });
-    },
+    ]),
+    tools: ["rotate_key"],
+    extensionFactories: [observeSession("child", routes, hooks), (pi) => pi.registerTool({
+      name: "rotate_key", label: "Rotate synthetic key", description: "Rotate the parent test key.", parameters: ai.Type.Object({}),
+      async execute() {
+        await parentRuntime.setRuntimeApiKey(id, "rotated-during-tool");
+        service.expectedKey = "rotated-during-tool";
+        return { content: [{ type: "text", text: "rotated" }], details: undefined };
+      },
+    })],
   });
-  const saved = await h.file();
-  assert.deepEqual(h.child.session.getActiveToolNames(), ["rotate_key"]);
-  await h.success(h.child, "ROTATE_DURING_TOOL");
-  assert.deepEqual(h.requests.map((request) => request.key), ["saved-a", "rotated-during-tool"]);
-  assert.equal(await h.file(), saved);
+  const childRuntime = child.modelRuntime;
+  await parent.setModel(parentRuntime.getModel(id, "auto"));
+  await child.setModel(childRuntime.getModel(id, "auto"));
+  const saved = await readFile(authPath, "utf8");
+  assert.deepEqual(child.getActiveToolNames(), ["rotate_key"]);
+  await child.prompt("ROTATE_DURING_TOOL");
+  assertStopped(child, "child-done");
+  assert.deepEqual(service.requests.map((request) => request.key), ["saved-a", "rotated-during-tool"]);
+  assert.equal(await readFile(authPath, "utf8"), saved);
 });
 
 test("concurrent parent and child OAuth requests refresh a rotated token only once", async (t) => {
-  const h = await fixture(t, { credential: savedOAuth("a", 0), expectedKey: "rotated-a" });
-  await Promise.all([h.success(h.parent, "PARENT_CONCURRENT"), h.success(h.child, "CHILD_CONCURRENT")]);
-  assert.equal(h.requests.length, 2);
-  assert.equal(h.refreshes.length, 1);
-  assert.equal((await h.stored()).refresh, "rotated-refresh-a");
+  const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+  const authPath = await jsonFile("auth.json", { [id]: savedOAuth("a", 0) });
+  const service = { expectedKey: "rotated-a", requests: [], refreshes: [] };
+  const routes = [];
+  const hooks = [];
+  let parentRegistry;
+  const parentProvider = provider("parent", service);
+  const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+    authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+    extensionFactories: [
+      observeSession("parent", routes, hooks),
+      (pi) => {
+        pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+      },
+    ],
+  });
+  const parentRuntime = parent.modelRuntime;
+  const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+    modelsPath, systemPrompt: "child instructions",
+    provider: provider("child", service),
+    extensionFactories: [observeSession("child", routes, hooks)],
+  });
+  const childRuntime = child.modelRuntime;
+  await parent.setModel(parentRuntime.getModel(id, "auto"));
+  await child.setModel(childRuntime.getModel(id, "auto"));
+  await Promise.all([parent.prompt("PARENT_CONCURRENT"), child.prompt("CHILD_CONCURRENT")]);
+  assertStopped(parent, "parent-done");
+  assertStopped(child, "child-done");
+  assert.equal(service.requests.length, 2);
+  assert.equal(service.refreshes.length, 1);
+  assert.equal(JSON.parse(await readFile(authPath, "utf8"))[id].refresh, "rotated-refresh-a");
 });
 
 test("failed OAuth refresh preserves credentials and makes no service request", async (t) => {
-  const h = await fixture(t, { credential: savedOAuth("a", 0) });
-  const before = await h.stored();
-  const original = h.parent.provider;
-  h.parent.extension.registerProvider({ ...original, auth: { ...original.auth, oauth: {
+  const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+  const authPath = await jsonFile("auth.json", { [id]: savedOAuth("a", 0) });
+  const service = { expectedKey: "oauth-a", requests: [], refreshes: [] };
+  const routes = [];
+  const hooks = [];
+  let parentRegistry;
+  let parentExtension;
+  const parentProvider = provider("parent", service);
+  const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+    authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+    extensionFactories: [
+      observeSession("parent", routes, hooks),
+      (pi) => {
+        parentExtension = pi;
+        pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+      },
+    ],
+  });
+  const parentRuntime = parent.modelRuntime;
+  const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+    modelsPath, systemPrompt: "child instructions",
+    provider: provider("child", service),
+    extensionFactories: [observeSession("child", routes, hooks)],
+  });
+  const childRuntime = child.modelRuntime;
+  await parent.setModel(parentRuntime.getModel(id, "auto"));
+  await child.setModel(childRuntime.getModel(id, "auto"));
+  const before = JSON.parse(await readFile(authPath, "utf8"))[id];
+  const original = parentProvider;
+  parentExtension.registerProvider({ ...original, auth: { ...original.auth, oauth: {
     ...original.auth.oauth,
     async refresh(current) {
-      h.refreshes.push({ role: "parent", token: current.refresh });
+      service.refreshes.push({ role: "parent", token: current.refresh });
       throw new Error("refresh rejected");
     },
   } } });
-  await h.parent.runtime.refresh({ allowNetwork: false });
-  await h.parent.waitForRefreshes();
-  await h.prepare();
-  await h.failure("FAILED_REFRESH");
-  assert.deepEqual(await h.stored(), before);
-  assert.equal(h.refreshes.length, 1);
+  await parentRuntime.refresh({ allowNetwork: false });
+  await waitParent();
+  await refreshModels(childRuntime, waitChild);
+  await assertAuthFailure(child, "FAILED_REFRESH", service.requests);
+  assert.deepEqual(JSON.parse(await readFile(authPath, "utf8"))[id], before);
+  assert.equal(service.refreshes.length, 1);
 });
 
 for (const oauth of [false, true]) {
   test(`${oauth ? "OAuth" : "key"} resolver changes remain live, routers and hooks remain independent`, async (t) => {
-    const h = await fixture(t, { credential: oauth ? savedOAuth("a") : { type: "api_key", key: "saved-a" } });
-    const before = await h.file();
-    await h.success(h.child, "FIRST");
-    await replaceParentAuth(h, async () => ({ auth: {
+    const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+    const authPath = await jsonFile("auth.json", { [id]: oauth ? savedOAuth("a") : { type: "api_key", key: "saved-a" } });
+    const service = { expectedKey: oauth ? "oauth-a" : "saved-a", requests: [], refreshes: [] };
+    const routes = [];
+    const hooks = [];
+    let parentRegistry;
+    let parentExtension;
+    const parentProvider = provider("parent", service);
+    const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+      authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+      extensionFactories: [
+        observeSession("parent", routes, hooks),
+        (pi) => {
+          parentExtension = pi;
+          pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+        },
+      ],
+    });
+    const parentRuntime = parent.modelRuntime;
+    const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+      modelsPath, systemPrompt: "child instructions",
+      provider: provider("child", service),
+      extensionFactories: [observeSession("child", routes, hooks)],
+    });
+    const childRuntime = child.modelRuntime;
+    await parent.setModel(parentRuntime.getModel(id, "auto"));
+    await child.setModel(childRuntime.getModel(id, "auto"));
+    const before = await readFile(authPath, "utf8");
+    await child.prompt("FIRST");
+    assertStopped(child, "child-done");
+    const resolve = async () => ({ auth: {
       apiKey: "extension-replacement", headers: { "x-account": "extension-replacement" },
       baseUrl: "https://extension-replacement.invalid",
-    } }));
-    h.service.expectedKey = "extension-replacement";
-    await h.prepare();
-    await h.success(h.child, "REPLACED");
-    assert.equal(h.child.runtime.isUsingSubscription(id), false);
-    await replaceParentAuth(h, async () => { throw new Error("parent resolver failed"); });
-    await h.prepare();
-    await h.failure("FAILED_RESOLVER");
-    assert.equal(await h.file(), before);
-    h.parent.extension.registerProvider(h.parent.provider);
-    await h.parent.runtime.refresh({ allowNetwork: false });
-    await h.parent.waitForRefreshes();
-    h.service.expectedKey = oauth ? "oauth-a" : "saved-a";
-    h.child.session.dispose();
-    await h.success(h.parent, "PARENT_AFTER_CHILD_DISPOSAL");
-    assert.deepEqual(h.hooks, [{ role: "child", count: 1 }, { role: "child", count: 2 }, { role: "parent", count: 1 }]);
-    assert.deepEqual(h.routes.filter((route) => route.role === "parent"), [{ role: "parent", turn: 0 }]);
+    } });
+    parentExtension.registerProvider({ ...parentProvider, auth: {
+      apiKey: { name: "Replacement key", resolve },
+      oauth: { ...parentProvider.auth.oauth, isSubscription: false, toAuth: async () => (await resolve()).auth },
+    } });
+    await refreshModels(parentRuntime, waitParent);
+    service.expectedKey = "extension-replacement";
+    await refreshModels(childRuntime, waitChild);
+    await child.prompt("REPLACED");
+    assertStopped(child, "child-done");
+    assert.equal(childRuntime.isUsingSubscription(id), false);
+    const rejectAuth = async () => { throw new Error("parent resolver failed"); };
+    parentExtension.registerProvider({ ...parentProvider, auth: {
+      apiKey: { name: "Replacement key", resolve: rejectAuth },
+      oauth: { ...parentProvider.auth.oauth, isSubscription: false, toAuth: rejectAuth },
+    } });
+    await refreshModels(parentRuntime, waitParent);
+    await refreshModels(childRuntime, waitChild);
+    await assertAuthFailure(child, "FAILED_RESOLVER", service.requests);
+    assert.equal(await readFile(authPath, "utf8"), before);
+    parentExtension.registerProvider(parentProvider);
+    await parentRuntime.refresh({ allowNetwork: false });
+    await waitParent();
+    service.expectedKey = oauth ? "oauth-a" : "saved-a";
+    child.dispose();
+    await parent.prompt("PARENT_AFTER_CHILD_DISPOSAL");
+    assertStopped(parent, "parent-done");
+    assert.deepEqual(hooks, [{ role: "child", count: 1 }, { role: "child", count: 2 }, { role: "parent", count: 1 }]);
+    assert.deepEqual(routes.filter((route) => route.role === "parent"), [{ role: "parent", turn: 0 }]);
   });
 }
 
 for (const oauth of [false, true]) {
   test(`parent ${oauth ? "OAuth" : "key"} resolver failure must block child requests`, async (t) => {
-    const h = await fixture(t, { credential: oauth ? savedOAuth("a") : { type: "api_key", key: "saved-a" } });
-    await h.success(h.child, "FIRST");
-    await replaceParentAuth(h, async () => { throw new Error("parent resolver failed"); });
-    await h.prepare();
-    const before = h.requests.length;
+    const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+    const authPath = await jsonFile("auth.json", { [id]: oauth ? savedOAuth("a") : { type: "api_key", key: "saved-a" } });
+    const service = { expectedKey: oauth ? "oauth-a" : "saved-a", requests: [], refreshes: [] };
+    const routes = [];
+    const hooks = [];
+    let parentRegistry;
+    let parentExtension;
+    const parentProvider = provider("parent", service);
+    const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+      authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+      extensionFactories: [
+        observeSession("parent", routes, hooks),
+        (pi) => {
+          parentExtension = pi;
+          pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+        },
+      ],
+    });
+    const parentRuntime = parent.modelRuntime;
+    const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+      modelsPath, systemPrompt: "child instructions",
+      provider: provider("child", service),
+      extensionFactories: [observeSession("child", routes, hooks)],
+    });
+    const childRuntime = child.modelRuntime;
+    await parent.setModel(parentRuntime.getModel(id, "auto"));
+    await child.setModel(childRuntime.getModel(id, "auto"));
+    await child.prompt("FIRST");
+    assertStopped(child, "child-done");
+    const rejectAuth = async () => { throw new Error("parent resolver failed"); };
+    parentExtension.registerProvider({ ...parentProvider, auth: {
+      apiKey: { name: "Replacement key", resolve: rejectAuth },
+      oauth: { ...parentProvider.auth.oauth, isSubscription: false, toAuth: rejectAuth },
+    } });
+    await refreshModels(parentRuntime, waitParent);
+    await refreshModels(childRuntime, waitChild);
+    const before = service.requests.length;
     let rejected;
-    try { await h.child.session.prompt("PARENT_AUTH_FAILED"); } catch (error) { rejected = error; }
-    assert.equal(h.requests.length, before, "a parent resolver failure must block child requests");
+    try { await child.prompt("PARENT_AUTH_FAILED"); } catch (error) { rejected = error; }
+    assert.equal(service.requests.length, before, "a parent resolver failure must block child requests");
     if (rejected) assert.match(rejected.message, /auth|resolver|key/i);
-    else assert.equal(h.child.session.messages.findLast((message) => message.role === "assistant").stopReason, "error");
+    else assert.equal(child.messages.findLast((message) => message.role === "assistant").stopReason, "error");
   });
 }
 test("stable auth retains independent child and parent routers/hooks after child disposal", async (t) => {
-  const h = await fixture(t);
-  await h.success(h.child, "FIRST");
-  await h.success(h.child, "SECOND");
-  h.child.session.dispose();
-  await h.success(h.parent, "PARENT_AFTER_CHILD");
-  assert.deepEqual(h.hooks, [{ role: "child", count: 1 }, { role: "child", count: 2 }, { role: "parent", count: 1 }]);
-  assert.deepEqual(h.routes, [{ role: "child", turn: 0 }, { role: "child", turn: 1 }, { role: "parent", turn: 0 }]);
+  const modelsPath = await jsonFile("models.json", { providers: { [id]: { apiKey: unresolvedApiKey() } } });
+  const authPath = await jsonFile("auth.json", { [id]: { type: "api_key", key: "saved-a" } });
+  const service = { expectedKey: "saved-a", requests: [], refreshes: [] };
+  const routes = [];
+  const hooks = [];
+  let parentRegistry;
+  const parentProvider = provider("parent", service);
+  const { session: parent, waitForRefreshes: waitParent } = await createSession(t, {
+    authPath, modelsPath, provider: parentProvider, systemPrompt: "parent instructions",
+    extensionFactories: [
+      observeSession("parent", routes, hooks),
+      (pi) => {
+        pi.on("session_start", (_event, ctx) => { parentRegistry = ctx.modelRegistry; });
+      },
+    ],
+  });
+  const parentRuntime = parent.modelRuntime;
+  const { session: child, waitForRefreshes: waitChild } = await inheritingSession(t, parentRegistry, {
+    modelsPath, systemPrompt: "child instructions",
+    provider: provider("child", service),
+    extensionFactories: [observeSession("child", routes, hooks)],
+  });
+  const childRuntime = child.modelRuntime;
+  await parent.setModel(parentRuntime.getModel(id, "auto"));
+  await child.setModel(childRuntime.getModel(id, "auto"));
+  await child.prompt("FIRST");
+  assertStopped(child, "child-done");
+  await child.prompt("SECOND");
+  assertStopped(child, "child-done");
+  child.dispose();
+  await parent.prompt("PARENT_AFTER_CHILD");
+  assertStopped(parent, "parent-done");
+  assert.deepEqual(hooks, [{ role: "child", count: 1 }, { role: "child", count: 2 }, { role: "parent", count: 1 }]);
+  assert.deepEqual(routes, [{ role: "child", turn: 0 }, { role: "child", turn: 1 }, { role: "parent", turn: 0 }]);
 });
