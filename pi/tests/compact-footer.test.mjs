@@ -8,7 +8,14 @@ function harness(mode = "tui", override = "1") {
   const statuses = new Map();
   const writes = [];
   let usage = { tokens: 100_000, percent: 25, contextWindow: 400_000 };
+  const entries = [];
+  let ledgerReads = 0;
   const ctx = {
+    sessionManager: {
+      getLeafId: () => entries.length ? String(entries.length) : null,
+      getEntries: () => { ledgerReads++; return entries.slice(); },
+    },
+    modelRegistry: { isUsingOAuth: () => false },
     mode,
     model: { provider: "openai", id: "gpt-6.1-sol", reasoning: true },
     thinkingLevel: "medium",
@@ -21,7 +28,8 @@ function harness(mode = "tui", override = "1") {
   };
   compactFooter({ on: (event, handler) => handlers.set(event, handler), getThinkingLevel: () => "low" });
   return {
-    ctx, statuses, writes,
+    ctx, statuses, writes, entries,
+    ledgerReads: () => ledgerReads,
     emit: (event, data = { message: { role: "user" } }) => {
       const previous = process.env.POWERLINE_NERD_FONTS;
       if (override === null) delete process.env.POWERLINE_NERD_FONTS;
@@ -173,9 +181,55 @@ for (const mode of ["print", "json", "rpc"]) {
   });
 }
 
+test("cost sums native ledger charges without changing parent context", () => {
+  const h = harness();
+  const usage = (cost) => ({ cost: { total: cost } });
+  h.emit("session_start");
+  assert.equal(h.statuses.get("compact-cost"), undefined);
+  assert.deepEqual(h.context(), [["compact-context", "25%/400k"]]);
+  for (const [entry, expected] of [
+    [{ type: "message", message: { role: "assistant", usage: usage(0.125) } }, "$0.13"],
+    [{ type: "message", message: { role: "toolResult", isError: true, usage: usage(0.25) } }, "$0.38"],
+    [{ type: "message", message: { role: "assistant", stopReason: "error", usage: usage(0.5) } }, "$0.88"],
+    [{ type: "message", message: { role: "assistant", stopReason: "aborted", usage: usage(1) } }, "$1.88"],
+    [{ type: "usage", usage: usage(2) }, "$3.88"],
+    [{ type: "compaction", usage: usage(4) }, "$7.88"],
+    [{ type: "branch_summary", usage: usage(8) }, "$15.88"],
+    [{ type: "custom", usage: usage(16) }, "$15.88"],
+    [{ type: "message", message: { role: "user", usage: usage(32) } }, "$15.88"],
+  ]) {
+    h.entries.push(entry);
+    h.emit("turn_end");
+    assert.equal(h.statuses.get("compact-cost"), expected);
+    assert.deepEqual(h.context(), [["compact-context", "25%/400k"]]);
+  }
+  const reads = h.ledgerReads();
+  h.emit("message_update", { message: { role: "assistant", usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0 } } });
+  assert.equal(h.ledgerReads(), reads, "streaming does not copy an unchanged ledger");
+  h.emit("session_tree");
+  assert.equal(h.statuses.get("compact-cost"), "$15.88");
+  assert.equal(h.ledgerReads(), reads + 1, "navigation reconciles charges recorded between refreshes");
+  h.entries.splice(0, 1, { type: "usage", usage: usage(0.25) });
+  h.entries.fill({ type: "custom" }, 1);
+  assert.equal(h.ledgerReads(), reads + 1);
+  h.emit("session_start");
+  assert.equal(h.statuses.get("compact-cost"), "$0.25", "session switch resets cached totals");
+  h.emit("session_shutdown");
+  assert.equal(h.statuses.has("compact-cost"), false);
+});
+
+test("cost preserves the zero-cost subscription indication", () => {
+  const h = harness();
+  h.emit("session_start");
+  assert.equal(h.statuses.has("compact-cost"), false);
+  h.ctx.modelRegistry.isUsingOAuth = () => true;
+  h.emit("model_select");
+  assert.equal(h.statuses.get("compact-cost"), "(sub)");
+});
+
 test("configuration replaces native segments, removes cache ratio and preserves git/path/other statuses", () => {
   const { powerline } = JSON.parse(readFileSync(new URL("../agent/settings.json", import.meta.url)));
-  for (const native of ["model", "thinking", "context_pct", "context_total", "cache_read", "cache_write"]) {
+  for (const native of ["model", "thinking", "context_pct", "context_total", "cache_read", "cache_write", "cost"]) {
     assert.ok(powerline.disabledSegments.includes(native));
     assert.ok(!powerline.layout.left.includes(native));
   }
@@ -184,6 +238,9 @@ test("configuration replaces native segments, removes cache ratio and preserves 
   assert.deepEqual(powerline.path, { mode: "abbreviated", maxLength: 30 });
   assert.equal(powerline.layout.secondary, undefined, "retain upstream aggregate extension statuses");
   assert.equal(powerline.model, undefined);
+  assert.equal(powerline.cost, undefined);
+  assert.equal(powerline.customItems.find((item) => item.id === "compact-cost").color, "dim");
+  assert.ok(powerline.layout.left.includes("custom:compact-cost"));
   assert.equal(powerline.context, undefined);
   assert.equal(powerline.cache_read, undefined);
   for (const [id, color] of [["compact-context", "dim"], ["compact-context-warn", "warning"], ["compact-context-error", "error"]]) {

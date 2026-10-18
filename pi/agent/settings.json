@@ -36,6 +36,10 @@
       {
         "id": "compact-context-error",
         "color": "error"
+      },
+      {
+        "id": "compact-cost",
+        "color": "dim"
       }
     ],
     "disabledSegments": [
@@ -44,7 +48,8 @@
       "context_pct",
       "context_total",
       "cache_read",
-      "cache_write"
+      "cache_write",
+      "cost"
     ],
     "layout": {
       "left": [
@@ -57,7 +62,7 @@
         "custom:compact-context",
         "custom:compact-context-warn",
         "custom:compact-context-error",
-        "cost"
+        "custom:compact-cost"
       ]
     },
     "path": {
@@ -67,10 +72,6 @@
     "welcome": false,
     "queue": {
       "compactPromptMode": "native"
-    },
-    "cost": {
-      "subscriptionDisplay": "reported-cost",
-      "currency": "USD"
     },
     "placement": "above"
   },

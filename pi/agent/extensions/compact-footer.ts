@@ -15,6 +15,8 @@ function formatCapacity(tokens: number): string {
 
 export default function (pi: ExtensionAPI) {
   const published = new Map<string, string | undefined>();
+  let costLeafId: string | null | undefined;
+  let cost = 0;
 
   function publish(ctx: ExtensionContext, key: string, value: string | undefined) {
     if (published.has(key) && published.get(key) === value) return;
@@ -22,9 +24,25 @@ export default function (pi: ExtensionAPI) {
     ctx.ui.setStatus(key, value);
   }
 
-  function refresh(ctx: ExtensionContext, liveTokens?: number) {
-    if (ctx.mode !== "tui") return;
+  function refreshCost(ctx: ExtensionContext) {
+    const leafId = ctx.sessionManager.getLeafId();
+    if (leafId !== costLeafId) {
+      cost = 0;
+      for (const entry of ctx.sessionManager.getEntries()) {
+        if (entry.type === "message" && (entry.message.role === "assistant" || entry.message.role === "toolResult")) {
+          cost += entry.message.usage?.cost.total ?? 0;
+        } else if (entry.type === "usage" || entry.type === "compaction" || entry.type === "branch_summary") {
+          cost += entry.usage?.cost.total ?? 0;
+        }
+      }
+      costLeafId = leafId;
+    }
+    const model = ctx.model;
+    const subscription = model && ctx.modelRegistry.isUsingOAuth(model);
+    publish(ctx, "compact-cost", cost > 0 ? `$${cost.toFixed(2)}` : subscription ? "(sub)" : undefined);
+  }
 
+  function refreshModel(ctx: ExtensionContext) {
     const model = ctx.model;
     const provider = model?.provider ?? "";
     const providerLabel = process.env.POWERLINE_NERD_FONTS === "0" ? provider : providerIcons.get(provider) ?? provider;
@@ -34,7 +52,9 @@ export default function (pi: ExtensionAPI) {
       ? ` ${level === "minimal" ? "min" : level === "medium" ? "med" : level}`
       : "";
     publish(ctx, "compact-model", `${providerLabel ? `${providerLabel} ` : ""}${id ?? "no-model"}${thinking}`);
+  }
 
+  function refreshContext(ctx: ExtensionContext, liveTokens?: number) {
     const usage = ctx.getContextUsage();
     const percent = liveTokens !== undefined && usage
       ? liveTokens / usage.contextWindow * 100
@@ -44,6 +64,13 @@ export default function (pi: ExtensionAPI) {
       : percent != null && percent > 70 ? contextKeys[1] : contextKeys[0];
     // Separate status keys let Powerline apply live theme colors without cached ANSI text.
     for (const key of contextKeys) publish(ctx, key, key === activeKey ? text : undefined);
+  }
+
+  function refresh(ctx: ExtensionContext, liveTokens?: number) {
+    if (ctx.mode !== "tui") return;
+    refreshCost(ctx);
+    refreshModel(ctx);
+    refreshContext(ctx, liveTokens);
   }
 
   const update = (_event: unknown, ctx: ExtensionContext) => refresh(ctx);
@@ -56,11 +83,15 @@ export default function (pi: ExtensionAPI) {
   };
   pi.on("session_start", (_event, ctx) => {
     published.clear();
+    costLeafId = undefined;
     refresh(ctx);
   });
   pi.on("model_select", update);
   pi.on("thinking_level_select", update);
-  pi.on("session_tree", update);
+  pi.on("session_tree", (_event, ctx) => {
+    costLeafId = undefined;
+    refresh(ctx);
+  });
   pi.on("session_compact", update);
   pi.on("before_agent_start", update);
   pi.on("message_end", (event, ctx) => {
@@ -73,7 +104,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("message_update", updateAssistant);
   pi.on("session_shutdown", (_event, ctx) => {
     if (ctx.mode === "tui") {
-      for (const key of ["compact-model", ...contextKeys]) ctx.ui.setStatus(key, undefined);
+      for (const key of ["compact-model", "compact-cost", ...contextKeys]) ctx.ui.setStatus(key, undefined);
     }
     published.clear();
   });
