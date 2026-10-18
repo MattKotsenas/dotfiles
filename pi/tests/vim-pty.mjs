@@ -45,6 +45,7 @@ export default function(pi) {
     timer = setInterval(() => {
       appendFileSync(${JSON.stringify(join(scratch, "state.jsonl"))}, JSON.stringify({
         text: editor.getText(), cursor: editor.getCursor(), focused: editor.focused,
+        autocomplete: editor.isShowingAutocomplete(),
         vim: editor[Symbol.for("pi-vim-editor")]?.status(), idle: ctx.isIdle(), instance,
       }) + "\\n");
     }, 50);
@@ -148,7 +149,7 @@ try {
   assert.ok(selectedText.includes("alpha"), "ConPTY must draw a highlighted word, not just a cursor");
   await keys("Escape");
   const saved = state();
-  await literal("q");
+  await keys("M-t");
   assert.match(capture("browse"), /BROWSE/);
   await keys("M-s");
   assert.equal(state().text, saved.text, "Powerline's earlier stash handler must not clear a BROWSE draft");
@@ -212,7 +213,8 @@ try {
   await keys("C-o");
   await keys("Enter", "C-k", "C-j");
   assert.equal(state().text, saved.text, "browse controls must not edit or submit a draft");
-  await literal("q");
+  await keys("M-t");
+  assert.match(capture("return-to-normal"), /NORMAL/);
   await literal("i");
   await waitFor("return to editing", (s) => s.vim.mode === "insert");
   await keys("M-s");
@@ -233,11 +235,22 @@ try {
   await waitFor("reload reattaches Vim", (s) => s.instance !== instance && s.vim?.mode === "insert");
   assert.match(capture("reloaded"), /INSERT/);
   await literal("@nav");
+  await waitFor("autocomplete opens", (s) => s.autocomplete);
   const completions = capture("autocomplete");
   assert.match(completions, /navigation-fixture.txt/);
   assert.ok(completions.indexOf("navigation-fixture.txt") > completions.indexOf("╰"), "completions stay below the frame");
   await keys("Escape");
   assert.equal(state().vim.mode, "insert", "Escape closes autocomplete before entering NORMAL");
+  await keys("C-c");
+  await literal("@nav");
+  await waitFor("autocomplete reopens", (s) => s.autocomplete);
+  assert.match(capture("completion-before-browse"), /navigation-fixture.txt/);
+  await keys("M-t");
+  await waitFor("Alt-T closes completion and enters NORMAL", (s) => s.vim.mode === "normal" && !s.autocomplete);
+  assert.match(capture("browse-from-completion"), /BROWSE/);
+  await keys("M-t");
+  assert.match(capture("normal-after-completion"), /NORMAL/);
+  await literal("i");
   await keys("C-c");
   await literal("start streaming validation"); await keys("Enter");
   await waitFor("fixture agent is running", (s) => !s.idle);

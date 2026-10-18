@@ -49,7 +49,7 @@ export default function (pi: ExtensionAPI) {
     const unsubscribe = ui.onTerminalInput((data) => {
       if (!active?.focused || isKeyRelease(data)) return;
       const status = active[vimStatus]?.version === 1 ? active[vimStatus]!.status() : undefined;
-      if (matchesKey(data, "alt+b") || (matchesKey(data, "q") && (browse || (status?.mode === "normal" && !status.pending)))) {
+      if (matchesKey(data, "alt+t") || (matchesKey(data, "q") && (browse || (status?.mode === "normal" && !status.pending)))) {
         if (!status) {
           ui.notify("Vim navigation needs pi-vim-editor loaded after it.", "warning");
           return { consume: true };
@@ -58,6 +58,11 @@ export default function (pi: ExtensionAPI) {
         if (!browse && (status.pending || !["insert", "normal"].includes(status.mode))) {
           ui.notify("Finish or cancel the Vim command before browsing.", "info");
           return { consume: true };
+        }
+        if (!browse && status.mode === "insert") {
+          // Close completion first so Escape completes Vim's INSERT undo group.
+          if (active.isShowingAutocomplete()) active.handleInput("\x1b");
+          active.handleInput("\x1b");
         }
         browse = !browse;
         pendingG = false;

@@ -38,8 +38,9 @@ handle Escape themselves.
 
 Press **`q` in idle NORMAL** to enter BROWSE without clearing the draft or moving
 its cursor. This plugin leaves `q` unused because it has no macro recording.
-Alt-B toggles BROWSE from INSERT or NORMAL. Finish or cancel pending Vim commands
-and Visual selections before entering BROWSE.
+Alt-T toggles between NORMAL and BROWSE. From INSERT, it closes completion and
+enters NORMAL before browsing, completing the current Vim edit. Finish or cancel
+pending Vim commands and leave Visual or REPLACE mode before entering BROWSE.
 
 | Key in BROWSE | Action |
 | --- | --- |
@@ -48,7 +49,7 @@ and Visual selections before entering BROWSE.
 | `J` / `K` | Next / previous marked user or assistant message |
 | `gg` / `G` | Transcript top / bottom; bottom resumes following output |
 | `/` | Open Pi's rendered-transcript search |
-| Alt-B / `q` | Return to the previous editor mode |
+| Alt-T / `q` | Return to NORMAL |
 | `i` | Return to INSERT |
 
 Search accepts ordinary query text, including `j`, `k`, and `n`. **Enter** moves

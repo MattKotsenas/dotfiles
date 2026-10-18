@@ -171,10 +171,79 @@ test("q toggles browsing only from idle NORMAL, leaving insert text and pending 
     h.send("q");
     h.send("i");
     assert.equal(capability(h).mode, "insert");
-    h.send("\x1bb");
+    h.send("\x1bt");
     h.send("q");
-    assert.equal(capability(h).mode, "insert", "q restores the underlying INSERT mode too");
+    assert.equal(capability(h).mode, "normal", "q returns to NORMAL after entering browse from INSERT");
     assert.equal(h.editor.getText(), "q");
+  } finally { h.close(); }
+});
+
+for (const key of ["\x1bt", "\x1b[116;3u", "\x1b[27;3;116~"]) {
+  test(`Alt-T completes INSERT before browsing and returns to NORMAL: ${JSON.stringify(key)}`, () => {
+    const h = harness();
+    try {
+      h.send("first");
+      assert.equal(capability(h).mode, "insert");
+      assert.deepEqual(h.editor.getCursor(), { line: 0, col: 5 });
+      h.send(key);
+      assert.equal(h.statuses.get("vim-mode"), "BROWSE");
+      assert.equal(capability(h).mode, "normal");
+      assert.deepEqual(h.editor.getCursor(), { line: 0, col: 4 });
+      assert.equal(h.interrupts, 0);
+      h.send(key);
+      assert.equal(h.statuses.get("vim-mode"), "NORMAL");
+      h.send("q");
+      h.send("i");
+      assert.equal(capability(h).mode, "insert");
+      h.send("second");
+      h.send(key);
+      h.send(key);
+      assert.equal(h.editor.getText(), "firssecondt");
+      h.send("u");
+      assert.equal(h.editor.getText(), "first", "browse entry closes each INSERT undo group");
+      h.send("u");
+      assert.equal(h.editor.getText(), "");
+      assert.equal(h.interrupts, 0);
+      h.send("\x1b");
+      assert.equal(h.interrupts, 1, "Escape in idle NORMAL still reaches Pi");
+    } finally { h.close(); }
+  });
+}
+
+test("Alt-T closes completion and completes INSERT before browsing", async () => {
+  const h = harness();
+  try {
+    h.editor.setAutocompleteProvider({
+      getSuggestions: () => ({ prefix: "", items: [
+        { value: "alpha", label: "alpha" }, { value: "beta", label: "beta" },
+      ] }),
+      applyCompletion() { throw new Error("browsing must not accept a completion"); },
+    });
+    h.send("\t");
+    await new Promise(setImmediate);
+    assert.equal(h.editor.isShowingAutocomplete(), true);
+    assert.equal(capability(h).mode, "insert");
+    h.send("\x1bt");
+    assert.equal(h.editor.isShowingAutocomplete(), false);
+    assert.equal(capability(h).mode, "normal");
+    assert.equal(h.statuses.get("vim-mode"), "BROWSE");
+    assert.equal(h.editor.getText(), "");
+    assert.equal(h.interrupts, 0);
+    h.send("\x1b");
+    assert.equal(h.statuses.get("vim-mode"), "NORMAL");
+    assert.equal(h.interrupts, 1, "Escape from BROWSE still reaches Pi through NORMAL");
+  } finally { h.close(); }
+});
+
+test("Alt-B retains native word movement instead of entering browse", () => {
+  const h = harness();
+  try {
+    h.send("one two");
+    assert.deepEqual(h.editor.getCursor(), { line: 0, col: 7 });
+    h.send("\x1bb");
+    assert.deepEqual(h.editor.getCursor(), { line: 0, col: 4 });
+    assert.equal(h.statuses.get("vim-mode"), "INSERT");
+    assert.equal(h.editor.getText(), "one two");
   } finally { h.close(); }
 });
 
@@ -182,7 +251,7 @@ test("message jumps accept literal, shifted and encoded uppercase keys without c
   const h = harness();
   try {
     h.send("populated draft");
-    h.send("\x1bb");
+    h.send("\x1bt");
     for (const [next, previous] of [
       ["J", "K"], ["\x1b[106;2u", "\x1b[107;2u"],
       ["\x1b[74u", "\x1b[75u"], ["\x1b[74;65u", "\x1b[75;65u"],
@@ -202,12 +271,12 @@ test("message jumps accept literal, shifted and encoded uppercase keys without c
   } finally { h.close(); }
 });
 
-test("browse preserves a populated draft, cursor, undo and underlying mode", () => {
+test("browse preserves a populated draft, NORMAL cursor and undo", () => {
   const h = harness();
   try {
     h.send("unfinished draft");
+    h.send("\x1bt");
     const cursor = h.editor.getCursor();
-    h.send("\x1bb");
     assert.equal(h.statuses.get("vim-mode"), "BROWSE");
     h.tui.scrollToTop();
     h.render();
@@ -243,7 +312,7 @@ test("native search owns query characters and Escape, then resumes browsing", ()
   const h = harness();
   try {
     h.send("draft");
-    h.send("\x1bb");
+    h.send("\x1bt");
     h.send("/");
     assert.equal(h.editor.focused, false);
     h.send("jkn");
@@ -274,7 +343,7 @@ test("native search owns query characters and Escape, then resumes browsing", ()
 test("dialogs suspend browse keys, and shutdown restores the shared matcher", () => {
   const h = harness();
   try {
-    h.send("\x1bb");
+    h.send("\x1bt");
     h.send("g");
     const received = [];
     const dialog = { focused: false, render: () => ["dialog"], invalidate() {}, handleInput: (data) => received.push(data) };
@@ -282,8 +351,8 @@ test("dialogs suspend browse keys, and shutdown restores the shared matcher", ()
     h.render();
     h.send("j");
     h.send("/");
-    h.send("\x1bb");
-    assert.deepEqual(received, ["j", "/", "\x1bb"]);
+    h.send("\x1bt");
+    assert.deepEqual(received, ["j", "/", "\x1bt"]);
     overlay.hide();
     h.render();
     h.tui.scrollBy(-10);
@@ -292,7 +361,6 @@ test("dialogs suspend browse keys, and shutdown restores the shared matcher", ()
     h.send("g");
     assert.equal(h.tui.viewportTop, top, "dialog focus loss clears the gg prefix");
     h.send("q");
-    h.send("\x1b");
     h.send("\x1b");
     assert.equal(h.interrupts, 1);
   } finally { h.close(); }
@@ -336,20 +404,25 @@ test("unfinished commands and Visual selections cannot be suspended into browse"
     h.send("words");
     h.send("\x1b");
     h.send("d");
-    h.send("\x1bb");
+    h.send("\x1bt");
     assert.equal(capability(h).pending, "d");
     assert.notEqual(h.statuses.get("vim-mode"), "BROWSE");
     h.send("\x1b");
     h.send("v");
-    h.send("\x1bb");
+    h.send("\x1bt");
     assert.equal(capability(h).mode, "visual");
-    assert.equal(h.notifications.length, 2);
+    h.send("\x1b");
+    h.send("R");
+    h.send("\x1bt");
+    assert.equal(capability(h).mode, "replace");
+    assert.equal(h.notifications.length, 3);
+    assert.equal(h.interrupts, 0);
   } finally { h.close(); }
 });
 
 test("a later keybinding wrapper can retain an inert navigation matcher after shutdown", () => {
   const h = harness();
-  h.send("\x1bb");
+  h.send("\x1bt");
   const navigationMatches = h.keys.matches;
   assert.equal(navigationMatches("J", "tui.altScreen.nextPrompt"), true);
   const later = function (data, action) { return navigationMatches.call(this, data, action); };
