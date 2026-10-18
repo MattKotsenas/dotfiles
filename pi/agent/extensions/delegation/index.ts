@@ -9,6 +9,7 @@ import {
 
 import { getParentCredentials, inheritParentAuth } from "./auth.ts";
 import { trackModelRefreshes } from "./model-refresh.ts";
+import { usageSince } from "./usage.ts";
 
 const parameters = Type.Object({
   prompt: Type.String({ description: "Task for a new child, or the next prompt for an existing child." }),
@@ -21,9 +22,31 @@ const parameters = Type.Object({
 const resultSchema = Type.Object({
   content: Type.Array(Type.Object({ type: Type.Literal("text"), text: Type.String() })),
   details: Type.Object({ handle: Type.String({ description: "Opaque handle for follow-up prompts in this parent session." }) }),
+  usage: Type.Object({
+    input: Type.Number({ description: "Input tokens excluding cache reads and writes." }),
+    output: Type.Number({ description: "Output tokens, including reasoning tokens when reported." }),
+    cacheRead: Type.Number({ description: "Input tokens read from the prompt cache." }),
+    cacheWrite: Type.Number({ description: "Input tokens written to the prompt cache." }),
+    cacheWrite1h: Type.Optional(Type.Number({ description: "Subset of cacheWrite with one-hour retention. Omitted when not reported." })),
+    reasoning: Type.Optional(Type.Number({ description: "Subset of output used for reasoning. Omitted when not reported." })),
+    totalTokens: Type.Number({ description: "Total tokens reported by Pi." }),
+    cost: Type.Object({
+      input: Type.Number({ description: "Estimated input cost in USD." }),
+      output: Type.Number({ description: "Estimated output cost in USD." }),
+      cacheRead: Type.Number({ description: "Estimated cache-read cost in USD." }),
+      cacheWrite: Type.Number({ description: "Estimated cache-write cost in USD." }),
+      total: Type.Number({ description: "Estimated total cost in USD." }),
+    }),
+  }, { description: "Tokens and estimated USD cost newly recorded by the child, including tool and summary usage. Follow-ups exclude already reported entries; reasoning and cacheWrite1h are subsets, not extra tokens." }),
 });
 
-type Child = { session: AgentSession; waitForRefreshes: (signal?: AbortSignal) => Promise<void>; busy: boolean };
+type Child = { session: AgentSession; waitForRefreshes: (signal?: AbortSignal) => Promise<void>; busy: boolean; reportedEntryCount: number };
+
+function reportUsage(child: Child) {
+  const usage = usageSince(child.session.sessionManager, child.reportedEntryCount);
+  child.reportedEntryCount = child.session.sessionManager.getEntryCount();
+  return usage;
+}
 
 async function close(child: Child): Promise<void> {
   await child.session.abort();
@@ -62,7 +85,7 @@ async function start(ctx: ExtensionContext, params: {
     sessionManager: SessionManager.inMemory(cwd),
     model: selectedModel, thinkingLevel: ctx.thinkingLevel, tools: params.tools,
   });
-  const child: Child = { session, waitForRefreshes, busy: false };
+  const child: Child = { session, waitForRefreshes, busy: false, reportedEntryCount: 0 };
   try {
     await session.bindExtensions({ mode: ctx.mode, ...(ctx.hasUI ? { uiContext: ctx.ui } : {}) });
     const model = modelRuntime.getModel(provider, modelId);
@@ -115,12 +138,18 @@ export default function delegation(pi: ExtensionAPI): void {
         const result = {
           content: [{ type: "text" as const, text: child.session.getLastAssistantText() ?? "" }],
           details: { handle },
+          usage: { ...reportUsage(child) },
         };
         return { ...result, structuredContent: result };
       } catch (error) {
         children.delete(handle);
-        await close(child);
-        throw error;
+        try { await close(child); }
+        catch (closeError) { error = closeError; }
+        return {
+          content: [{ type: "text" as const, text: error instanceof Error ? error.message : String(error) }],
+          details: {}, isError: true,
+          usage: reportUsage(child),
+        };
       } finally {
         signal?.removeEventListener("abort", abort);
         child.busy = false;

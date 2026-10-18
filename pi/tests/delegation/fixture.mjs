@@ -11,7 +11,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const entry = resolve(here, "../../agent/extensions/delegation/index.ts");
 const text = (message) => message.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
 
-export async function fixture(t, { systemPrompt = "Execute the supplied codemode script.", tools } = {}) {
+export async function fixture(t, { systemPrompt = "Execute the supplied codemode script.", tools, providerModule = join(here, "provider.mjs") } = {}) {
   const root = await mkdtemp(join(tmpdir(), "pi-delegation-acceptance-"));
   const agentDir = join(root, "agent");
   const cwd = join(root, "workspace");
@@ -52,7 +52,7 @@ export async function fixture(t, { systemPrompt = "Execute the supplied codemode
     retry: { enabled: false }, cacheWarming: "off",
   }));
   await writeFile(join(agentDir, "extensions/acceptance-provider.ts"),
-    `export { default } from ${JSON.stringify(pathToFileURL(join(here, "provider.mjs")).href)};\n`);
+    `export { default } from ${JSON.stringify(pathToFileURL(providerModule).href)};\n`);
   const settingsManager = sdk.SettingsManager.create(cwd, agentDir);
   const resourceLoader = new sdk.DefaultResourceLoader({
     cwd, agentDir, settingsManager,

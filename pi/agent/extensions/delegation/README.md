@@ -38,6 +38,13 @@ const next = await tools.delegate({
 ```
 
 Text content contains the answer; `details.handle` identifies the child conversation.
+`usage` reports newly recorded child tokens and estimated USD cost in Pi's native
+format. Follow-ups exclude previously reported entries and pick up usage recorded
+since the last result. Charges recorded after the final call remain unreported.
+Pi adds this usage to the outer codemode result and the parent's totals, including when the script fails.
+Failed or cancelled child calls retain recorded usage and still reject in codemode.
+Only usage recorded by Pi is included; a provider may bill requests without reporting usage.
+
 A child starts with the parent's selected provider/model unless `provider` or `model`
 is supplied. Omitting `systemPrompt` or `tools` uses Pi discovery and settings.
 Project discovery respects the parent's trust decision. Child UI requests use the
@@ -46,10 +53,9 @@ parent's available UI context.
 > [!WARNING]
 > Follow-up fields beyond `handle` and `prompt` are not supported yet.
 >
-> Completed-conversation restoration, parent rewind and incremental usage accounting
-> are not supported yet. Handles advance the same conversation and last until parent
-> reload or exit. Broader cancellation and policy validation and real-provider smoke
-> tests remain outstanding.
+> Completed-conversation restoration and parent rewind are not supported yet.
+> Handles advance the same conversation and last until parent reload or exit.
+> Broader cancellation and policy validation remain outstanding.
 
 Concurrent calls to the same child are rejected. A failed call closes the child and
 invalidates its handle. Parent shutdown closes its children.
@@ -91,4 +97,4 @@ that the extension works through the interfaces its callers use.
 SDK compatibility tests exercise the adapter directly to catch changes in Pi's
 private behavior. Separate workers let SDK background work finish before fixture
 files are deleted. All tests use isolated configuration and synthetic credentials;
-real-provider compatibility requires an opt-in smoke test.
+live use provides additional evidence about provider compatibility.
