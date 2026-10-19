@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -22,6 +22,7 @@ export async function fixture(
     tools,
     providerModule = join(here, "provider.mjs"),
     persisted = false,
+    discoverDelegation = false,
   } = {},
 ) {
   const root = await mkdtemp(join(tmpdir(), "pi-delegation-acceptance-"));
@@ -54,6 +55,13 @@ export async function fixture(
   delete process.env.PI_SESSION_FILE;
   delete process.env.PI_SESSION_ID;
   await mkdir(join(agentDir, "extensions"), { recursive: true });
+  const discoveredDirectory = join(agentDir, "extensions/delegation");
+  if (discoverDelegation) {
+    await mkdir(discoveredDirectory);
+    for (const file of await readdir(dirname(entry))) {
+      if (file.endsWith(".ts")) await symlink(join(dirname(entry), file), join(discoveredDirectory, file), "file");
+    }
+  }
   await mkdir(cwd);
   const key = `synthetic-${randomUUID()}`;
   const authPath = join(agentDir, "auth.json");
@@ -65,8 +73,8 @@ export async function fixture(
   await writeFile(
     join(agentDir, "settings.json"),
     JSON.stringify({
-      extensions: [entry],
-      defaultTools: ["codemode"],
+      extensions: discoverDelegation ? [] : [entry],
+      defaultTools: discoverDelegation ? ["+codemode"] : ["codemode"],
       compaction: { enabled: false },
       retry: { enabled: false },
       cacheWarming: "off",
@@ -92,8 +100,10 @@ export async function fixture(
   const loaded = resourceLoader.getExtensions();
   assert.deepEqual(loaded.errors, [], "extension files must load successfully");
   assert(
-    loaded.extensions.some((extension) => resolve(extension.path) === entry),
-    "the configured delegation entry must load",
+    loaded.extensions.some(
+      (extension) => resolve(extension.path) === (discoverDelegation ? join(discoveredDirectory, "index.ts") : entry),
+    ),
+    "the delegation entry must load",
   );
   const modelRuntime = await sdk.ModelRuntime.create({ authPath, modelsPath: null, refreshOnCreate: false });
   ({ session: parent } = await sdk.createAgentSession({

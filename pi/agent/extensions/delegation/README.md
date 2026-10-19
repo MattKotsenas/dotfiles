@@ -4,25 +4,6 @@
 Call it through codemode as `tools.delegate(...)`. Each child has its own
 conversation, extensions, provider setup, policy hooks, tools and virtual router.
 
-## Enable
-
-Pi discovers this directory when the dotfiles installer links it under
-`~/.pi/agent/extensions`. To keep it disabled by default, add this exclusion to
-that agent directory's `settings.json`:
-
-```json
-{ "extensions": ["-./extensions/delegation/index.ts"] }
-```
-
-Explicit command-line loading enables it for one Pi invocation. From this repository:
-
-```sh
-pi -e ./pi/agent/extensions/delegation/index.ts
-```
-
-`pi config` also manages extension exclusions. Use `/reload` after changing settings
-in a running session.
-
 ## Use
 
 ```js
