@@ -91,6 +91,23 @@ type Child = {
 
 export default function delegation(pi: ExtensionAPI): void {
   const children = new Map<string, Child>();
+  let ready = true;
+  const assertReady = () => {
+    if (!ready) throw new Error("Delegation is restoring parent branch state; reload if restoration failed");
+  };
+  const closeChildren = async () => {
+    const closing = [...children.values()];
+    children.clear();
+    for (const child of closing) child.operation?.stop.abort();
+    const closed = await Promise.allSettled(
+      closing.map(async (child) => {
+        await child.operation?.done;
+        if (child.live) await closeChild(child.live);
+      }),
+    );
+    const errors = closed.flatMap((result) => (result.status === "rejected" ? [result.reason] : []));
+    if (errors.length) throw new AggregateError(errors, errors.map(String).join("; "));
+  };
   const save = (child: Child) => {
     if (child.live) {
       const session = child.live.session;
@@ -107,17 +124,19 @@ export default function delegation(pi: ExtensionAPI): void {
     children.clear();
     for (const [handle, record] of restoreChildren(ctx)) children.set(handle, { record });
   });
-  pi.on("session_shutdown", async () => {
-    const closing = [...children.values()];
-    children.clear();
-    for (const child of closing) child.operation?.stop.abort();
-    await Promise.all(
-      closing.map(async (child) => {
-        await child.operation?.done;
-        if (child.live) await closeChild(child.live);
-      }),
-    );
+  pi.on("session_before_tree", (_event, ctx) => {
+    if (!ready || [...children.values()].some((child) => child.operation)) {
+      if (ctx.hasUI) ctx.ui.notify("Wait for delegation calls and cancellation cleanup before navigating", "warning");
+      return { cancel: true };
+    }
   });
+  pi.on("session_tree", async (_event, ctx) => {
+    ready = false;
+    await closeChildren();
+    for (const [handle, record] of restoreChildren(ctx)) children.set(handle, { record });
+    ready = true;
+  });
+  pi.on("session_shutdown", closeChildren);
   const namespace = { name: "delegation", description: "Run child Pi sessions and discover their conversations." };
   pi.registerTool({
     name: "delegates",
@@ -130,6 +149,7 @@ export default function delegation(pi: ExtensionAPI): void {
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     async execute(_id, _params, signal) {
       signal?.throwIfAborted();
+      assertReady();
       const entries = [...children.values()].map(({ record: { handle, prompt, status } }) => ({
         handle,
         prompt,
@@ -153,6 +173,7 @@ export default function delegation(pi: ExtensionAPI): void {
     outputSchema: resultSchema,
     async execute(_id, params, signal, _onUpdate, ctx) {
       signal?.throwIfAborted();
+      assertReady();
       if (
         params.handle !== undefined &&
         [params.systemPrompt, params.tools, params.provider, params.model].some((value) => value !== undefined)

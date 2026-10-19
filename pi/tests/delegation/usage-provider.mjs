@@ -79,6 +79,15 @@ export default function usageProvider(pi) {
       } else if (prompt.startsWith("Remember ")) {
         units = 7;
         response = ai.fauxAssistantMessage("REMEMBERED");
+      } else if (prompt === "History") {
+        units = 11;
+        response = ai.fauxAssistantMessage(
+          messages
+            .filter((message) => message.role === "user")
+            .map(text)
+            .filter((value) => value.startsWith("Remember "))
+            .join("; ") || "HISTORY_MISSING",
+        );
       } else if (prompt === "Recall" || prompt === "Recall again") {
         units = prompt === "Recall" ? 11 : 13;
         const remembered = messages

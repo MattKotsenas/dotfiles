@@ -20,11 +20,17 @@ export type ChildRuntime = { session: AgentSession; waitForRefreshes: (signal?: 
 
 export async function closeChild(child: ChildRuntime): Promise<void> {
   await child.session.abort();
+  const errors: string[] = [];
+  const unsubscribe = child.session.extensionRunner.onError(({ event, error }) => {
+    if (event === "session_shutdown") errors.push(error);
+  });
   try {
     await child.session.extensionRunner.emit({ type: "session_shutdown", reason: "quit" });
   } finally {
+    unsubscribe();
     child.session.dispose();
   }
+  if (errors.length) throw new Error(`Child shutdown failed: ${errors.join("; ")}`);
 }
 
 export async function startChild(

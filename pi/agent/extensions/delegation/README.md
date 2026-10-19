@@ -51,9 +51,14 @@ is supplied. Omitting `systemPrompt` or `tools` uses Pi discovery and settings.
 Project discovery respects the parent's trust decision. Child UI requests use the
 parent's available UI context.
 
-> [!WARNING]
-> Parent rewind is not supported yet. A handle can refer to child work performed
-> after the point you return to. Keep delegation opt-in until rewind is supported.
+When you switch parent branches, each child's next follow-up uses the checkpoint
+saved on that branch. Children created later on another branch are absent from
+discovery and reject follow-ups until you return to their branch. Switching branches
+never replays child work. Usage totals include work on every branch without charging
+previously reported usage again. Navigation is blocked while a delegation call or
+its cancellation cleanup is still running.
+Overlapping parent turns and navigation are unsupported
+([Pi #9154](https://github.com/earendil-works/pi/issues/9154)).
 
 Follow-ups accept only `handle` and `prompt`. Concurrent calls to the same child
 are rejected. Cancellation stops the current turn and preserves the conversation;
@@ -81,7 +86,8 @@ retries or replays work.
 Parent shutdown stops and closes child runtimes. A turn left running at exit is
 listed as `interrupted` when the parent resumes.
 
-A `--no-session` parent keeps children in memory only. Its handles end at reload or exit.
+A `--no-session` parent keeps children in memory only. Its handles end at reload,
+exit, or a completed parent tree switch. Canceled navigation preserves them.
 
 ## Authentication and compatibility
 

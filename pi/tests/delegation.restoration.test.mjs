@@ -143,7 +143,10 @@ describe("delegation conversation restoration", { concurrency: false }, () => {
       .getBranch()
       .find((entry) => entry.type === "custom" && entry.customType === "delegation.child.v1").data;
     await parent.reload();
-    sdk.SessionManager.open(record.sessionFile).appendThinkingLevelChange("high");
+    const childManager = sdk.SessionManager.open(record.sessionFile);
+    childManager.appendThinkingLevelChange("high");
+    parent.sessionManager.appendCustomEntry("delegation.child.v1", { ...record, leafId: childManager.getLeafId() });
+    await parent.reload();
     const alternate = modelRuntime.getModel("delegation-acceptance", "alternate");
     assert(alternate);
     await parent.setModel(alternate);
@@ -259,6 +262,11 @@ describe("delegation conversation restoration", { concurrency: false }, () => {
     assert.equal((await running).isError, true);
     const stopping = await list(parent);
     assert.equal(stopping[0].status, "stopping");
+    const leaf = parent.sessionManager.getLeafId();
+    const target = parent.sessionManager.getBranch()[0].id;
+    assert.notEqual(target, leaf, "navigation must attempt a different point");
+    assert.equal((await parent.navigateTree(target)).cancelled, true, "stopping cleanup must block navigation");
+    assert.equal(parent.sessionManager.getLeafId(), leaf, "a blocked tree switch must preserve the parent branch");
     const rejected = await nativeCall(parent, { handle: first.details.handle, prompt: "Recall" });
     assert.equal(rejected.isError, true);
     assert.match(rejected.content.map((b) => b.text).join("\n"), /call in progress or is stopping/);
@@ -310,7 +318,11 @@ describe("delegation conversation restoration", { concurrency: false }, () => {
     await parent.reload();
     await rm(firstFile);
     await writeFile(thirdFile, "");
-    sdk.SessionManager.open(secondFile).appendModelChange("missing-provider", "missing-model");
+    const childManager = sdk.SessionManager.open(secondFile);
+    childManager.appendModelChange("missing-provider", "missing-model");
+    const saved = records.findLast((entry) => entry.data.handle === second.details.handle).data;
+    parent.sessionManager.appendCustomEntry("delegation.child.v1", { ...saved, leafId: childManager.getLeafId() });
+    await parent.reload();
     for (const [handle, pattern] of [
       [first.details.handle, /conversation file is missing/],
       [second.details.handle, /Unknown model: missing-provider\/missing-model/],

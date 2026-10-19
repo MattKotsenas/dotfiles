@@ -54,7 +54,10 @@ export function openChild(record: ChildRecord): SessionManager {
     ids.add(entry.id);
   }
   if (record.reportedEntryCount > ledger.length || (record.leafId !== null && !ids.has(record.leafId))) throw damaged();
-  return SessionManager.open(record.sessionFile);
+  const manager = SessionManager.open(record.sessionFile);
+  if (record.leafId === null) manager.resetLeaf();
+  else manager.branch(record.leafId);
+  return manager;
 }
 
 export function createChildSession(ctx: ExtensionContext): SessionManager {
@@ -74,6 +77,14 @@ export const entryType = "delegation.child.v1";
 
 export function restoreChildren(ctx: ExtensionContext): Map<string, ChildRecord> {
   const records = new Map<string, ChildRecord>();
+  const reported = new Map<string, number>();
+  // Spending belongs to the full ledger even when conversation history rewinds.
+  for (const entry of ctx.sessionManager.getEntries()) {
+    if (entry.type !== "custom" || entry.customType !== entryType) continue;
+    const record = entry.data as ChildRecord;
+    if (record.owner !== ctx.sessionManager.getSessionId() || record.version !== 1) continue;
+    reported.set(record.sessionId, Math.max(reported.get(record.sessionId) ?? 0, record.reportedEntryCount));
+  }
   for (const entry of ctx.sessionManager.getBranch()) {
     if (entry.type !== "custom" || entry.customType !== entryType) continue;
     const record = entry.data as ChildRecord;
@@ -81,6 +92,7 @@ export function restoreChildren(ctx: ExtensionContext): Map<string, ChildRecord>
     if (record.version !== 1) throw new Error("Unsupported delegation checkpoint version");
     records.set(record.handle, {
       ...record,
+      reportedEntryCount: reported.get(record.sessionId) ?? record.reportedEntryCount,
       status: record.status === "running" || record.status === "stopping" ? "interrupted" : record.status,
     });
   }
