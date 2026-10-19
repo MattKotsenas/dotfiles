@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["agent/extensions/delegation/*.ts"]
+  "include": ["agent/extensions/delegation/*.ts", "agent/extensions/openai-quota-resume/*.ts"]
 }

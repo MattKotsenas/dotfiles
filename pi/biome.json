@@ -3,6 +3,10 @@
   "files": {
     "includes": [
       "agent/extensions/delegation/*.ts",
+      "agent/extensions/openai-quota-resume/*.ts",
+      "tests/quota-resume.acceptance.test.mjs",
+      "tests/quota-resume.pty.mjs",
+      "tests/quota-resume/**/*.mjs",
       "tests/delegation.*.test.mjs",
       "tests/delegation/**/*.mjs",
       "package.json",
