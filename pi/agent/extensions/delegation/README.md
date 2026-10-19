@@ -29,8 +29,9 @@ Only usage recorded by Pi is included; a provider may bill requests without repo
 
 A child starts with the parent's selected provider/model unless `provider` or `model`
 is supplied. Omitting `systemPrompt` or `tools` uses Pi discovery and settings.
-Project discovery respects the parent's trust decision. Child UI requests use the
-parent's available UI context.
+Project discovery respects the parent's trust decision. Child dialogs and
+notifications use the parent's available UI. Other child UI operations use Pi's
+no-op defaults and cannot overwrite the parent's display or draft.
 
 When you switch parent branches, each child's next follow-up uses the checkpoint
 saved on that branch. Children created later on another branch are absent from

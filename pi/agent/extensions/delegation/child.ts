@@ -76,7 +76,20 @@ export async function startChild(
   });
   const child: ChildRuntime = { session, waitForRefreshes };
   try {
-    await session.bindExtensions({ mode: ctx.mode, ...(ctx.hasUI ? { uiContext: ctx.ui } : {}) });
+    const ui = ctx.ui;
+    // Keep the unbound session's no-op display UI; forward only explicit user interactions.
+    const uiContext = ctx.hasUI
+      ? {
+          ...session.extensionRunner.getUIContext(),
+          select: ui.select.bind(ui),
+          confirm: ui.confirm.bind(ui),
+          input: ui.input.bind(ui),
+          editor: ui.editor.bind(ui),
+          custom: ui.custom.bind(ui),
+          notify: ui.notify.bind(ui),
+        }
+      : undefined;
+    await session.bindExtensions({ mode: ctx.mode, uiContext });
     const model = modelRuntime.getModel(provider, modelId);
     if (!model) throw new Error(`Child model is unavailable: ${provider}/${modelId}`);
     return child;
