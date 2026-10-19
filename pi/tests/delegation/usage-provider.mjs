@@ -26,6 +26,7 @@ export default function usageProvider(pi) {
       const messages = context.messages;
       const userIndex = messages.findLastIndex((message) => message.role === "user");
       const prompt = text(messages[userIndex]);
+      network.emit("request", prompt);
       let response;
       let units;
       if (prompt.startsWith("ACCEPTANCE_CODE:")) {
@@ -39,6 +40,12 @@ export default function usageProvider(pi) {
         units = read ? 5 : 3;
         response = read ? ai.fauxAssistantMessage(text(read))
           : ai.fauxAssistantMessage(ai.fauxToolCall("read", { path: "note.txt" }), { stopReason: "toolUse" });
+      } else if (prompt === "Probe directly" || prompt === "Probe through codemode") {
+        const completed = messages.slice(userIndex + 1).find((message) => message.role === "toolResult");
+        units = completed ? 5 : 3;
+        response = completed ? ai.fauxAssistantMessage(text(completed))
+          : ai.fauxAssistantMessage(prompt === "Probe directly" ? ai.fauxToolCall("probe", {})
+            : ai.fauxToolCall("codemode", { code: 'text(await tools.probe({}));' }), { stopReason: "toolUse" });
       } else if (prompt.startsWith("Remember ")) {
         units = 7;
         response = ai.fauxAssistantMessage("REMEMBERED");

@@ -42,7 +42,7 @@ Text content contains the answer; `details.handle` identifies the child conversa
 format. Follow-ups exclude previously reported entries and pick up usage recorded
 since the last result. Charges recorded after the final call remain unreported.
 Pi adds this usage to the outer codemode result and the parent's totals, including when the script fails.
-Failed or cancelled child calls retain recorded usage and still reject in codemode.
+Failed or cancelled child calls still reject in codemode.
 Only usage recorded by Pi is included; a provider may bill requests without reporting usage.
 
 A child starts with the parent's selected provider/model unless `provider` or `model`
@@ -55,7 +55,6 @@ parent's available UI context.
 >
 > Completed-conversation restoration and parent rewind are not supported yet.
 > Handles advance the same conversation and last until parent reload or exit.
-> Broader cancellation and policy validation remain outstanding.
 
 Concurrent calls to the same child are rejected. A failed call closes the child and
 invalidates its handle. Parent shutdown closes its children.
