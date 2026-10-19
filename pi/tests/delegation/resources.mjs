@@ -60,24 +60,47 @@ export async function inheritingSession(t, parent, { modelsPath, ...options }) {
   return bindSession(t, await inheritingRuntime(parent, modelsPath), options);
 }
 
-async function bindSession(t, { runtime: modelRuntime, waitForRefreshes }, { provider, extensionFactories = [], tools = [], systemPrompt }) {
+async function bindSession(
+  t,
+  { runtime: modelRuntime, waitForRefreshes },
+  { provider, extensionFactories = [], tools = [], systemPrompt },
+) {
   const root = await mkdtemp(join(fixtures, "session-"));
   const settingsManager = sdk.SettingsManager.inMemory({
-    compaction: { enabled: false }, retry: { enabled: false }, cacheWarming: "off", defaultTools: [],
+    compaction: { enabled: false },
+    retry: { enabled: false },
+    cacheWarming: "off",
+    defaultTools: [],
   });
   const resourceLoader = new sdk.DefaultResourceLoader({
-    cwd: root, agentDir: root, settingsManager,
-    noExtensions: true, noSkills: true, noThemes: true, noPromptTemplates: true, noContextFiles: true,
-    extensionFactories: [(pi) => pi.registerProvider(provider), ...extensionFactories], systemPrompt,
+    cwd: root,
+    agentDir: root,
+    settingsManager,
+    noExtensions: true,
+    noSkills: true,
+    noThemes: true,
+    noPromptTemplates: true,
+    noContextFiles: true,
+    extensionFactories: [(pi) => pi.registerProvider(provider), ...extensionFactories],
+    systemPrompt,
   });
   await resourceLoader.reload();
   assert.deepEqual(resourceLoader.getExtensions().errors, []);
   const { session } = await sdk.createAgentSession({
-    cwd: root, agentDir: root, modelRuntime, settingsManager, resourceLoader,
-    model: provider.getModels()[0], thinkingLevel: "off", tools,
+    cwd: root,
+    agentDir: root,
+    modelRuntime,
+    settingsManager,
+    resourceLoader,
+    model: provider.getModels()[0],
+    thinkingLevel: "off",
+    tools,
     sessionManager: sdk.SessionManager.inMemory(root),
   });
-  t.after(async () => { await session.abort(); session.dispose(); });
+  t.after(async () => {
+    await session.abort();
+    session.dispose();
+  });
   await session.bindExtensions({ mode: "print" });
   await refreshModels(modelRuntime, waitForRefreshes);
   return { session, waitForRefreshes };

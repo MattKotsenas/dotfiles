@@ -7,7 +7,9 @@ import { trackModelRefreshes } from "./auth-adapter.mjs";
 
 async function waitWhileHeld(wait, finish) {
   let completed = false;
-  const waiting = wait().then(() => { completed = true; });
+  const waiting = wait().then(() => {
+    completed = true;
+  });
   await Promise.resolve();
   assert.equal(completed, false, "waiting must include the newer, still-held refresh");
   for (const gate of finish) gate.release();
@@ -16,7 +18,9 @@ async function waitWhileHeld(wait, finish) {
 
 function barrier() {
   let release;
-  const ready = new Promise((resolve) => { release = resolve; });
+  const ready = new Promise((resolve) => {
+    release = resolve;
+  });
   return { ready, release };
 }
 
@@ -47,7 +51,12 @@ test("virtual routing checks usable credentials while a newer availability pass 
   let refresh;
   let newest;
   try {
-    runtime.registerVirtualModel({ provider: "race-router", id: "auto", thinkingLevels: ["off"], route: () => ({ model: physical, thinkingLevel: "off" }) });
+    runtime.registerVirtualModel({
+      provider: "race-router",
+      id: "auto",
+      thinkingLevels: ["off"],
+      route: () => ({ model: physical, thinkingLevel: "off" }),
+    });
     await entered[0].ready; // registration's automatic refresh is pending
     refresh = runtime.refresh({ allowNetwork: false });
     await entered[1].ready;
@@ -57,9 +66,16 @@ test("virtual routing checks usable credentials while a newer availability pass 
     const result = await refresh;
     assert.equal(result.errors.size, 0);
     assert.equal(runtime.hasConfiguredAuth("openai"), false, "superseded refresh leaves the initial snapshot in place");
-    assert.equal((await runtime.checkAuth("openai")).type, "api_key", "the credential is usable despite the empty snapshot");
+    assert.equal(
+      (await runtime.checkAuth("openai")).type,
+      "api_key",
+      "the credential is usable despite the empty snapshot",
+    );
     await waitWhileHeld(wait, finish);
-    const routed = await runtime.resolveModel(runtime.getModel("race-router", "auto"), [], { reason: "direct", thinkingLevel: "off" });
+    const routed = await runtime.resolveModel(runtime.getModel("race-router", "auto"), [], {
+      reason: "direct",
+      thinkingLevel: "off",
+    });
     assert.equal(routed.model.id, physical.id);
   } finally {
     for (const gate of finish) gate.release();
@@ -81,14 +97,21 @@ test("an awaited catalog refresh publishes its account models even when supersed
   let refresh;
   let newest;
   try {
-    runtime.registerNativeProvider({ ...fake.provider, getModels: () => models, getAllModels: () => models,
+    runtime.registerNativeProvider({
+      ...fake.provider,
+      getModels: () => models,
+      getAllModels: () => models,
       async refreshModels(context) {
         const index = calls++;
         if (index < entered.length) {
           entered[index].release();
           await finish[index].ready;
         }
-        await context.publish({ update() { models = [...fake.provider.getModels(), { ...fake.getModel(), id: "account-a" }]; } });
+        await context.publish({
+          update() {
+            models = [...fake.provider.getModels(), { ...fake.getModel(), id: "account-a" }];
+          },
+        });
       },
     });
     assert.equal(runtime.getModel(id, "account-a"), undefined);
@@ -112,14 +135,22 @@ test("an awaited catalog refresh publishes its account models even when supersed
   }
 });
 
-test("cancellation stops waiting for a registration refresh without cancelling its publication", { timeout: 10000 }, async (t) => {
+test("cancellation stops waiting for a registration refresh without cancelling its publication", {
+  timeout: 10000,
+}, async (t) => {
   const entered = barrier();
   const finish = barrier();
   t.after(() => finish.release());
   const store = new ai.InMemoryCredentialStore();
   const credentials = {
-    read: (...args) => store.read(...args), modify: (...args) => store.modify(...args), delete: (...args) => store.delete(...args),
-    async list(...args) { entered.release(); await finish.ready; return store.list(...args); },
+    read: (...args) => store.read(...args),
+    modify: (...args) => store.modify(...args),
+    delete: (...args) => store.delete(...args),
+    async list(...args) {
+      entered.release();
+      await finish.ready;
+      return store.list(...args);
+    },
   };
   const runtime = await sdk.ModelRuntime.create({ credentials, modelsPath: null, refreshOnCreate: false });
   const wait = trackModelRefreshes(runtime);
@@ -135,11 +166,18 @@ test("cancellation stops waiting for a registration refresh without cancelling i
 });
 
 test("a rejected refresh remains visible to a later waiter", async () => {
-  const runtime = await sdk.ModelRuntime.create({ credentials: new ai.InMemoryCredentialStore(), modelsPath: null, refreshOnCreate: false });
+  const runtime = await sdk.ModelRuntime.create({
+    credentials: new ai.InMemoryCredentialStore(),
+    modelsPath: null,
+    refreshOnCreate: false,
+  });
   const wait = trackModelRefreshes(runtime);
   let rejection;
   // Invalid caller input makes the real SDK reject, rather than returning its
   // normal best-effort result.errors. The tracker must not consume that rejection.
-  await assert.rejects(runtime.refresh({ providers: 42 }), (error) => { rejection = error; return error instanceof TypeError; });
+  await assert.rejects(runtime.refresh({ providers: 42 }), (error) => {
+    rejection = error;
+    return error instanceof TypeError;
+  });
   await assert.rejects(wait(), (error) => error === rejection);
 });

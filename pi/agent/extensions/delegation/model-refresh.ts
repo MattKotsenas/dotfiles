@@ -9,19 +9,24 @@ export function trackModelRefreshes(runtime: ModelRuntime): (signal?: AbortSigna
   runtime.refresh = (options) => {
     const operation = refresh(options);
     pending.add(operation);
-    operation.then(() => pending.delete(operation), (error: unknown) => {
-      pending.delete(operation);
-      rejection ??= { error };
-    });
+    operation.then(
+      () => pending.delete(operation),
+      (error: unknown) => {
+        pending.delete(operation);
+        rejection ??= { error };
+      },
+    );
     return operation;
   };
   return async (signal) => {
     signal?.throwIfAborted();
     let abort: (() => void) | undefined;
-    const cancelled = signal && new Promise<never>((_resolve, reject) => {
-      abort = () => reject(signal.reason);
-      signal.addEventListener("abort", abort, { once: true });
-    });
+    const cancelled =
+      signal &&
+      new Promise<never>((_resolve, reject) => {
+        abort = () => reject(signal.reason);
+        signal.addEventListener("abort", abort, { once: true });
+      });
     try {
       while (pending.size) {
         const current = Promise.all([...pending]);

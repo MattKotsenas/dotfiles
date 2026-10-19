@@ -12,8 +12,10 @@ describe("delegation review regressions", { concurrency: false }, () => {
       const marker = join(cwd, "project-extension-loaded");
       await mkdir(join(cwd, ".pi/extensions"), { recursive: true });
       // Added after the parent loads: only child discovery can execute this extension.
-      await writeFile(join(cwd, ".pi/extensions/marker.ts"),
-        `import { writeFileSync } from "node:fs"; export default function () { writeFileSync(${JSON.stringify(marker)}, "loaded"); }`);
+      await writeFile(
+        join(cwd, ".pi/extensions/marker.ts"),
+        `import { writeFileSync } from "node:fs"; export default function () { writeFileSync(${JSON.stringify(marker)}, "loaded"); }`,
+      );
       parent.settingsManager.setProjectTrusted(trusted);
       await assert.rejects(readFile(marker), { code: "ENOENT" });
       const result = await invoke(parent, { prompt: "Remember this word: trust-check", tools: [] });
@@ -26,18 +28,30 @@ describe("delegation review regressions", { concurrency: false }, () => {
   test("an existing child inherits a parent-only resolver replacement", { timeout: 15000 }, async (t) => {
     const { parent, modelRuntime, expectedKeyPath, authPath } = await fixture(t);
     const originalAuth = await readFile(authPath, "utf8");
-    const child = await invoke(parent, { prompt: "Remember this word: resolver-history", systemPrompt: "Prefix recalled words with MEMORY:", tools: [] });
+    const child = await invoke(parent, {
+      prompt: "Remember this word: resolver-history",
+      systemPrompt: "Prefix recalled words with MEMORY:",
+      tools: [],
+    });
     const native = modelRuntime.getRegisteredNativeProvider(providerId);
     assert(native, "the parent must have a native provider to replace");
     const replacement = "synthetic-parent-resolver-only";
     assert.notEqual(JSON.parse(originalAuth)[providerId].key, replacement);
-    modelRuntime.registerNativeProvider({ ...native, auth: { apiKey: {
-      name: "Parent replacement",
-      resolve: async () => ({ auth: { apiKey: replacement } }),
-    } } });
+    modelRuntime.registerNativeProvider({
+      ...native,
+      auth: {
+        apiKey: {
+          name: "Parent replacement",
+          resolve: async () => ({ auth: { apiKey: replacement } }),
+        },
+      },
+    });
     await modelRuntime.refresh({ allowNetwork: false });
     await writeFile(expectedKeyPath, replacement);
-    const recalled = await invoke(parent, { handle: child.details.handle, prompt: "What word did I ask you to remember?" });
+    const recalled = await invoke(parent, {
+      handle: child.details.handle,
+      prompt: "What word did I ask you to remember?",
+    });
     assert.equal(answer(recalled), "MEMORY:resolver-history");
     assert.equal(await readFile(authPath, "utf8"), originalAuth);
   });
@@ -48,9 +62,12 @@ describe("delegation review regressions", { concurrency: false }, () => {
     // A random-looking variable name is still explicitly checked, so inherited env cannot make this pass.
     const variable = "PI_DELEGATION_REGRESSION_UNSET_KEY";
     assert.equal(process.env[variable], undefined);
-    await writeFile(join(agentDir, "models.json"), JSON.stringify({
-      providers: { [providerId]: { apiKey: `$${variable}` } },
-    }));
+    await writeFile(
+      join(agentDir, "models.json"),
+      JSON.stringify({
+        providers: { [providerId]: { apiKey: `$${variable}` } },
+      }),
+    );
     await modelRuntime.setRuntimeApiKey(providerId, await readFile(expectedKeyPath, "utf8"));
     await modelRuntime.refresh({ allowNetwork: false });
     assert.match(await runCode(parent, 'text("PARENT_AUTH_WORKS");'), /PARENT_AUTH_WORKS/);

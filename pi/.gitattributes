@@ -1,0 +1,7 @@
+agent/extensions/delegation/*.ts text eol=lf
+tests/delegation.*.test.mjs text eol=lf
+tests/delegation/**/*.mjs text eol=lf
+package.json text eol=lf
+package-lock.json text eol=lf
+biome.json text eol=lf
+tsconfig.json text eol=lf

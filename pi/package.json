@@ -1,0 +1,30 @@
+{
+  "name": "dotfiles-pi-checks",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm test",
+    "lint": "biome lint --error-on-warnings .",
+    "format:check": "biome format .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/delegation.*.test.mjs"
+  },
+  "overrides": {
+    "@earendil-works/pi-agent-core": "1.2.0",
+    "@earendil-works/pi-ai": "1.2.0",
+    "@earendil-works/pi-codemode": "1.2.0",
+    "@earendil-works/pi-mcp": "1.2.0",
+    "@earendil-works/pi-tui": "1.2.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@earendil-works/pi-ai": "1.2.0",
+    "@earendil-works/pi-coding-agent": "1.2.0",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  }
+}

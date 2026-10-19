@@ -6,7 +6,9 @@ import { answer, fixture, invoke, providerId, runCode } from "./delegation/fixtu
 
 // Serial cases own and restore the agent-directory environment in this isolated test process.
 describe("delegation acceptance", { concurrency: false }, () => {
-  test("setup control: discovered provider and real codemode work without delegation", { timeout: 15000 }, async (t) => {
+  test("setup control: discovered provider and real codemode work without delegation", {
+    timeout: 15000,
+  }, async (t) => {
     const { parent } = await fixture(t);
     assert.match(await runCode(parent, 'text("HARNESS_READY");'), /HARNESS_READY/);
   });
@@ -27,7 +29,9 @@ describe("delegation acceptance", { concurrency: false }, () => {
     const children = [];
     for (const word of words) {
       const result = await invoke(parent, {
-        prompt: `Remember this word: ${word}`, systemPrompt: "Prefix recalled words with MEMORY:", tools: [],
+        prompt: `Remember this word: ${word}`,
+        systemPrompt: "Prefix recalled words with MEMORY:",
+        tools: [],
       });
       assert.equal(answer(result), "REMEMBERED");
       children.push(result.details.handle);
@@ -38,20 +42,31 @@ describe("delegation acceptance", { concurrency: false }, () => {
     }
   });
 
-  test("D3: continuing a child uses the parent's changed temporary auth and retains its conversation", { timeout: 15000 }, async (t) => {
+  test("D3: continuing a child uses the parent's changed temporary auth and retains its conversation", {
+    timeout: 15000,
+  }, async (t) => {
     const { parent, modelRuntime, authPath, expectedKeyPath } = await fixture(t);
     const word = randomUUID();
     const originalAuthFile = await readFile(authPath, "utf8");
     const first = await invoke(parent, {
-      prompt: `Remember this word: ${word}`, systemPrompt: "Prefix recalled words with MEMORY:", tools: [],
+      prompt: `Remember this word: ${word}`,
+      systemPrompt: "Prefix recalled words with MEMORY:",
+      tools: [],
     });
     assert.equal(answer(first), "REMEMBERED");
     const changedKey = `synthetic-changed-${randomUUID()}`;
     await modelRuntime.setRuntimeApiKey(providerId, changedKey);
     // The fake service now rejects the old credential, including requests from an existing child.
     await writeFile(expectedKeyPath, changedKey);
-    const result = await invoke(parent, { handle: first.details.handle, prompt: "What word did I ask you to remember?" });
+    const result = await invoke(parent, {
+      handle: first.details.handle,
+      prompt: "What word did I ask you to remember?",
+    });
     assert.equal(answer(result), `MEMORY:${word}`);
-    assert.equal(await readFile(authPath, "utf8"), originalAuthFile, "temporary credentials must not replace saved auth");
+    assert.equal(
+      await readFile(authPath, "utf8"),
+      originalAuthFile,
+      "temporary credentials must not replace saved auth",
+    );
   });
 });

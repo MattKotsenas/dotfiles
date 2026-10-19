@@ -9,9 +9,21 @@ import { modelId, providerId } from "./provider.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const entry = resolve(here, "../../agent/extensions/delegation/index.ts");
-const text = (message) => message.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
+const text = (message) =>
+  message.content
+    .filter((block) => block.type === "text")
+    .map((block) => block.text)
+    .join("\n");
 
-export async function fixture(t, { systemPrompt = "Execute the supplied codemode script.", tools, providerModule = join(here, "provider.mjs") } = {}) {
+export async function fixture(
+  t,
+  {
+    systemPrompt = "Execute the supplied codemode script.",
+    tools,
+    providerModule = join(here, "provider.mjs"),
+    persisted = false,
+  } = {},
+) {
   const root = await mkdtemp(join(tmpdir(), "pi-delegation-acceptance-"));
   const agentDir = join(root, "agent");
   const cwd = join(root, "workspace");
@@ -23,8 +35,11 @@ export async function fixture(t, { systemPrompt = "Execute the supplied codemode
     try {
       if (parent) {
         await parent.abort();
-        try { await parent.extensionRunner.emit({ type: "session_shutdown", reason: "quit" }); }
-        finally { parent.dispose(); }
+        try {
+          await parent.extensionRunner.emit({ type: "session_shutdown", reason: "quit" });
+        } finally {
+          parent.dispose();
+        }
       }
       await rm(root, { recursive: true, force: true });
     } finally {
@@ -47,29 +62,58 @@ export async function fixture(t, { systemPrompt = "Execute the supplied codemode
   await writeFile(join(cwd, "note.txt"), fileContents);
   await writeFile(authPath, JSON.stringify({ [providerId]: { type: "api_key", key } }));
   await writeFile(expectedKeyPath, key);
-  await writeFile(join(agentDir, "settings.json"), JSON.stringify({
-    extensions: [entry], defaultTools: ["codemode"], compaction: { enabled: false },
-    retry: { enabled: false }, cacheWarming: "off",
-  }));
-  await writeFile(join(agentDir, "extensions/acceptance-provider.ts"),
-    `export { default } from ${JSON.stringify(pathToFileURL(providerModule).href)};\n`);
+  await writeFile(
+    join(agentDir, "settings.json"),
+    JSON.stringify({
+      extensions: [entry],
+      defaultTools: ["codemode"],
+      compaction: { enabled: false },
+      retry: { enabled: false },
+      cacheWarming: "off",
+    }),
+  );
+  await writeFile(
+    join(agentDir, "extensions/acceptance-provider.ts"),
+    `export { default } from ${JSON.stringify(pathToFileURL(providerModule).href)};\n`,
+  );
   const settingsManager = sdk.SettingsManager.create(cwd, agentDir);
   const resourceLoader = new sdk.DefaultResourceLoader({
-    cwd, agentDir, settingsManager,
-    noSkills: true, noThemes: true, noPromptTemplates: true, noContextFiles: true,
+    cwd,
+    agentDir,
+    settingsManager,
+    noSkills: true,
+    noThemes: true,
+    noPromptTemplates: true,
+    noContextFiles: true,
     extensionFactories: [sdk.createCodemodeExtension({ models: false })],
     systemPrompt,
   });
   await resourceLoader.reload();
   const loaded = resourceLoader.getExtensions();
   assert.deepEqual(loaded.errors, [], "extension files must load successfully");
-  assert(loaded.extensions.some((extension) => resolve(extension.path) === entry), "the configured delegation entry must load");
+  assert(
+    loaded.extensions.some((extension) => resolve(extension.path) === entry),
+    "the configured delegation entry must load",
+  );
   const modelRuntime = await sdk.ModelRuntime.create({ authPath, modelsPath: null, refreshOnCreate: false });
   ({ session: parent } = await sdk.createAgentSession({
-    cwd, agentDir, modelRuntime, resourceLoader, settingsManager,
-    sessionManager: sdk.SessionManager.inMemory(cwd), thinkingLevel: "off", tools,
+    cwd,
+    agentDir,
+    modelRuntime,
+    resourceLoader,
+    settingsManager,
+    sessionManager: persisted
+      ? sdk.SessionManager.create(cwd, join(root, "sessions"))
+      : sdk.SessionManager.inMemory(cwd),
+    thinkingLevel: "off",
+    tools,
   }));
-  await parent.bindExtensions({ mode: "print" });
+  await parent.bindExtensions({
+    mode: "print",
+    onError: (error) => {
+      throw new Error(error.error);
+    },
+  });
   const refresh = await modelRuntime.refresh({ allowNetwork: false });
   assert.equal(refresh.errors.size, 0);
   const model = modelRuntime.getModel(providerId, modelId);
@@ -92,7 +136,10 @@ export async function runCode(parent, code) {
 }
 
 export async function invoke(parent, args) {
-  const output = await runCode(parent, `const result = await tools.delegate(${JSON.stringify(args)}); text("DELEGATION_RESULT:" + JSON.stringify(result));`);
+  const output = await runCode(
+    parent,
+    `const result = await tools.delegate(${JSON.stringify(args)}); text("DELEGATION_RESULT:" + JSON.stringify(result));`,
+  );
   const match = output.match(/^DELEGATION_RESULT:(.+)$/m);
   assert(match, `codemode must return the delegation result:\n${output}`);
   const result = JSON.parse(match[1]);

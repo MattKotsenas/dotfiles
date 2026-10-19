@@ -10,12 +10,14 @@ test("production auth adapter SDK compatibility", { timeout: 150000 }, async (t)
   const fixtures = await mkdtemp(join(tmpdir(), "pi-delegation-auth-"));
   try {
     const files = ["auth", "auth-lifecycle", "model-refresh"].map((name) =>
-      fileURLToPath(new URL(`./delegation/${name}.cases.mjs`, import.meta.url)));
+      fileURLToPath(new URL(`./delegation/${name}.cases.mjs`, import.meta.url)),
+    );
     const env = { ...process.env, PI_DELEGATION_AUTH_FIXTURES: fixtures, PI_OFFLINE: "1" };
     delete env.NODE_TEST_CONTEXT; // The workers are a new test run, not nested test-runner imports.
     const result = spawnSync(process.execPath, ["--test", "--test-reporter=tap", ...files], {
       env,
-      encoding: "utf8", timeout: 120000,
+      encoding: "utf8",
+      timeout: 120000,
     });
     const output = (result.stdout ?? "") + (result.stderr ?? "");
     assert.ifError(result.error);

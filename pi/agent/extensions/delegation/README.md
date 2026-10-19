@@ -21,7 +21,7 @@ pi -e ./pi/agent/extensions/delegation/index.ts
 ```
 
 `pi config` also manages extension exclusions. Use `/reload` after changing settings
-in a running session. Reload discards this extension's child handles.
+in a running session.
 
 ## Use
 
@@ -35,6 +35,7 @@ const next = await tools.delegate({
   handle: result.details.handle,
   prompt: "What did you read?",
 });
+const children = await tools.delegates({});
 ```
 
 Text content contains the answer; `details.handle` identifies the child conversation.
@@ -51,13 +52,36 @@ Project discovery respects the parent's trust decision. Child UI requests use th
 parent's available UI context.
 
 > [!WARNING]
-> Follow-up fields beyond `handle` and `prompt` are not supported yet.
->
-> Completed-conversation restoration and parent rewind are not supported yet.
-> Handles advance the same conversation and last until parent reload or exit.
+> Parent rewind is not supported yet. A handle can refer to child work performed
+> after the point you return to. Keep delegation opt-in until rewind is supported.
 
-Concurrent calls to the same child are rejected. A failed call closes the child and
-invalidates its handle. Parent shutdown closes its children.
+Follow-ups accept only `handle` and `prompt`. Concurrent calls to the same child
+are rejected. Cancellation stops the current turn and preserves the conversation;
+it does not undo completed actions. Failed turns also keep their handles.
+A child cannot accept a follow-up until its current turn and cancellation cleanup finish.
+
+`delegates` returns `details.children` with each child's `handle`, initial `prompt`, and `status`:
+`running`, `stopping`, `interrupted`, `completed`, or `failed`. Listing starts no work
+and recovers handles when a first call is interrupted before returning its answer.
+Cancellation before child creation leaves nothing to list.
+
+## Reload and resume
+
+For a persisted parent, handles survive `/reload` and exit/resume. Native child
+session files live in a directory beside the parent file, named after that file
+without `.jsonl`. Parent history stores the child references, initial configuration,
+and usage cursors. Child files stay outside Pi's parent-session continuation candidates.
+These files contain conversation data and should be protected like the parent session.
+
+A follow-up loads the conversation into a fresh child runtime using the saved
+provider/model, thinking level, and explicit prompt/tool choices. Discovery uses
+current settings, extensions, parent trust, and credentials. Missing files, malformed
+JSONL, broken checkpoints, and unavailable models fail the call. Restoration never
+retries or replays work.
+Parent shutdown stops and closes child runtimes. A turn left running at exit is
+listed as `interrupted` when the parent resumes.
+
+A `--no-session` parent keeps children in memory only. Its handles end at reload or exit.
 
 ## Authentication and compatibility
 
@@ -81,12 +105,21 @@ the private store read; the composition hook would still be needed.
 
 ## Verify
 
-From the repository root, with Node 24 and an installed Pi package:
+With Node 24, install the pinned development dependencies and run the checks:
 
-```powershell
-$env:PI_SDK_ROOT = 'C:/path/to/node_modules/@earendil-works/pi-coding-agent'
-node --test pi/tests/delegation.*.test.mjs
+```sh
+cd pi
+npm ci
+npm run check
 ```
+
+`check` runs Biome linting and format verification, strict TypeScript checking, and
+the delegation tests against Pi 1.2.0. `npm run format` applies formatting. These
+checks cover delegation source and tests; other extensions and live configuration
+are outside their scope.
+
+Set `PI_SDK_ROOT` to an installed Pi package directory to run `npm test` against
+that installation instead. Typechecking always uses the pinned development SDK.
 
 Acceptance tests exercise delegation through Pi's file loader, codemode and bundled
 CLI. A synthetic provider supplies deterministic responses and rejects incorrect

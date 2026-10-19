@@ -12,14 +12,18 @@ export default function lifecycleExtension(pi) {
       await new Promise((release) => lifecycle.emit("startup-held", release));
     }
   });
-  pi.on("session_shutdown", () => { lifecycle.emit("closed"); });
+  pi.on("session_shutdown", () => {
+    lifecycle.emit("closed");
+  });
   pi.on("tool_call", (event, ctx) => {
     if (event.toolName === "probe" && existsSync(join(ctx.cwd, "deny-probe"))) {
       return { block: true, reason: "Child policy denied probe" };
     }
   });
   pi.registerTool({
-    name: "probe", label: "Probe", description: "Write a marker and optionally wait for cancellation.",
+    name: "probe",
+    label: "Probe",
+    description: "Write a marker and optionally wait for cancellation.",
     parameters: ai.Type.Object({}),
     async execute(_id, _args, signal, _onUpdate, ctx) {
       const marker = join(ctx.cwd, "probe-effects");

@@ -15,8 +15,14 @@ test("settings can disable discovered delegation and an explicit session path ca
   await writeFile(entry, `export { default } from ${JSON.stringify(production)};\n`);
   async function load(extensions, additionalExtensionPaths = []) {
     const loader = new sdk.DefaultResourceLoader({
-      cwd: root, agentDir: root, settingsManager: sdk.SettingsManager.inMemory({ extensions }),
-      additionalExtensionPaths, noSkills: true, noThemes: true, noPromptTemplates: true, noContextFiles: true,
+      cwd: root,
+      agentDir: root,
+      settingsManager: sdk.SettingsManager.inMemory({ extensions }),
+      additionalExtensionPaths,
+      noSkills: true,
+      noThemes: true,
+      noPromptTemplates: true,
+      noContextFiles: true,
     });
     await loader.reload();
     const loaded = loader.getExtensions();
@@ -26,6 +32,10 @@ test("settings can disable discovered delegation and an explicit session path ca
   assert.equal(await load([]), true, "conventional discovery must load the extension first");
   const disabled = ["-./extensions/delegation/index.ts"];
   assert.equal(await load(disabled), false, "the settings exclusion must prevent registration");
-  assert.equal(await load(disabled, [entry]), true, "explicit CLI loading must override the exclusion for this invocation");
+  assert.equal(
+    await load(disabled, [entry]),
+    true,
+    "explicit CLI loading must override the exclusion for this invocation",
+  );
   assert.equal(await load(disabled), false, "the session override must not persist");
 });
