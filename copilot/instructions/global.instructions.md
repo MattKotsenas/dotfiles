@@ -2,10 +2,6 @@
 description: Global instructions that apply to every session. Always read.
 applyTo: '**'
 ---
-# Feedback Signals
-
-A user message beginning with `FLAG` is telemetry, not a task: it labels a rule violation in your immediately preceding turn. It may name the rule (`FLAG brevity - this recap is 3x too long`) or not; a bare `FLAG` is valid. Acknowledge in five words or fewer ("Flagged.") and carry on; do not rework, defend, or change course unless asked. The flag is fire-and-forget. It and the turn it marks are recorded as labeled adherence data.
-
 # Behavioral
 
 These bias toward caution over speed; for trivial tasks, use judgment. Project-specific instructions augment them.

@@ -1,5 +1,10 @@
 # Pi
 
+## Bookmarks
+
+[`agent/extensions/bookmarks`](agent/extensions/bookmarks/README.md) provides
+`/bookmark` capture and `/bookmarks` browsing for saved responses across sessions.
+
 ## Additional instructions
 
 `agent/extensions/additional-instructions.ts` loads external files into Pi's system-prompt
