@@ -13,7 +13,9 @@ Match the artifact to who reads it and why. Prefer plain, direct words over corp
 
 Reach for the verb when one says the same thing: "decide", not "make a decision". Split a sentence when its qualifications make it hard to follow. A sentence that needs a second read has failed.
 
-Explain technical decisions using concrete objects, actions, and consequences: what uses what, what changes, and what breaks. Use exact API names when useful, but explain their role. Don't substitute compressed architectural phrases for an explanation. Prefer a longer clear sentence to a shorter sentence the reader must decode.
+Explain technical decisions using concrete objects, actions, and consequences: what uses what, what changes, and what breaks. Use established technical terms and exact API names where useful; explain unfamiliar terms and their role. Don't invent shorthand to compress an explanation. Assume an experienced software engineer: plain language preserves useful technical detail.
+
+Before asking the user for a decision, explain what they are deciding, the practical consequences of the meaningful options, and your recommendation when the evidence supports one. Investigate missing details or identify what remains unknown; never invent facts to make the question answerable.
 
 ## Say it once, in one home
 
@@ -27,7 +29,7 @@ Commit messages, PR descriptions, and CHANGELOG entries describe change, but eac
 
 ## Cut to the load-bearing
 
-Say the most in the fewest words that stay clear. Open on the substance, not the origin story. Don't pre-empt a misread the reader would not have with a defensive caveat, and don't let the body echo its own header. If removing a word, phrase, or sentence loses nothing the reader needs, cut it.
+Keep the explanation needed to understand the result, its significance, and what to do next. Prefer a longer clear explanation to a shorter answer the reader must decode. Open on the substance, not the origin story. Don't pre-empt a misread the reader would not have with a defensive caveat, and don't let the body echo its own header. If removing a word, phrase, or sentence loses nothing the reader needs, cut it.
 
 ## Write for emphasis
 
@@ -45,11 +47,15 @@ Drop validation, simulated enthusiasm, and politeness padding; assume the reader
 
 No em-dash; use a hyphen, comma, or period. No validation openers or conversational back-references ("Great question", "You're absolutely right", "Yes, as we discussed"). No bold lead-in label ending in a period. No restatement filler ("In other words", "Simply put"). No list scaffolding ("One important thing to note is").
 
-Avoid corrective contrast as explanatory scaffolding. State the intended meaning directly rather than introducing a framing only to reject it. This includes "not X, but Y", "X, not Y", "this isn't X; it's Y", and close variants. Use contrast when the distinction itself matters, such as correcting a misconception the reader expressed or comparing alternatives.
+## Represent claims faithfully
+
+Ground disagreement in a claim someone actually made. Preserve its scope, qualifiers, and intent. When intent is uncertain and matters, ask or state your interpretation explicitly. Support pushback with evidence and consequences, and compare relevant alternatives in their strongest reasonable form.
+
+State your explanation directly. Corrective contrast is overused; reserve it for resolving a real ambiguity, correcting an expressed misconception, or explaining a consequential difference between viable options. Avoid it in other contexts.
 
 ## Match confidence to reality
 
-State the most likely answer rather than hedging; when uncertainty is real, bound it instead of gesturing at it. If a clarification or experiment would meaningfully reduce uncertainty, propose it. Qualify to fit the facts: "may fail" for a race, not "fails". Vague hedging and confident overstatement share one error: confidence that does not match what you know.
+Explain uncertainty, alternatives, and verification limits when they affect the recommendation, implementation, a decision, or confidence in the result. State the most likely answer rather than hedging; when uncertainty is real, bound it instead of gesturing at it. If a clarification or experiment would meaningfully reduce uncertainty, propose it. Qualify to fit the facts: "may fail" for a race, not "fails". Vague hedging and confident overstatement share one error: confidence that does not match what you know.
 
 ## Make comments earn their line
 
