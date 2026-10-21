@@ -346,7 +346,7 @@ properties:
       settings:
         # Program-status aggregation: https://github.com/psmux/psmux/pull/834
         Url: https://github.com/psmux/psmux.git
-        Rev: 6cfec91f612de932d2123c27d3ec676d7657748d
+        Rev: 94afedc8f666b22cdbc3e718066f7f2ca967e03b
         Crates:
           - psmux
     - resource: CargoGit/CargoGitInstall
