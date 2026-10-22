@@ -11,7 +11,7 @@ test("packaged CLI loads delegation and returns a real child file read", { timeo
   const env = { ...process.env, PI_CODING_AGENT_DIR: dirname(authPath), PI_OFFLINE: "1" };
   delete env.NODE_TEST_CONTEXT;
   const code =
-    'const result = await tools.delegate({ prompt: "Read note.txt and return its contents.", systemPrompt: "Prefix file contents with CHILD:", tools: ["read"] }); text("CLI_CHILD:" + JSON.stringify(result));';
+    'const result = await tools.delegate({ prompt: "Read note.txt and return its contents.", systemPrompt: { replace: "Prefix file contents with CHILD:" }, tools: ["read"] }); text("CLI_CHILD:" + JSON.stringify(result));';
   const result = spawnSync(
     process.execPath,
     [

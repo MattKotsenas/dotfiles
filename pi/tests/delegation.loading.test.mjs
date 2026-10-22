@@ -17,7 +17,7 @@ test("delegation is available through codemode by default", async (t) => {
   assert.match(await runCode(parent, "text((await tools.delegates({})).details.children);"), /\[\]/);
   const result = await invoke(parent, {
     prompt: "Read note.txt and return its exact contents.",
-    systemPrompt: "Prefix file contents with CHILD:",
+    systemPrompt: { replace: "Prefix file contents with CHILD:" },
     tools: ["read"],
   });
   assert.equal(answer(result), `CHILD:${fileContents}`);

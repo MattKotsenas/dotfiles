@@ -45,7 +45,7 @@ export default function usageProvider(pi) {
       const messages = context.messages;
       const userIndex = messages.findLastIndex((message) => message.role === "user");
       const prompt = text(messages[userIndex]);
-      network.emit("request", prompt, { model: model.id, reasoning: options.reasoning });
+      network.emit("request", prompt, { model: model.id, reasoning: options.reasoning }, context);
       let response;
       let units;
       if (prompt.startsWith("ACCEPTANCE_CODE:")) {

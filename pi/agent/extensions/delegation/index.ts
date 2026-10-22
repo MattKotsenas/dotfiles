@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { Type } from "@earendil-works/pi-ai";
+import { statSync } from "node:fs";
+import { resolve } from "node:path";
+import { StringEnum, Type } from "@earendil-works/pi-ai";
 import { SessionManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { closeChild, startChild, type ChildRuntime } from "./child.ts";
 import { createChildSession, entryType, openChild, restoreChildren, type ChildRecord } from "./storage.ts";
@@ -14,10 +16,30 @@ const parameters = Type.Object(
           "Opaque handle from an earlier result.details.handle. Omit to start a child. Follow-ups currently accept only handle and prompt.",
       }),
     ),
-    systemPrompt: Type.Optional(
+    cwd: Type.Optional(
       Type.String({
-        description: "Initial system prompt for a new child. Omit to use Pi's discovered prompt and instructions.",
+        minLength: 1,
+        description:
+          "Working directory for a new child. Relative paths resolve against the parent cwd; defaults to the parent cwd.",
       }),
+    ),
+    thinkingLevel: Type.Optional(
+      StringEnum(["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const, {
+        description:
+          "Thinking level for a new child. Defaults to the parent thinking level; Pi clamps to model support.",
+      }),
+    ),
+    systemPrompt: Type.Optional(
+      Type.Union(
+        [
+          Type.Object({ append: Type.String() }, { additionalProperties: false }),
+          Type.Object({ replace: Type.String() }, { additionalProperties: false }),
+        ],
+        {
+          description:
+            "Append instruction text or replace the base system prompt for a new child. Omit for Pi discovery.",
+        },
+      ),
     ),
     tools: Type.Optional(
       Type.Array(Type.String(), {
@@ -176,7 +198,9 @@ export default function delegation(pi: ExtensionAPI): void {
       assertReady();
       if (
         params.handle !== undefined &&
-        [params.systemPrompt, params.tools, params.provider, params.model].some((value) => value !== undefined)
+        [params.systemPrompt, params.tools, params.provider, params.model, params.cwd, params.thinkingLevel].some(
+          (value) => value !== undefined,
+        )
       ) {
         throw new Error("A follow-up accepts only handle and prompt");
       }
@@ -188,7 +212,9 @@ export default function delegation(pi: ExtensionAPI): void {
         const provider = params.provider ?? ctx.model.provider;
         const model = params.model ?? ctx.model.id;
         if (!ctx.modelRegistry.find(provider, model)) throw new Error(`Unknown model: ${provider}/${model}`);
-        manager = createChildSession(ctx);
+        const cwd = resolve(ctx.cwd, params.cwd ?? ".");
+        if (!statSync(cwd).isDirectory()) throw new Error(`Child cwd is not a directory: ${cwd}`);
+        manager = createChildSession(ctx, cwd);
         child = {
           record: {
             version: 1,
@@ -202,7 +228,7 @@ export default function delegation(pi: ExtensionAPI): void {
             tools: params.tools,
             provider,
             model,
-            thinkingLevel: ctx.thinkingLevel,
+            thinkingLevel: params.thinkingLevel ?? ctx.thinkingLevel,
             reportedEntryCount: 0,
             leafId: null,
           },

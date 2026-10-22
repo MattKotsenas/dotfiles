@@ -17,7 +17,7 @@ describe("delegation acceptance", { concurrency: false }, () => {
     const { parent, fileContents } = await fixture(t);
     const result = await invoke(parent, {
       prompt: "Read note.txt and return its exact contents.",
-      systemPrompt: "Prefix file contents with CHILD:",
+      systemPrompt: { replace: "Prefix file contents with CHILD:" },
       tools: ["read"],
     });
     assert.equal(answer(result), `CHILD:${fileContents}`);
@@ -30,7 +30,7 @@ describe("delegation acceptance", { concurrency: false }, () => {
     for (const word of words) {
       const result = await invoke(parent, {
         prompt: `Remember this word: ${word}`,
-        systemPrompt: "Prefix recalled words with MEMORY:",
+        systemPrompt: { replace: "Prefix recalled words with MEMORY:" },
         tools: [],
       });
       assert.equal(answer(result), "REMEMBERED");
@@ -50,7 +50,7 @@ describe("delegation acceptance", { concurrency: false }, () => {
     const originalAuthFile = await readFile(authPath, "utf8");
     const first = await invoke(parent, {
       prompt: `Remember this word: ${word}`,
-      systemPrompt: "Prefix recalled words with MEMORY:",
+      systemPrompt: { replace: "Prefix recalled words with MEMORY:" },
       tools: [],
     });
     assert.equal(answer(first), "REMEMBERED");

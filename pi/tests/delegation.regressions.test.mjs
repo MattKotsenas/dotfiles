@@ -30,7 +30,7 @@ describe("delegation review regressions", { concurrency: false }, () => {
     const originalAuth = await readFile(authPath, "utf8");
     const child = await invoke(parent, {
       prompt: "Remember this word: resolver-history",
-      systemPrompt: "Prefix recalled words with MEMORY:",
+      systemPrompt: { replace: "Prefix recalled words with MEMORY:" },
       tools: [],
     });
     const native = modelRuntime.getRegisteredNativeProvider(providerId);

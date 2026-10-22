@@ -65,7 +65,7 @@ describe("delegation conversation restoration", { concurrency: false }, () => {
         (
           await invoke(parent, {
             prompt: `Remember this word: ${word}`,
-            systemPrompt: "Prefix recalled words with MEMORY:",
+            systemPrompt: { replace: "Prefix recalled words with MEMORY:" },
             tools: [],
           })
         ).details.handle,

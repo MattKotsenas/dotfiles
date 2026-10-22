@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import {
   createAgentSession,
   createCodemodeExtension,
@@ -7,6 +7,7 @@ import {
   DefaultResourceLoader,
   getAgentDir,
   ModelRuntime,
+  ProjectTrustStore,
   SettingsManager,
   type AgentSession,
   type ExtensionContext,
@@ -42,14 +43,22 @@ export async function startChild(
   const modelId = params.model;
   const selectedModel = ctx.modelRegistry.find(provider, modelId);
   if (!selectedModel) throw new Error(`Unknown model: ${provider}/${modelId}`);
-  const cwd = ctx.cwd;
+  const cwd = sessionManager.getCwd();
   const agentDir = getAgentDir();
-  const settingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted: ctx.isProjectTrusted() });
+  const settingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted: false });
+  const trusted =
+    resolve(cwd) === resolve(ctx.cwd)
+      ? ctx.isProjectTrusted()
+      : (new ProjectTrustStore(agentDir).get(cwd) ?? settingsManager.getDefaultProjectTrust() === "always");
+  settingsManager.setProjectTrusted(trusted);
+  const append = params.systemPrompt?.append;
+  const replace = params.systemPrompt?.replace;
   const resourceLoader = new DefaultResourceLoader({
     cwd,
     agentDir,
     settingsManager,
-    systemPrompt: params.systemPrompt,
+    systemPromptOverride: replace === undefined ? undefined : () => replace,
+    appendSystemPromptOverride: append === undefined ? undefined : (base) => [...base, append],
     extensionFactories: [createCodemodeExtension(), createToolSearchExtension(), createMcpExtension()],
   });
   await resourceLoader.reload();

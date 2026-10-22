@@ -218,8 +218,8 @@ describe("delegation parent rewind", { concurrency: false }, () => {
       }); }
     `,
     );
-    await invoke(parent, { prompt: "Remember violet", tools: [], systemPrompt: "FAIL_SHUTDOWN" });
-    await invoke(parent, { prompt: "Remember amber", tools: [], systemPrompt: "SLOW_SHUTDOWN" });
+    await invoke(parent, { prompt: "Remember violet", tools: [], systemPrompt: { replace: "FAIL_SHUTDOWN" } });
+    await invoke(parent, { prompt: "Remember amber", tools: [], systemPrompt: { replace: "SLOW_SHUTDOWN" } });
     const controller = new AbortController();
     t.after(() => controller.abort());
     const entered = once(lifecycle, "slow-close-entered", { signal: controller.signal });

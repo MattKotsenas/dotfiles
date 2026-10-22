@@ -9,7 +9,7 @@ conversation, extensions, provider setup, policy hooks, tools and virtual router
 ```js
 const result = await tools.delegate({
   prompt: "Read note.txt and return its contents.",
-  systemPrompt: "Prefix file contents with CHILD:",
+  systemPrompt: { append: "Prefix file contents with CHILD:" },
   tools: ["read"],
 });
 const next = await tools.delegate({
@@ -27,11 +27,22 @@ Pi adds this usage to the outer codemode result and the parent's totals, includi
 Failed or cancelled child calls still reject in codemode.
 Only usage recorded by Pi is included; a provider may bill requests without reporting usage.
 
-A child starts with the parent's selected provider/model unless `provider` or `model`
-is supplied. Omitting `systemPrompt` or `tools` uses Pi discovery and settings.
-Project discovery respects the parent's trust decision. Child dialogs and
-notifications use the parent's available UI. Other child UI operations use Pi's
-no-op defaults and cannot overwrite the parent's display or draft.
+A child inherits the parent's provider, model, thinking level and working directory.
+Override these on a new call with `provider`, `model`, `thinkingLevel` or `cwd`.
+Pi clamps thinking levels to model support. `cwd` must be an existing directory;
+relative paths resolve against the parent's cwd. It controls project discovery and
+the child tools' working directory without changing the parent's cwd.
+
+`systemPrompt` accepts `{ append: text }` to add instructions after discovered
+addenda, or `{ replace: text }` to replace the base prompt. Both modes preserve
+project context and discovered `APPEND_SYSTEM.md` instructions. Text is literal,
+not a file path. Omitting `systemPrompt` or `tools` uses Pi discovery and settings.
+In the same cwd,
+project discovery respects the parent's trust decision. Another cwd uses its saved
+trust decision or the global `defaultProjectTrust` setting. With no saved decision,
+`ask` skips protected project resources. Child dialogs and notifications use the parent's
+available UI. Other child UI operations use Pi's no-op defaults and cannot overwrite
+the parent's display or draft.
 
 When you switch parent branches, each child's next follow-up uses the checkpoint
 saved on that branch. Children created later on another branch are absent from
@@ -61,8 +72,8 @@ and usage cursors. Child files stay outside Pi's parent-session continuation can
 These files contain conversation data and should be protected like the parent session.
 
 A follow-up loads the conversation into a fresh child runtime using the saved
-provider/model, thinking level, and explicit prompt/tool choices. Discovery uses
-current settings, extensions, parent trust, and credentials. Missing files, malformed
+cwd, provider/model, thinking level, and explicit prompt/tool choices. Discovery uses
+current settings, extensions, trust decisions, and credentials. Missing files, malformed
 JSONL, broken checkpoints, and unavailable models fail the call. Restoration never
 retries or replays work.
 Parent shutdown stops and closes child runtimes. A turn left running at exit is

@@ -15,7 +15,7 @@ export type ChildRecord = {
   status: Status;
   sessionFile?: string;
   sessionId: string;
-  systemPrompt?: string;
+  systemPrompt?: { append: string; replace?: never } | { replace: string; append?: never };
   tools?: string[];
   provider: string;
   model: string;
@@ -60,11 +60,11 @@ export function openChild(record: ChildRecord): SessionManager {
   return manager;
 }
 
-export function createChildSession(ctx: ExtensionContext): SessionManager {
+export function createChildSession(ctx: ExtensionContext, cwd: string): SessionManager {
   const parentFile = ctx.sessionManager.getSessionFile();
-  if (!parentFile) return SessionManager.inMemory(ctx.cwd);
+  if (!parentFile) return SessionManager.inMemory(cwd);
   const directory = /\.jsonl$/i.test(parentFile) ? parentFile.slice(0, -6) : `${parentFile}.children`;
-  const manager = SessionManager.create(ctx.cwd, directory, { parentSession: parentFile });
+  const manager = SessionManager.create(cwd, directory, { parentSession: parentFile });
   // Persist identity before startup so an interrupted first call is recoverable.
   mkdirSync(directory, { recursive: true });
   const file = manager.getSessionFile();
