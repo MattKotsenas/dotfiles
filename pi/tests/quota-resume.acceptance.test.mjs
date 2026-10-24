@@ -267,6 +267,56 @@ test("repeated startup does not install recovery handlers twice", { timeout: 100
   assert.equal(f.ui.notifications.length, 2);
 });
 
+test("named SSE Subscription Sharing wording recovers without structured quota details", {
+  timeout: 10000,
+}, async (t) => {
+  const f = await fixture(t);
+  await f.start(
+    quota(
+      {
+        message:
+          "The ChatGPT user has reached their Subscription Sharing usage limit. Ask the user to try again after their usage limit resets or use an API key instead.",
+        resets_in_seconds: 60,
+      },
+      "named-error",
+    ),
+    "Original task completed.",
+  );
+  f.waiting();
+  await f.tick(15 * MINUTE - 1);
+  assert.equal(f.requests.length, 1, "lost reset metadata must use the fallback interval");
+  await f.tick(1);
+  await f.done();
+  assert.equal(f.requests.length, 2);
+  assert.equal(f.requests[1].at, START + 15 * MINUTE);
+  assert.equal(f.session.getLastAssistantText(), "Original task completed.");
+  assert.deepEqual(f.requests[1].messages.filter((m) => m.role === "user").map(text), ["Finish the original task."]);
+  assert.match(f.osc.at(-1), /state=done/);
+});
+
+for (const provider of ["openai", "openai-codex", "manual-alternative"]) {
+  test(`Subscription Sharing text fallback is restricted to OpenAI errors: ${provider}`, {
+    timeout: 10000,
+  }, async (t) => {
+    const f = await fixture(t, { provider, settings: { retry: { enabled: false } } });
+    await f.start(
+      quota(
+        {
+          message:
+            provider === "openai"
+              ? "Authentication failed. The ChatGPT user has reached their Subscription Sharing usage limit."
+              : "The ChatGPT user has reached their Subscription Sharing usage limit.",
+        },
+        "normalized",
+      ),
+    );
+    await f.done();
+    assert.equal(f.requests.length, 1);
+    assert.equal(f.ui.notifications.length, 0);
+    assert.match(f.osc.at(-1), /state=error/);
+  });
+}
+
 test("Pi's named SSE error loses quota details and remains an ordinary terminal failure", {
   timeout: 10000,
 }, async (t) => {

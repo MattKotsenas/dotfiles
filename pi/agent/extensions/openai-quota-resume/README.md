@@ -5,8 +5,9 @@ on the model selected at retry time. The extension recognizes
 `subscription_sharing_usage_limit_exceeded` and legacy `openai-codex` ChatGPT usage-limit
 wording. HTTP errors, `response.failed` SSE events, and data-only top-level SSE errors
 are supported. Pi discards quota details from named `event: error` SSE frames before
-extensions see them; those frames cannot trigger recovery. API billing exhaustion and
-unrelated failures retain Pi's normal behavior.
+extensions see them; recovery falls back to the specific “The ChatGPT user has reached
+their Subscription Sharing usage limit.” message when present. API billing exhaustion
+and unrelated failures retain Pi's normal behavior.
 
 The wait uses a provider reset time plus 30 seconds when available, or probes every
 15 minutes otherwise. Legacy Codex reset hints are approximate. A static indicator

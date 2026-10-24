@@ -39,6 +39,14 @@ function quotaFailure(message: AssistantMessage): { resetAt?: number } | undefin
     }
     return subscriptionFailure(error);
   }
+  // Replace this text fallback with structured quota detection when
+  // https://github.com/earendil-works/pi/issues/11071 exposes provider
+  // error codes to turn_end handlers.
+  if (
+    message.provider === "openai" &&
+    line.startsWith("The ChatGPT user has reached their Subscription Sharing usage limit.")
+  )
+    return {};
   const code = line.split(":", 1)[0];
   if (code === QUOTA_CODE || code === `Error Code ${QUOTA_CODE}`) return {};
   if (message.provider === "openai-codex" && text.startsWith("You have hit your ChatGPT usage limit")) {
