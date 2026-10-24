@@ -5,6 +5,8 @@
       "agent/extensions/bookmarks/*.ts",
       "tests/bookmarks.test.mjs",
       "tests/bookmarks.pty.mjs",
+      "agent/extensions/tangent.ts",
+      "tests/tangent*.mjs",
       "agent/extensions/delegation/*.ts",
       "agent/extensions/openai-quota-resume/*.ts",
       "tests/quota-resume.acceptance.test.mjs",

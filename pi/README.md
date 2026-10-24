@@ -1,5 +1,32 @@
 # Pi
 
+## Tangent
+
+After the parent finishes, `/tangent [name]` forks the current branch into a
+side-by-side tmux/psmux pane and waits for input there, leaving the parent's
+conversation and position untouched. The session name defaults to `tangent`.
+Run `/tree` in the child to explore an earlier point. With the default bindings,
+Ctrl-b then `z` toggles pane zoom; Ctrl-b then `!` promotes the pane to a window.
+
+The child keeps the working directory, agent directory, session storage directory,
+model/provider, thinking level, and active tool selection. Installed extensions
+and project resources are rediscovered. Temporary startup flags, in-memory
+extension state, and unsaved credentials are not copied. Both conversations use
+the same files on disk; this is not worktree isolation.
+
+Windows launches through `pwsh -EncodedCommand` with the PowerShell profile enabled.
+New processes inherit the multiplexer's environment plus any profile assignments,
+not variables changed later in the parent's shell. Other platforms use the tmux
+pane's shell. Both launches explicitly address the parent's server and pane.
+Pi and the `tmux` executable must be on `PATH`; psmux supplies a `tmux` alias.
+
+Run `cd pi && npm run check` for component checks and
+`node pi/tests/tangent.pty.mjs` for the isolated terminal test. The terminal test
+uses a local faux provider, opens a child pane, exercises `/tree` and promotion
+to a window, and verifies
+that the child can respond without changing the parent. It prints its temporary
+artifact directory and removes its test session.
+
 ## Bookmarks
 
 [`agent/extensions/bookmarks`](agent/extensions/bookmarks/README.md) provides

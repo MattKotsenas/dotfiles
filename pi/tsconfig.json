@@ -13,6 +13,7 @@
   "include": [
     "agent/extensions/delegation/*.ts",
     "agent/extensions/openai-quota-resume/*.ts",
-    "agent/extensions/bookmarks/*.ts"
+    "agent/extensions/bookmarks/*.ts",
+    "agent/extensions/tangent.ts"
   ]
 }

@@ -11,7 +11,7 @@
     "format:check": "biome format .",
     "format": "biome format --write .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/bookmarks.test.mjs tests/delegation.*.test.mjs tests/quota-resume.acceptance.test.mjs"
+    "test": "node --test tests/bookmarks.test.mjs tests/delegation.*.test.mjs tests/quota-resume.acceptance.test.mjs tests/tangent.test.mjs"
   },
   "overrides": {
     "@earendil-works/pi-agent-core": "1.2.0",
