@@ -109,6 +109,10 @@ Commit each logical unit of work with a clear message rather than piling up unco
 operation (commit, push, rebase, merge, conflict resolution, branch delete), invoke the `git-good` skill; it
 owns the safety guardrails, including how to undo a commit.
 
+For open-source work, follow the repository's documented branch-naming convention. If none is specified, use
+`bugfix/`, `feature/`, or `refactor/` as appropriate. Do not carry employer-specific branch namespaces from
+internal work into open-source contributions.
+
 ## Be Honest About Limitations
 
 If you are genuinely stuck or uncertain, say so and re-center rather than pushing out less reliable output. But
