@@ -1,5 +1,10 @@
 # Pi
 
+## Cost
+
+[`agent/extensions/cost`](agent/extensions/cost/README.md) provides `/cost`,
+persistent checkpoints, explicit footer baselines, and tangent cost isolation.
+
 ## Tangent
 
 After the parent finishes, `/tangent [name]` forks the current branch into a

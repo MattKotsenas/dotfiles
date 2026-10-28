@@ -6,6 +6,8 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import tangent, { launchCommand } from "../agent/extensions/tangent.ts";
+import { project } from "../agent/extensions/cost/ledger.ts";
+import { COST_ENTRY, checkpointRecord, costRecord, footerRecord } from "../agent/extensions/cost/model.ts";
 
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), "pi-tangent-"));
@@ -98,9 +100,18 @@ test("forks the selected branch beside the originating pane without changing the
   );
   assert.notEqual(child.getSessionId(), f.manager.getSessionId());
   assert.equal(child.getHeader().parentSession, source);
-  assert.equal(child.getLeafId(), f.selected);
+  assert.equal(
+    child
+      .getBranch()
+      .filter((entry) => !costRecord(entry))
+      .at(-1).id,
+    f.selected,
+  );
   assert.deepEqual(
-    child.getBranch().map((entry) => entry.id),
+    child
+      .getBranch()
+      .filter((entry) => !costRecord(entry))
+      .map((entry) => entry.id),
     f.manager.getBranch().map((entry) => entry.id),
   );
   assert(
@@ -125,6 +136,64 @@ test("forks the selected branch beside the originating pane without changing the
     assert(command.includes(value), value);
   }
   assert.equal(f.notifications.at(-1).type, "info");
+});
+
+test("tangent baselines exclude inherited spending, survive tree navigation, and reset independently when nested", async (t) => {
+  const f = await fixture(t);
+  const usage = (total) => ({
+    input: 1,
+    output: 1,
+    cacheRead: 0,
+    cacheWrite: 0,
+    totalTokens: 2,
+    cost: { input: total, output: 0, cacheRead: 0, cacheWrite: 0, total },
+  });
+  const state = (manager) =>
+    project(manager.getEntries(), new Set(manager.getBranch().map((entry) => entry.id)), manager.getSessionId());
+  f.manager.appendUsage("parent", "test", "old", usage(2));
+  const inherited = checkpointRecord(f.manager.getSessionId(), "Parent point", f.manager.getEntries().at(-1).id);
+  f.manager.appendCustomEntry(COST_ENTRY, inherited);
+  f.manager.appendCustomEntry(COST_ENTRY, footerRecord(f.manager.getSessionId(), inherited.id));
+  assert.equal(state(f.manager).total, 2);
+  assert.equal(state(f.manager).footerCost, 0);
+  const source = f.manager.getSessionFile();
+  const before = await readFile(source, "utf8");
+  const parentLeaf = f.manager.getLeafId();
+  await f.run("Child baseline");
+  const childPath = (await readdir(f.root)).map((name) => join(f.root, name)).find((path) => path !== source);
+  const child = SessionManager.open(childPath, f.root);
+  assert.equal(state(child).total, 2);
+  assert.equal(state(child).footerCost, 0);
+  assert.equal(state(child).checkpoints.length, 1, "parent checkpoint is copied but not owned by child");
+  assert.equal(state(child).baseline.name, "Child baseline");
+  assert.equal(state(child).baseline.owner, child.getSessionId());
+  assert(
+    child
+      .getEntries()
+      .map(costRecord)
+      .some((entry) => entry?.id === inherited.id),
+  );
+  child.branch(f.selected);
+  child.appendUsage("cache_warm", "test", "current", usage(4));
+  assert.equal(state(child).footerCost, 4);
+  assert.equal(state(child).total, 6);
+  const childBefore = await readFile(childPath, "utf8");
+  const filesBefore = new Set(await readdir(f.root));
+  f.ctx.sessionManager = child;
+  await f.run("Nested baseline");
+  const nestedPath = join(
+    f.root,
+    (await readdir(f.root)).find((name) => !filesBefore.has(name)),
+  );
+  const nested = SessionManager.open(nestedPath, f.root);
+  assert.equal(nested.getHeader().parentSession, childPath);
+  assert.equal(state(nested).total, 4, "only the selected child path is inherited");
+  assert.equal(state(nested).footerCost, 0);
+  assert.equal(state(nested).baseline.owner, nested.getSessionId());
+  assert.equal(state(nested).baseline.name, "Nested baseline");
+  assert.equal(await readFile(source, "utf8"), before);
+  assert.equal(await readFile(childPath, "utf8"), childBefore);
+  assert.equal(f.manager.getLeafId(), parentLeaf);
 });
 
 test("a resumed conversation retains its replacement working directory", async (t) => {

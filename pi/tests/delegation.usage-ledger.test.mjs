@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { usageSince } from "../agent/extensions/delegation/usage.ts";
+import { usageSince } from "../agent/extensions/shared/usage.ts";
 import { ai, sdk } from "./delegation/sdk.mjs";
 import { usage } from "./delegation/usage-provider.mjs";
 

@@ -5,7 +5,7 @@ import { StringEnum, Type } from "@earendil-works/pi-ai";
 import { SessionManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { closeChild, startChild, type ChildRuntime } from "./child.ts";
 import { createChildSession, entryType, openChild, restoreChildren, type ChildRecord } from "./storage.ts";
-import { usageSince } from "./usage.ts";
+import { usageSince } from "../shared/usage.ts";
 
 const parameters = Type.Object(
   {

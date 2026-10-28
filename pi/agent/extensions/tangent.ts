@@ -1,5 +1,6 @@
 import { rmSync } from "node:fs";
 import { getAgentDir, SessionManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { COST_ENTRY, checkpointRecord, footerRecord } from "./cost/model.ts";
 
 export function launchCommand(args: string[], agentDir: string, platform = process.platform): string {
   if (platform === "win32") {
@@ -29,9 +30,13 @@ export default function (pi: ExtensionAPI) {
         if (!source || !leaf) throw new Error("There is no saved conversation to fork yet.");
         const directory = ctx.sessionManager.getSessionDir();
         // Use a separate manager so extracting the selected branch cannot move the parent runtime.
-        fork = SessionManager.open(source, directory, ctx.cwd).createBranchedSession(leaf);
+        const child = SessionManager.open(source, directory, ctx.cwd);
+        fork = child.createBranchedSession(leaf);
         if (!fork) throw new Error("Could not save the tangent session.");
         const label = name.trim() || "tangent";
+        const checkpoint = checkpointRecord(child.getSessionId(), label, child.getEntries().at(-1)?.id ?? null);
+        child.appendCustomEntry(COST_ENTRY, checkpoint);
+        child.appendCustomEntry(COST_ENTRY, footerRecord(child.getSessionId(), checkpoint.id));
         const args = ["--session", fork, "--session-dir", directory, "--name", label];
         if (ctx.model) args.push("--provider", ctx.model.provider, "--model", ctx.model.id);
         args.push("--thinking", pi.getThinkingLevel());

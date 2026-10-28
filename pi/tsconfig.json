@@ -14,6 +14,9 @@
     "agent/extensions/delegation/*.ts",
     "agent/extensions/openai-quota-resume/*.ts",
     "agent/extensions/bookmarks/*.ts",
-    "agent/extensions/tangent.ts"
+    "agent/extensions/tangent.ts",
+    "agent/extensions/compact-footer.ts",
+    "agent/extensions/cost/*.ts",
+    "agent/extensions/shared/*.ts"
   ]
 }

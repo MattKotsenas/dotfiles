@@ -57,6 +57,8 @@ export async function fixture(
   await mkdir(join(agentDir, "extensions"), { recursive: true });
   const discoveredDirectory = join(agentDir, "extensions/delegation");
   if (discoverDelegation) {
+    await mkdir(join(agentDir, "extensions/shared"));
+    await symlink(resolve(dirname(entry), "../shared/usage.ts"), join(agentDir, "extensions/shared/usage.ts"), "file");
     await mkdir(discoveredDirectory);
     for (const file of await readdir(dirname(entry))) {
       if (file.endsWith(".ts")) await symlink(join(dirname(entry), file), join(discoveredDirectory, file), "file");
