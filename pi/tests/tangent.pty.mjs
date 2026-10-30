@@ -23,6 +23,11 @@ writeFileSync(
   `import { appendFileSync } from "node:fs";
 import { fauxProvider, fauxAssistantMessage } from "@earendil-works/pi-ai";
 export default function(pi) {
+  for (const [name, exposure] of [["delegate", "codemode"], ["lookup", "deferred"]]) {
+    pi.registerTool({name, label:name, description:name, exposure,
+      parameters:{type:"object", properties:{}},
+      execute:async()=>({content:[{type:"text",text:name+"-ok"}]})});
+  }
   const emit = event => appendFileSync(${JSON.stringify(eventsFile)}, JSON.stringify(event)+"\\n");
   const fake = fauxProvider({provider:"tangent-test",models:[{id:"fixture",reasoning:true}],tokensPerSecond:0});
   pi.registerProvider({...fake.provider, streamSimple(model, context, options) {
@@ -32,6 +37,7 @@ export default function(pi) {
   }});
   pi.on("session_start",(_,ctx)=>emit({type:"ready",pane:process.env.TMUX_PANE,tmux:process.env.TMUX,
     file:ctx.sessionManager.getSessionFile(),model:ctx.model?.id,thinking:pi.getThinkingLevel(),tools:pi.getActiveTools(),
+    callable:pi.getAllTools().filter(t=>t.exposure==="codemode"||t.exposure==="deferred").map(t=>t.name),
     profile:process.env.PI_CLIPBOARD_OSC52}));
 }
 `,
@@ -43,6 +49,7 @@ writeFileSync(
     defaultProvider: "tangent-test",
     defaultModel: "fixture",
     defaultThinkingLevel: "high",
+    defaultTools: ["read", "codemode"],
     cacheWarming: "off",
     compaction: { enabled: false },
     retry: { enabled: false },
@@ -137,7 +144,8 @@ try {
         "--no-context-files",
         "--no-skills",
         "--no-prompt-templates",
-        "--no-tools",
+        "--tools",
+        "read",
         "--session",
         source.getSessionFile(),
       ],
@@ -152,7 +160,8 @@ try {
   );
   assert.equal(parent.model, "fixture");
   assert.equal(parent.thinking, "high");
-  assert.deepEqual(parent.tools, []);
+  assert.deepEqual(parent.tools, ["read"]);
+  assert.deepEqual(parent.callable, []);
   const original = readFileSync(source.getSessionFile(), "utf8");
   assert.equal(events().filter((e) => e.type === "request").length, 0);
   submit(parent.pane, "/tangent O'Brien  日本語");
@@ -162,7 +171,8 @@ try {
   assert.notEqual(child.file, parent.file);
   assert.equal(child.model, parent.model);
   assert.equal(child.thinking, parent.thinking);
-  assert.deepEqual(child.tools, parent.tools);
+  assert.deepEqual(child.tools, ["read", "codemode"]);
+  assert.deepEqual(child.callable, ["delegate", "lookup"]);
   if (process.platform === "win32") assert.equal(child.profile, "1");
   const manager = SessionManager.open(child.file, join(root, "sessions"));
   assert.equal(manager.getHeader().parentSession, parent.file);

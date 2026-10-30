@@ -14,10 +14,11 @@ Run `/tree` in the child to explore an earlier point. With the default bindings,
 Ctrl-b then `z` toggles pane zoom; Ctrl-b then `!` promotes the pane to a window.
 
 The child keeps the working directory, agent directory, session storage directory,
-model/provider, thinking level, and active tool selection. Installed extensions
-and project resources are rediscovered. Temporary startup flags, in-memory
-extension state, and unsaved credentials are not copied. Both conversations use
-the same files on disk; this is not worktree isolation.
+model/provider, and thinking level. Tools follow the child's configuration, not
+the parent's runtime selection. Installed extensions and project resources are
+rediscovered. Temporary startup flags, in-memory extension state, and unsaved
+credentials are not copied. Both conversations use the same files on disk; this
+is not worktree isolation.
 
 Windows launches through `pwsh -EncodedCommand` with the PowerShell profile enabled.
 New processes inherit the multiplexer's environment plus any profile assignments,

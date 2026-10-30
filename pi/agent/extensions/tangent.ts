@@ -40,8 +40,6 @@ export default function (pi: ExtensionAPI) {
         const args = ["--session", fork, "--session-dir", directory, "--name", label];
         if (ctx.model) args.push("--provider", ctx.model.provider, "--model", ctx.model.id);
         args.push("--thinking", pi.getThinkingLevel());
-        const tools = pi.getActiveTools();
-        args.push(...(tools.length ? ["--tools", tools.join(",")] : ["--no-tools"]));
         const opened = await pi.exec(
           "tmux",
           ["-S", socket, "split-window", "-h", "-t", pane, "-c", ctx.cwd, launchCommand(args, getAgentDir())],

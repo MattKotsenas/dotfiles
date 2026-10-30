@@ -4,7 +4,15 @@ import { mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { SessionManager } from "@earendil-works/pi-coding-agent";
+import {
+  createAgentSession,
+  createCodemodeExtension,
+  DefaultResourceLoader,
+  ModelRuntime,
+  SessionManager,
+  SettingsManager,
+} from "@earendil-works/pi-coding-agent";
+import { fauxAssistantMessage, fauxProvider, fauxToolCall, InMemoryCredentialStore } from "@earendil-works/pi-ai";
 import tangent, { launchCommand } from "../agent/extensions/tangent.ts";
 import { project } from "../agent/extensions/cost/ledger.ts";
 import { COST_ENTRY, checkpointRecord, costRecord, footerRecord } from "../agent/extensions/cost/model.ts";
@@ -130,7 +138,6 @@ test("forks the selected branch beside the originating pane without changing the
     "current",
     "--thinking",
     "high",
-    "read,codemode",
     "PI_CODING_AGENT_DIR",
   ]) {
     assert(command.includes(value), value);
@@ -264,12 +271,106 @@ for (const failure of ["launch", "missing-executable"]) {
   });
 }
 
-test("an empty active tool selection remains empty in the child", async (t) => {
-  const f = await fixture(t);
-  f.pi.getActiveTools = () => [];
-  await f.run();
-  assert(commandText(f.calls[0].at(-1)).includes("--no-tools"));
-});
+for (const options of [{ tools: ["read"] }, { noTools: "all" }]) {
+  test(`tangent starts with the default toolset independent of parent overrides ${JSON.stringify(options)}`, async (t) => {
+    const f = await fixture(t);
+    const agentDir = join(f.root, "agent");
+    await mkdir(agentDir);
+    const configured = ["read", "codemode"];
+    const settingsManager = SettingsManager.inMemory({ defaultTools: configured, cacheWarming: "off" });
+    const fake = fauxProvider({ provider: "tangent-test", models: [{ id: "fixture" }], tokensPerSecond: 0 });
+    const modelRuntime = await ModelRuntime.create({
+      credentials: new InMemoryCredentialStore(),
+      modelsPath: null,
+      refreshOnCreate: false,
+    });
+    const resourceLoader = new DefaultResourceLoader({
+      cwd: f.root,
+      agentDir,
+      settingsManager,
+      noExtensions: true,
+      noSkills: true,
+      noThemes: true,
+      noPromptTemplates: true,
+      noContextFiles: true,
+      extensionFactories: [
+        createCodemodeExtension({ models: false }),
+        tangent,
+        (pi) => {
+          pi.registerProvider(fake.provider);
+          for (const [name, exposure] of [
+            ["delegate", "codemode"],
+            ["lookup", "deferred"],
+            ["inactive", "direct"],
+          ]) {
+            pi.registerTool({
+              name,
+              label: name,
+              description: name,
+              exposure,
+              defaultActive: false,
+              parameters: { type: "object", properties: {} },
+              execute: async () => ({ content: [{ type: "text", text: `${name}-ok` }] }),
+            });
+          }
+        },
+      ],
+    });
+    await resourceLoader.reload();
+    assert.deepEqual(resourceLoader.getExtensions().errors, []);
+    const open = async (overrides = {}) => {
+      const { session } = await createAgentSession({
+        cwd: f.root,
+        agentDir,
+        settingsManager,
+        modelRuntime,
+        resourceLoader,
+        sessionManager: SessionManager.inMemory(f.root),
+        ...overrides,
+      });
+      t.after(() => session.dispose());
+      await session.bindExtensions({
+        mode: "print",
+        onError: (error) => {
+          throw new Error(error.error);
+        },
+      });
+      return session;
+    };
+    const parent = await open(options);
+    assert.deepEqual(parent.getActiveToolNames(), options.tools ?? []);
+    assert.deepEqual(parent.getCallableToolNames(), options.tools ?? []);
+    assert.notDeepEqual(parent.getActiveToolNames(), configured, "the parent differs from configuration");
+    f.pi.getActiveTools = () => parent.getActiveToolNames();
+    await f.run();
+    assert.equal(f.calls.length, 1, JSON.stringify(f.notifications));
+    const command = commandText(f.calls[0].at(-1));
+    const list = /'--tools' '([^']+)'/.exec(command)?.[1];
+    const child = await open(
+      list ? { tools: list.split(",") } : command.includes("'--no-tools'") ? { noTools: "all" } : {},
+    );
+    assert.deepEqual(child.getActiveToolNames(), configured);
+    assert.deepEqual(child.getCallableToolNames(), ["read", "delegate", "lookup"]);
+    fake.setResponses([
+      fauxAssistantMessage(
+        fauxToolCall("codemode", { code: "text(await tools.delegate({})); text(await tools.lookup({}));" }),
+        { stopReason: "toolUse" },
+      ),
+      fauxAssistantMessage("Done"),
+    ]);
+    await child.setModel(modelRuntime.getModel("tangent-test", "fixture"));
+    await child.prompt("Exercise both callable tools.");
+    const result = child.messages.find((message) => message.role === "toolResult" && message.toolName === "codemode");
+    assert(result, "the scripted provider must call real codemode");
+    assert.notEqual(result.isError, true, JSON.stringify(result));
+    const output = result.content
+      .filter((block) => block.type === "text")
+      .map((block) => block.text)
+      .join("\n");
+    assert.match(output, /delegate-ok/);
+    assert.match(output, /lookup-ok/);
+  });
+}
 
 const tricky = [
   "--session",
