@@ -78,7 +78,9 @@
   "workingVibe": "technobabble",
   "workingVibeMode": "file",
   "additionalInstructions": {
-    "paths": ["~/.copilot/instructions/*.instructions.md"]
+    "paths": [
+      "~/.copilot/instructions/*.instructions.md"
+    ]
   },
   "skills": [
     "~/.copilot/installed-plugins/grove",
@@ -100,5 +102,9 @@
     "github-copilot/gpt-6.1-sol",
     "openai/gpt-6-luna",
     "openai/gpt-6.1-sol"
-  ]
+  ],
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 32768
+  }
 }
