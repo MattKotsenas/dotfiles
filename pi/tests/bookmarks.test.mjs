@@ -228,15 +228,45 @@ test("Save for reference captures a neutral bookmark", async (t) => {
   assert.equal(record.response, "Useful reference");
 });
 
-test("ordinary text becomes a neutral bookmark note", async (t) => {
-  const f = await fixture(t);
-  f.exchange("Question", "Answer");
-  await f.run("/bookmark return to this explanation");
-  const [record] = await f.records();
-  assert.equal(record.kind, "saved");
-  assert.equal(await f.storedKind(record.id), "saved");
-  assert.equal(record.note, "return to this explanation");
-});
+for (const [alias, kind] of [
+  ["good", "more"],
+  ["bad", "less"],
+]) {
+  for (const note of ["", "kept the full explanation\nincluding the edge cases"]) {
+    test(`${alias} explicitly captures ${kind} with note ${JSON.stringify(note)}`, async (t) => {
+      const f = await fixture(t);
+      assert.deepEqual(await f.records(), []);
+      const target = f.exchange("Question", "Answer with provenance");
+      await f.run(`/bookmark ${alias}${note ? ` ${note}` : ""}`);
+      const [record] = await f.records();
+      assert.equal(record.kind, kind);
+      assert.equal(await f.storedKind(record.id), kind);
+      assert.equal(record.note, note);
+      assert.equal(record.response, "Answer with provenance");
+      assert.equal(record.source.entryId, target);
+    });
+  }
+}
+
+for (const note of [
+  "return to this explanation",
+  "goodbye",
+  "badger",
+  "Good explanation",
+  "good: reference",
+  "bad, reference",
+  "this is good",
+]) {
+  test(`ordinary text remains neutral: ${note}`, async (t) => {
+    const f = await fixture(t);
+    f.exchange("Question", "Answer");
+    await f.run(`/bookmark ${note}`);
+    const [record] = await f.records();
+    assert.equal(record.kind, "saved");
+    assert.equal(await f.storedKind(record.id), "saved");
+    assert.equal(record.note, note);
+  });
+}
 
 test("existing bookmark records and the old command spelling remain usable", async (t) => {
   const f = await fixture(t);
@@ -492,7 +522,10 @@ test("fresh CLI discovery captures positive and negative examples without a mode
   const entry = new URL("../agent/extensions/bookmarks/index.ts", import.meta.url).href;
   await writeFile(join(extensionDir, "index.ts"), `export { default } from ${JSON.stringify(entry)};\n`);
   const cli = fileURLToPath(new URL("./bundle/cli.js", import.meta.resolve("@earendil-works/pi-coding-agent")));
-  for (const kind of ["more", "less"]) {
+  for (const [alias, kind] of [
+    ["good", "more"],
+    ["bad", "less"],
+  ]) {
     const run = execFile(
       process.execPath,
       [
@@ -506,7 +539,7 @@ test("fresh CLI discovery captures positive and negative examples without a mode
         "--no-context-files",
         "--session",
         f.runtime.session.sessionFile,
-        `/bookmark ${kind} captured in a fresh process`,
+        `/bookmark ${alias} captured in a fresh process`,
       ],
       { cwd: f.cwd, env: { ...process.env, PI_CODING_AGENT_DIR: f.root }, timeout: 30000 },
     );

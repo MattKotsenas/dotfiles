@@ -16,9 +16,13 @@ Direct capture skips the dialogs:
 /bookmark less invented a distinction I never made
 /bookmark more explained the timing change clearly
 /bookmark saved revisit this explanation
+/bookmark good explained the timing change clearly
+/bookmark bad invented a distinction I never made
 ```
 
-Other arguments become a neutral bookmark's note. Direct capture also works in
+`good` aliases `more`; `bad` aliases `less`. These lowercase initial tokens are
+command arguments, so they are not included in the captured note. Other arguments
+become a neutral bookmark's note. Direct capture also works in
 print, JSON, and RPC modes. Capture requires the agent to be idle and leaves the
 conversation and model context unchanged.
 
@@ -61,7 +65,8 @@ use their source references to recover context.
 
 From `pi/`, run `node --test tests/bookmarks.test.mjs` and `npm run check`.
 The tests use isolated data directories and native Pi sessions, including
-cross-session navigation and concurrent capture. They make no network requests.
+cross-session navigation, concurrent capture, and command aliases. They make no
+network requests.
 
 On Windows, `node tests/bookmarks.pty.mjs` checks the saved-response overlay and
 source navigation in a real terminal. It requires Pi, psmux, and PowerShell, uses

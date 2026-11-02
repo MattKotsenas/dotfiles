@@ -102,7 +102,7 @@ async function goToSource(bookmark: Bookmark, ctx: ExtensionCommandContext) {
 
 export function registerBookmarks(pi: ExtensionAPI, directory: string) {
   pi.registerCommand("bookmark", {
-    description: "Save an assistant response: /bookmark [more|less|saved] [note]",
+    description: "Save an assistant response: /bookmark [more|good|less|bad|saved] [note]",
     handler: async (args, ctx) => {
       try {
         if (!ctx.isIdle()) {
@@ -126,9 +126,10 @@ export function registerBookmarks(pi: ExtensionAPI, directory: string) {
         let kind: BookmarkKind = "saved";
         let note = args.trim();
         if (note) {
-          const match = /^(more|less|saved|bookmark)(?:\s+(.*))?$/s.exec(note);
+          const match = /^(more|less|saved|bookmark|good|bad)(?:\s+(.*))?$/s.exec(note);
           if (match) {
-            kind = match[1] === "bookmark" ? "saved" : (match[1] as BookmarkKind);
+            const aliases: Record<string, BookmarkKind> = { bookmark: "saved", good: "more", bad: "less" };
+            kind = aliases[match[1]] ?? (match[1] as BookmarkKind);
             note = match[2] ?? "";
           }
         } else {
