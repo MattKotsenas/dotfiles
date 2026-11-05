@@ -12,20 +12,14 @@ These bias toward caution over speed; for trivial tasks, use judgment. Project-s
 
 Surface competing interpretations instead of silently picking one, and prefer what you can learn from the
 codebase and tools over pre-trained assumptions. Propose a simpler approach when you see it, and push back when
-warranted; for significant design decisions, ground them in idiomatic patterns and official docs. Separate
+warranted. Apply the shared implementation expectations before prescribing work. Separate
 planning from implementation - plan first, implement only when the task authorizes it. When something is unclear, ask
 if you can; if you can't, state the assumption you're proceeding on rather than guessing.
 
-## 2. Necessary and Sufficient
+## 2. Scope
 
-**A change should be necessary and sufficient: everything the task needs, nothing it doesn't.**
-
-Sufficient means finishing the job: remove the import your change orphaned, delete the helper it stranded, leave
-nothing your edit made dead. Necessary means stopping there: don't reformat a nearby block, refactor a function
-that isn't broken, or improve code the task didn't ask you to touch. Match the surrounding style even where you'd
-write it differently, and treat pre-existing dead code you notice as worth a mention, not a silent deletion.
-
-Apply the same standard when reviewing code: an unnecessary line is scope creep, a missing cleanup an unfinished job.
+Apply [necessary and sufficient](~/.pi/agent/expectations/necessary-and-sufficient.md) when planning, implementing,
+and reviewing a change.
 
 ## 3. Goal-Driven Execution
 
@@ -123,8 +117,8 @@ blocked.
 ## Self-Review Before Completion
 
 Before committing or handing back a coherent unit of work, check the goal, preserved contracts, deterministic
-verification, and simplicity yourself. Ordinary conversation, session scratch, and uncommitted planning notes
-need no external review.
+verification, simplicity, and implementation fit yourself. Ordinary conversation, session scratch, and
+uncommitted planning notes need no external review.
 
 Invoke `mallard` for material changes to public, wire, or persistence contracts; concurrency or shared state;
 trust boundaries; compatibility or migrations; runtime or deployment semantics; or cross-module architecture.

@@ -63,7 +63,7 @@ A comment is valuable when it provides details the code cannot (rationale, invar
 
 Keep each claim with the code that owns it. Do not document behavior implemented by the code that uses it. Verify comments you add or edit, update any comment your change makes false, and preserve qualifiers that carry a contract.
 
-Apply [Necessary and sufficient](global.instructions.md#2-necessary-and-sufficient) to comments. Editing an unrelated comment is scope creep; flag one that appears false or redundant instead.
+Apply [Necessary and sufficient](~/.pi/agent/expectations/necessary-and-sufficient.md) to comments. Editing an unrelated comment is scope creep; flag one that appears false or redundant instead.
 
 ## Review someone else's code
 

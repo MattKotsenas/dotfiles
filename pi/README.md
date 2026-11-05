@@ -38,18 +38,19 @@ artifact directory and removes its test session.
 [`agent/extensions/bookmarks`](agent/extensions/bookmarks/README.md) provides
 `/bookmark` capture and `/bookmarks` browsing for saved responses across sessions.
 
+## Shared expectations
+
+`agent/expectations/` holds the shared principles and implementation guidance. Each file explains an expectation,
+why it matters, and the circumstances that change the judgment. Use ordinary prose; examples and headings earn
+their place when they clarify the rule. Edit the existing home of a criterion rather than copying it.
+
+`agent/reviewers/` defines review priorities and procedures. Both reviewers apply the full shared set;
+priorities direct attention rather than exclude findings. Dotbot installs both directories under `~/.pi/agent/`.
+
 ## Additional instructions
 
-`agent/extensions/additional-instructions.ts` loads external files into Pi's system-prompt
-context. Configure it in `~/.pi/agent/settings.json`:
-
-```json
-{
-  "additionalInstructions": {
-    "paths": ["~/.copilot/instructions/*.instructions.md"]
-  }
-}
-```
+`agent/extensions/additional-instructions.ts` loads the files selected by `additionalInstructions.paths` in
+`~/.pi/agent/settings.json` into Pi's system-prompt context. The configuration chooses what is loaded.
 
 Paths accept filenames or Node.js file glob patterns. `~`, `~/`, and `~\` refer to
 the current user's home; relative paths resolve from Pi's agent directory, including a

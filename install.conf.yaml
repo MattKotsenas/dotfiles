@@ -61,7 +61,6 @@
     ~/.config/kanata: kanata/**
     ~/.config/mousemaster: mousemaster/**
     ~/.copilot/instructions: copilot/instructions/**
-    ~/.copilot/agents: copilot/agents/**
     ~/.copilot/preferences.yaml: copilot/preferences.yaml
     ~/.copilot/measure-twice/config.json: copilot/measure-twice/config.json
     $LOCALAPPDATA/nvim: nvim/**

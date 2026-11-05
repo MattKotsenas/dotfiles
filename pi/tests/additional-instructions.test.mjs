@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -147,14 +147,6 @@ test("non-interactive failures go to stderr", t => {
   handler({ systemPromptOptions: { contextFiles: [] } }, { hasUI: false });
   assert.equal(errors.length, 1);
   assert.match(errors[0], /additional-instructions:.*missing/);
-});
-
-test("dotfiles configure the shared source and leave AGENTS with only Pi-specific rules", () => {
-  const settings = JSON.parse(readFileSync(new URL("../agent/settings.json", import.meta.url)));
-  assert.deepEqual(settings.additionalInstructions.paths, ["~/.copilot/instructions/*.instructions.md"]);
-  const agents = readFileSync(new URL("../agent/AGENTS.md", import.meta.url), "utf8");
-  assert.ok(!agents.includes("Read them and consider them part of the system prompt"));
-  assert.ok(agents.includes("Run named reviewers in separate Pi CLI processes"));
 });
 
 test("real Pi session keeps injected instructions through manual compaction without reinjection", async t => {

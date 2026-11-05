@@ -79,7 +79,8 @@
   "workingVibeMode": "file",
   "additionalInstructions": {
     "paths": [
-      "~/.copilot/instructions/*.instructions.md"
+      "~/.copilot/instructions/*.instructions.md",
+      "expectations/*.md"
     ]
   },
   "skills": [

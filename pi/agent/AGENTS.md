@@ -1,7 +1,7 @@
 Use `tools.delegate(...)` through codemode for subagent work instead of shelling
 out to Pi. Start named reviewers in fresh child sessions; use the returned
 `handle` and `prompt` for a targeted re-review. Read the reviewer definition from
-`~/.copilot/agents/<name>.md`. Pass its instructions as
+`~/.pi/agent/reviewers/<name>.md`. Pass its instructions as
 `systemPrompt: { append: definition }` and the assignment as `prompt`.
 On the initial call, set `model` and `thinkingLevel` from the definition and
 `provider` to the main session's provider. Set `cwd` when the assignment belongs
