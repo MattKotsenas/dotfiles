@@ -3,10 +3,15 @@
   "defaultProvider": "github-copilot",
   "defaultThinkingLevel": "medium",
   "cacheWarming": "idle",
+  "selfUpdateCommand": [
+    "volta",
+    "install",
+    "{installSpec}"
+  ],
   "defaultTools": [
     "+codemode"
   ],
-  "lastChangelogVersion": "1.2.0",
+  "lastChangelogVersion": "1.5.0",
   "packages": [
     "./extensions/powerline-chrome.ts",
     "./extensions/vim-navigation.ts",
@@ -107,5 +112,8 @@
   "compaction": {
     "enabled": true,
     "reserveTokens": 32768
+  },
+  "extensionChangelogVersions": {
+    "{\"source\":\"npm:pi-powerline-footer\",\"scope\":\"user\"}": "0.20.1"
   }
 }

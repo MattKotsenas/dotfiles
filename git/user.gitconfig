@@ -12,6 +12,9 @@
         nuke = "!f() { export GIT_ASK_YESNO=false; git clean -xdf ; git reset --hard; }; f"
 [rerere]
         enabled = true
+[filter "pi-settings"]
+        clean = "jq 'del(.deviceId)'"
+        required = true
 [pull]
         ff = only
 [stash]
