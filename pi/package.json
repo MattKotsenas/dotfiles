@@ -14,17 +14,18 @@
     "test": "node --test tests/bookmarks.test.mjs tests/delegation.*.test.mjs tests/quota-resume.acceptance.test.mjs tests/tangent.test.mjs tests/cost.*.test.mjs tests/compact-footer*.test.mjs"
   },
   "overrides": {
-    "@earendil-works/pi-agent-core": "1.2.0",
-    "@earendil-works/pi-ai": "1.2.0",
-    "@earendil-works/pi-codemode": "1.2.0",
-    "@earendil-works/pi-mcp": "1.2.0",
-    "@earendil-works/pi-tui": "1.2.0"
+    "@earendil-works/pi-agent-core": "1.5.0",
+    "@earendil-works/pi-ai": "1.5.0",
+    "@earendil-works/pi-codemode": "1.5.0",
+    "@earendil-works/pi-mcp": "1.5.0",
+    "@earendil-works/pi-tui": "1.5.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "@earendil-works/pi-ai": "1.2.0",
-    "@earendil-works/pi-coding-agent": "1.2.0",
+    "@earendil-works/pi-ai": "1.5.0",
+    "@earendil-works/pi-coding-agent": "1.5.0",
     "@types/node": "24.19.2",
+    "typebox": "1.3.27",
     "typescript": "7.0.2"
   }
 }

@@ -20,10 +20,15 @@ const children = await tools.delegates({});
 ```
 
 Text content contains the answer; `details.handle` identifies the child conversation.
-`usage` reports newly recorded child tokens and estimated USD cost in Pi's native
-format. Follow-ups exclude previously reported entries and pick up usage recorded
-since the last result. Charges recorded after the final call remain unreported.
-Pi adds this usage to the outer codemode result and the parent's totals, including when the script fails.
+`usage` reports newly recorded child tokens and USD cost in Pi's native format.
+`cost.totalFromProvider` is true only when every contributing total is provider-reported;
+false or missing means the total includes estimates. Component costs remain estimates.
+Follow-ups exclude previously reported entries and pick up usage recorded since the
+last result. Charges recorded after the final call remain unreported.
+Pi adds returned usage to the outer codemode result and the parent's totals, including
+when the script fails. Cancellation does not wait for child cleanup, so usage returned
+after the outer result is persisted is absent from parent totals. Reporting late usage
+requires an upstream API ([Pi #11224](https://github.com/earendil-works/pi/issues/11224)).
 Failed or cancelled child calls still reject in codemode.
 Only usage recorded by Pi is included; a provider may bill requests without reporting usage.
 
@@ -84,7 +89,7 @@ exit, or a completed parent tree switch. Canceled navigation preserves them.
 
 ## Authentication and compatibility
 
-The adapter supports **Pi 1.2.0** and checks its private SDK layout before use.
+The adapter supports **Pi 1.5.0** and checks its private SDK layout before use.
 Children share the parent's live credential store and use its API-key and OAuth
 methods. Temporary overrides and account changes reach existing children. Parent
 authentication failures stop child requests. Shared login and refresh writes reach
@@ -113,12 +118,17 @@ npm run check
 ```
 
 `check` runs Biome linting and format verification, strict TypeScript checking, and
-the delegation tests against Pi 1.2.0. `npm run format` applies formatting. These
-checks cover delegation source and tests; other extensions and live configuration
-are outside their scope.
+tests against the pinned Pi 1.5.0 SDK. `npm run format` applies formatting.
 
-Set `PI_SDK_ROOT` to an installed Pi package directory to run `npm test` against
-that installation instead. Typechecking always uses the pinned development SDK.
+Set `PI_SDK_ROOT` to another Pi 1.5.0 package directory to run the delegation tests
+against that installation instead:
+
+```sh
+PI_SDK_ROOT=/path/to/pi-coding-agent node --test tests/delegation.*.test.mjs
+```
+
+Typechecking always uses the pinned development SDK. Late-usage accounting tests
+are skipped for the cancellation limitation described above.
 
 Acceptance tests exercise delegation through Pi's file loader, codemode and bundled
 CLI. A synthetic provider supplies deterministic responses and rejects incorrect

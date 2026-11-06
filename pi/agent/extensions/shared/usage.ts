@@ -18,6 +18,7 @@ export function usageSince(sessionManager: Pick<SessionManager, "getEntries">, f
     totalTokens: 0,
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
   };
+  let allProviderReported = true;
   for (const entry of sessionManager.getEntries().slice(firstEntry)) {
     const usage = entryUsage(entry);
     if (!usage) continue;
@@ -27,6 +28,8 @@ export function usageSince(sessionManager: Pick<SessionManager, "getEntries">, f
     }
     for (const key of ["input", "output", "cacheRead", "cacheWrite", "total"] as const)
       total.cost[key] += usage.cost[key];
+    allProviderReported &&= usage.cost.totalFromProvider === true;
+    total.cost.totalFromProvider = allProviderReported;
   }
   return total;
 }

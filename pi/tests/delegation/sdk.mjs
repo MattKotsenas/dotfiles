@@ -11,6 +11,7 @@ const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 export const version = manifest.version;
 export const sdk = await import(pathToFileURL(join(root, manifest.exports["."].import)));
 const sdkRequire = createRequire(pathToFileURL(join(root, "package.json")));
+export const { Type } = sdkRequire("typebox");
 const aiRoot = sdkRequire.resolve
   .paths("@earendil-works/pi-ai")
   .map((path) => join(path, "@earendil-works/pi-ai"))

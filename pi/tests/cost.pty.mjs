@@ -15,7 +15,7 @@ import { costRecord } from "../agent/extensions/cost/model.ts";
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const sdkRoot = dirname(dirname(fileURLToPath(import.meta.resolve("@earendil-works/pi-coding-agent"))));
 const manifest = JSON.parse(readFileSync(join(sdkRoot, "package.json"), "utf8"));
-assert.equal(manifest.version, "1.2.0", "native lifecycle contracts are pinned to SDK 1.2.0");
+assert.equal(manifest.version, "1.5.0", "native lifecycle contracts are pinned to SDK 1.5.0");
 const root = mkdtempSync(join(tmpdir(), "pi-cost-pty-"));
 const agent = join(root, "agent");
 const workspace = join(root, "workspace");
@@ -69,7 +69,7 @@ syncBuiltinESMExports();
 // /tangent owns its launch arguments. Enforce test-only isolation at CLI entry
 // for every generation without changing the production launcher or user files.
 assert(process.argv[1]?.endsWith("cli.js"), "Expected the native Pi CLI");
-assert.equal(JSON.parse(readFileSync(resolve(dirname(process.argv[1]),"../../package.json"),"utf8")).version, "1.2.0");
+assert.equal(JSON.parse(readFileSync(resolve(dirname(process.argv[1]),"../../package.json"),"utf8")).version, "1.5.0");
 for (const key of Object.keys(process.env)) {
   if (/KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|PROXY/i.test(key)) delete process.env[key];
 }

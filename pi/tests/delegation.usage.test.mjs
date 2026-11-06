@@ -184,6 +184,7 @@ describe("delegation incremental usage", { concurrency: false }, () => {
 
   test("cancellation carries reported partial usage once and retains the conversation", {
     timeout: 20000,
+    skip: "Codemode cancellation does not wait for child cleanup; late usage reporting needs Pi #11224.",
   }, async (t) => {
     const { parent } = await setup(t);
     const first = await invoke(parent, start);

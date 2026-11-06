@@ -13,7 +13,14 @@ export const usage = (n) => ({
   cacheWrite1h: n,
   reasoning: 2 * n,
   totalTokens: 26 * n,
-  cost: { input: n / 32, output: n / 16, cacheRead: n / 64, cacheWrite: n / 128, total: (15 * n) / 128 },
+  cost: {
+    input: n / 32,
+    output: n / 16,
+    cacheRead: n / 64,
+    cacheWrite: n / 128,
+    total: (15 * n) / 128,
+    totalFromProvider: false,
+  },
 });
 const text = (message) =>
   typeof message.content === "string"

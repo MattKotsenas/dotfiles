@@ -73,10 +73,10 @@ describe("delegation system prompts", { concurrency: false }, () => {
     await writeFile(join(cwd, ".pi/APPEND_SYSTEM.md"), "PROJECT_ADDENDUM");
     const prompts = childPrompts(t);
     await invoke(parent, { prompt: "Remember violet", tools: [] });
-    assert(prompts[0].includes("You are an expert coding assistant"));
+    assert(prompts[0].includes("You are a coding assistant running inside pi"));
     await invoke(parent, { prompt: "Remember amber", tools: [], systemPrompt: { append: "REVIEWER_ROLE" } });
     assert.equal(prompts.length, 2);
-    assert(prompts[1].includes("You are an expert coding assistant"));
+    assert(prompts[1].includes("You are a coding assistant running inside pi"));
     assert(prompts[1].includes("PROJECT_ADDENDUM"));
     assert(prompts[1].includes("REVIEWER_ROLE"));
   });

@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { appendFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { ai } from "./sdk.mjs";
+import { Type } from "./sdk.mjs";
 
 export const lifecycle = new EventEmitter();
 
@@ -24,7 +24,7 @@ export default function lifecycleExtension(pi) {
     name: "probe",
     label: "Probe",
     description: "Write a marker and optionally wait for cancellation.",
-    parameters: ai.Type.Object({}),
+    parameters: Type.Object({}),
     async execute(_id, _args, signal, _onUpdate, ctx) {
       const marker = join(ctx.cwd, "probe-effects");
       appendFileSync(marker, "entered\n");

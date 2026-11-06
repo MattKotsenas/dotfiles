@@ -67,7 +67,7 @@ counted again. Unreported charges cannot be recovered from this ledger.
 
 A recorded conversation turn starts with prompt preparation and ends at
 `agent_settled`. It includes automatic compaction, tools, subagents, retries,
-steering, and queued follow-ups. Pi 1.2.0 exposes the queue kind at submission but
+steering, and queued follow-ups. Pi exposes the queue kind at submission but
 does not reliably identify it at delivery, so queued follow-ups remain in that
 turn. Idle warming and manual summaries outside a turn remain separate overhead.
 

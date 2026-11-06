@@ -159,7 +159,7 @@ describe("delegation policy and cooperative cancellation", { concurrency: false 
 
   test("late child usage reaches parent totals after codemode cancellation", {
     timeout: 20000,
-    skip: "Pi 1.2.0/1.3.0 codemode accounting race: late nested usage is lost; requires an SDK fix (upstream report pending).",
+    skip: "Codemode cancellation does not wait for child cleanup; late usage reporting needs Pi #11224.",
   }, async (t) => {
     let releaseTool, releaseCleanup;
     t.after(() => {

@@ -76,9 +76,7 @@ for (const trigger of ["user", "custom"]) {
   for (const overlaps of [false, true]) {
     test(`native ${trigger} turn retains its accepted history when started ${overlaps ? "during" : "after"} navigation`, {
       timeout: 20000,
-      skip:
-        overlaps &&
-        "Pi 1.2.0/1.3.0 allow turns to overlap navigation (#9154); parent scheduling is outside delegation.",
+      skip: overlaps && "Pi 1.5.0 allow turns to overlap navigation (#9154); parent scheduling is outside delegation.",
     }, async (t) => {
       const entered = Promise.withResolvers();
       const release = Promise.withResolvers();
