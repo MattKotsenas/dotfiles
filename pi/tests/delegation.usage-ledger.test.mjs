@@ -75,6 +75,38 @@ for (const stopReason of ["error", "aborted"]) {
   });
 }
 
+for (const [sources, expected] of [
+  [[undefined], false],
+  [[undefined, undefined], false],
+  [[true], true],
+  [[true, true], true],
+  [[false], false],
+  [[true, false], false],
+  [[false, true], false],
+  [[undefined, true], false],
+  [[true, undefined], false],
+]) {
+  test(`cost source [${sources.map((source) => source ?? "missing").join(", ")}] aggregates to ${expected}`, () => {
+    const ledger = sdk.SessionManager.inMemory();
+    assert.deepEqual(usageSince(ledger, 0), zero);
+    for (const source of sources) {
+      const message = assistant(1);
+      // Reported totals can differ from the catalog-priced components.
+      message.usage.cost.total = 2;
+      if (source === undefined) delete message.usage.cost.totalFromProvider;
+      else message.usage.cost.totalFromProvider = source;
+      assert.notEqual(message.usage.cost.total, message.usage.cost.input + message.usage.cost.output);
+      ledger.appendMessage(message);
+    }
+    const total = usageSince(ledger, 0);
+    assert.equal(total.cost.total, 2 * sources.length);
+    assert.equal(total.totalTokens, usage(sources.length).totalTokens);
+    assert.equal(total.cost.totalFromProvider, expected);
+    assert.equal(Object.hasOwn(total.cost, "totalFromProvider"), expected !== undefined);
+    assert.equal(usageSince(ledger, ledger.getEntryCount()).cost.totalFromProvider, undefined);
+  });
+}
+
 test("optional reasoning and one-hour cache splits preserve missing and explicit zero without adding tokens", () => {
   const ledger = sdk.SessionManager.inMemory();
   const withoutSplits = usage(3);

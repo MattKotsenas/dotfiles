@@ -46,7 +46,7 @@ async function fixture(
   t,
   { mode = "print", settings = {}, controls = () => {}, manager, persisted = false, oauth = false } = {},
 ) {
-  assert.equal(version, "1.2.0", "these lifecycle contracts are pinned to SDK 1.2.0");
+  assert.equal(version, "1.5.0", "these lifecycle contracts are pinned to SDK 1.5.0");
   const root = await mkdtemp(join(tmpdir(), "pi-cost-runtime-"));
   const agentDir = join(root, "agent");
   await mkdir(agentDir);

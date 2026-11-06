@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { ai } from "./sdk.mjs";
+import { ai, Type } from "./sdk.mjs";
 import { getParentCredentials } from "./auth-adapter.mjs";
 import { jsonFile, unresolvedApiKey, refreshModels, createSession, inheritingSession } from "./resources.mjs";
 
@@ -340,7 +340,7 @@ test("a key changed during a child tool reaches the next request of the same inv
           name: "rotate_key",
           label: "Rotate synthetic key",
           description: "Rotate the parent test key.",
-          parameters: ai.Type.Object({}),
+          parameters: Type.Object({}),
           async execute() {
             await parentRuntime.setRuntimeApiKey(id, "rotated-during-tool");
             service.expectedKey = "rotated-during-tool";

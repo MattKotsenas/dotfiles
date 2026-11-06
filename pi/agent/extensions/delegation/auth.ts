@@ -27,14 +27,14 @@ type Compose = (id: string, base: Provider | undefined, config: Config, extensio
 
 function unsupported(): never {
   throw new Error(
-    `Delegation auth requires the tested Pi 1.2.0 layout and a fresh, separate child runtime (running ${VERSION})`,
+    `Delegation auth requires the tested Pi 1.5.0 layout and a fresh, separate child runtime (running ${VERSION})`,
   );
 }
 
 function privateFields(owner: ModelRegistry): RegistryInternals;
 function privateFields(owner: ModelRuntime): RuntimeInternals;
 function privateFields(owner: ModelRegistry | ModelRuntime): RegistryInternals | RuntimeInternals {
-  if (VERSION !== "1.2.0") unsupported();
+  if (VERSION !== "1.5.0") unsupported();
   if (owner instanceof ModelRegistry) {
     const fields = owner as unknown as RegistryInternals;
     if (!(fields.runtime instanceof ModelRuntime)) unsupported();

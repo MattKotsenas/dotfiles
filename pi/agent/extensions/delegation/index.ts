@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { statSync } from "node:fs";
 import { resolve } from "node:path";
-import { StringEnum, Type } from "@earendil-works/pi-ai";
+import { Type } from "typebox";
 import { SessionManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { closeChild, startChild, type ChildRuntime } from "./child.ts";
 import { createChildSession, entryType, openChild, restoreChildren, type ChildRecord } from "./storage.ts";
@@ -24,7 +24,7 @@ const parameters = Type.Object(
       }),
     ),
     thinkingLevel: Type.Optional(
-      StringEnum(["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const, {
+      Type.Enum(["off", "minimal", "low", "medium", "high", "xhigh", "max"], {
         description:
           "Thinking level for a new child. Defaults to the parent thinking level; Pi clamps to model support.",
       }),
@@ -95,12 +95,15 @@ const resultSchema = Type.Object({
         output: Type.Number({ description: "Estimated output cost in USD." }),
         cacheRead: Type.Number({ description: "Estimated cache-read cost in USD." }),
         cacheWrite: Type.Number({ description: "Estimated cache-write cost in USD." }),
-        total: Type.Number({ description: "Estimated total cost in USD." }),
+        total: Type.Number({ description: "Total cost in USD, provider-reported when totalFromProvider is true." }),
+        totalFromProvider: Type.Optional(
+          Type.Boolean({ description: "True only when every contributing total is provider-reported, not estimated." }),
+        ),
       }),
     },
     {
       description:
-        "Tokens and estimated USD cost newly recorded by the child, including tool and summary usage. Follow-ups exclude already reported entries; reasoning and cacheWrite1h are subsets, not extra tokens.",
+        "Tokens and USD cost newly recorded by the child, including tool and summary usage. Follow-ups exclude already reported entries; reasoning and cacheWrite1h are subsets, not extra tokens.",
     },
   ),
 });
