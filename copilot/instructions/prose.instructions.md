@@ -33,7 +33,7 @@ Keep the explanation needed to understand the result, its significance, and what
 
 ## Write for emphasis
 
-Every artifact makes a case - even a bug comment or a commit message. Arrange it to persuade: a piece carries most weight at its opening and its close, so open on your strongest point or drive it home at the end.
+Every artifact makes a case - even a bug comment or a commit message. Its opening and close carry the most weight. Open with the behavior or outcome you want to encourage. Put supporting steps and qualifications after the reader understands the point; do not let them displace it.
 
 ## Prefer prose to lists
 
