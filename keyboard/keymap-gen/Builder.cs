@@ -235,7 +235,7 @@ public sealed class LayerBuilder(string name)
         "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
         // Common psmux / pain-control symbol bindings that are not wm-base reserved.
         // Excludes "/" (wm-base global cheatsheet) and "tab" (wm-base global).
-        ",", ".", "\\", "-", "[", "]", ";",
+        ",", ".", "\\", "-", "[", "]", ";", "'",
     ];
 
     internal IReadOnlyList<Binding> ToList() => _bindings;

@@ -157,6 +157,7 @@ Every key here forwards `Ctrl+b` (psmux prefix) then the key to the focused term
 
 | Key | Action |
 |---|---|
+| `CAP '` | macro `C-b` → `'` |
 | `CAP ,` | macro `C-b` → `,` |
 | `CAP -` | macro `C-b` → `-` |
 | `CAP .` | macro `C-b` → `.` |
