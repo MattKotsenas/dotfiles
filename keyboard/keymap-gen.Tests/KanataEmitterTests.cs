@@ -321,6 +321,19 @@ public class KanataEmitterTests
         Assert.Contains("c (macro (unmod lctl spc) c)", output);
     }
 
+    [Theory]
+    [InlineData("wm-terminal", "' (multi (macro (unmod lctl b) ') (layer-switch base-terminal))")]
+    [InlineData("wm-terminal-toggle", "' (macro (unmod lctl b) ')")]
+    public void ProductionKeymap_Apostrophe_ForwardsPsmuxWindowPrompt(string layerName, string expectedBinding)
+    {
+        var layer = ExtractLayer(
+            KanataEmitter.Emit(ProductionKeymap.Build()),
+            layerName);
+
+        Assert.Contains(expectedBinding, layer);
+        Assert.Contains("(macro (unmod lctl b) (unmod 1))", layer);
+    }
+
     [Fact]
     public void PrefixAll_CommandMatchingPrefixKey_EmitsUnmodKeyStep()
     {
