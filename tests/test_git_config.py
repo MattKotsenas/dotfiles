@@ -77,6 +77,20 @@ class GitConfigTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn("password=", result.stdout)
 
+    def test_fsmonitor_is_opt_in_per_shared_repository(self):
+        self.assertEqual(self.git("config", "--bool", "core.fsmonitor", cwd=self.repo).stdout.strip(), "false")
+        self.assertEqual(self.git("config", "--bool", "core.untrackedCache", cwd=self.repo).stdout.strip(), "true")
+        self.git("-c", "user.name=Config Fixture", "-c", "user.email=fixture@example.invalid",
+                 "commit", "--quiet", "--allow-empty", "-m", "Fixture", cwd=self.repo)
+        shared = self.home / "shared.git"
+        self.git("clone", "--bare", "--quiet", str(self.repo), str(shared))
+        self.git("--git-dir", str(shared), "config", "--local", "core.fsmonitor", "true")
+        worktree = self.home / "shared-worktree"
+        self.git("--git-dir", str(shared), "worktree", "add", "--quiet", str(worktree))
+        self.addCleanup(self.git, "fsmonitor--daemon", "stop", cwd=worktree)
+        self.assertEqual(self.git("config", "--bool", "core.fsmonitor", cwd=worktree).stdout.strip(), "true")
+        self.assertEqual(self.git("config", "--bool", "core.fsmonitor", cwd=self.repo).stdout.strip(), "false")
+
     def test_work_configuration_is_ignored(self):
         shutil.copyfile(SOURCE / ".gitignore", self.repo / ".gitignore")
         self.git("check-ignore", "git/user.ghe.gitconfig", cwd=self.repo)

@@ -21,7 +21,7 @@
         showIncludeUntracked = true
 [core]
         excludesFile = ~/.config/git/ignore
-        fsmonitor = true
+        fsmonitor = false
         untrackedcache = true
         editor = "nvim -f"
         longpaths = true
