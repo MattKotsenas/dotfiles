@@ -100,10 +100,13 @@ test("Pi interruption cancels the wait and recovery permanently", { timeout: 100
   assert.match(f.osc.at(-1), /state=idle/);
 });
 
-test("interrupt then reload cannot resurrect recovery", { timeout: 10000 }, async (t) => {
+test("reload requires interruption first and cannot resurrect recovery", { timeout: 10000 }, async (t) => {
   const f = await fixture(t);
   await f.start(quota(), "Must never run.");
   f.waiting();
+  await assert.rejects(f.session.reload(), /Wait for the current response to finish before reloading/);
+  f.waiting();
+  assert.equal(f.requests.length, 1);
   await f.session.abort();
   await f.done();
   await f.session.reload();
@@ -328,11 +331,11 @@ test("Pi's named SSE error loses quota details and remains an ordinary terminal 
   assert.match(f.osc.at(-1), /state=error/);
 });
 
-test("runtime shutdown while waiting cancels recovery before replacing extensions", { timeout: 10000 }, async (t) => {
+test("runtime shutdown while waiting cancels recovery", { timeout: 10000 }, async (t) => {
   const f = await fixture(t);
   await f.start(quota(), "Must never run.");
   f.waiting();
-  await f.session.reload();
+  await f.session.extensionRunner.emit({ type: "session_shutdown", reason: "quit" });
   await f.done();
   await f.tick(6 * HOUR);
   assert.equal(f.requests.length, 1);

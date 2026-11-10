@@ -74,9 +74,13 @@ async function parentSession(t, beforeTree) {
 
 for (const trigger of ["user", "custom"]) {
   for (const overlaps of [false, true]) {
-    test(`native ${trigger} turn retains its accepted history when started ${overlaps ? "during" : "after"} navigation`, {
+    const name =
+      overlaps && trigger === "user"
+        ? "native user turn rejects during navigation and retains its accepted retry"
+        : `native ${trigger} turn retains its accepted history when started ${overlaps ? "during" : "after"} navigation`;
+    test(name, {
       timeout: 20000,
-      skip: overlaps && "Pi 1.5.0 allow turns to overlap navigation (#9154); parent scheduling is outside delegation.",
+      skip: overlaps && trigger === "custom" && "Pi 1.5.2 still allows custom turns to overlap navigation (#9154).",
     }, async (t) => {
       const entered = Promise.withResolvers();
       const release = Promise.withResolvers();
@@ -96,10 +100,16 @@ for (const trigger of ["user", "custom"]) {
             : message.content.some((block) => block.type === "text" && block.text === marker),
         );
       assert.equal(contains(parent.messages), false);
+      const originalLeaf = parent.sessionManager.getLeafId();
       const navigation = parent.navigateTree(target);
       await entered.promise;
       try {
-        if (!overlaps) {
+        if (overlaps && trigger === "user") {
+          await assert.rejects(parent.prompt(marker), /Cannot submit a prompt while compaction is in progress/);
+          assert.equal(parent.sessionManager.getLeafId(), originalLeaf, "the rejected turn must not change the branch");
+          assert.equal(contains(parent.messages), false, "the rejected turn must not enter history");
+        }
+        if (!overlaps || trigger === "user") {
           release.resolve();
           assert.equal((await navigation).cancelled, false);
         }

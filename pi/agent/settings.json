@@ -11,7 +11,7 @@
   "defaultTools": [
     "+codemode"
   ],
-  "lastChangelogVersion": "1.5.0",
+  "lastChangelogVersion": "1.5.2",
   "packages": [
     "./extensions/powerline-chrome.ts",
     "./extensions/vim-navigation.ts",

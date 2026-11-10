@@ -55,8 +55,8 @@ discovery and reject follow-ups until you return to their branch. Switching bran
 never replays child work. Usage totals include work on every branch without charging
 previously reported usage again. Navigation is blocked while a delegation call or
 its cancellation cleanup is still running.
-Overlapping parent turns and navigation are unsupported
-([Pi #9154](https://github.com/earendil-works/pi/issues/9154)).
+During parent navigation, Pi rejects user prompts, but custom-message turns can still
+run and lose accepted history ([Pi #9154](https://github.com/earendil-works/pi/issues/9154)).
 
 Follow-ups accept only `handle` and `prompt`. Concurrent calls to the same child
 are rejected. Cancellation stops the current turn and preserves the conversation;
@@ -89,7 +89,7 @@ exit, or a completed parent tree switch. Canceled navigation preserves them.
 
 ## Authentication and compatibility
 
-The adapter supports **Pi 1.5.0** and checks its private SDK layout before use.
+The adapter requires **Pi 1.5.2** and checks its private SDK layout before use.
 Children share the parent's live credential store and use its API-key and OAuth
 methods. Temporary overrides and account changes reach existing children. Parent
 authentication failures stop child requests. Shared login and refresh writes reach
@@ -118,9 +118,9 @@ npm run check
 ```
 
 `check` runs Biome linting and format verification, strict TypeScript checking, and
-tests against the pinned Pi 1.5.0 SDK. `npm run format` applies formatting.
+tests against the pinned Pi 1.5.2 SDK. `npm run format` applies formatting.
 
-Set `PI_SDK_ROOT` to another Pi 1.5.0 package directory to run the delegation tests
+Set `PI_SDK_ROOT` to another Pi 1.5.2 package directory to run the delegation tests
 against that installation instead:
 
 ```sh
