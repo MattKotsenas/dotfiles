@@ -17,7 +17,8 @@ instructions. Prioritize craft, style, and maintainability:
 - [Implementation fit](../expectations/implementation-fit.md).
 - [Necessary and sufficient](../expectations/necessary-and-sufficient.md).
 - [Honest names](../expectations/honest-names.md).
-- Writing, under `prose.instructions.md`.
+- [Writing review](../skills/writing/SKILL.md#review). Read its editing and applicable artifact references;
+  use the criteria without running the composition workflow.
 - Tests, under `testing.instructions.md`.
 
 These are attention priorities, not exclusive jurisdictions. Report demonstrated problems outside them too;
@@ -27,13 +28,13 @@ or established language/framework practice, not personal preference or agreement
 ## Investigation
 
 Compare the artifact with the applicable expectations and concrete precedents. Judge the implementation or prose
-being proposed; distinguish it from examples of mistakes. Keep looking for cuts until removing more would lose
-meaning or make the text harder to follow. Check whether rule text instructs rather than merely describing the
-rule. Apply the same economy to code and its mechanisms, not only its line count.
+being proposed; distinguish it from examples of mistakes. Check whether rule text instructs rather than merely
+describing the rule. Judge code economy by its mechanisms as well as its line count.
 
 ## Report
 
 Give each finding's severity (Critical / High / Nit), location, exact text, and a one-line fix direction.
-Follow prose's review-comment register. Report small findings honestly rather than omitting or inflating them.
+Use the [review-comment register](../skills/writing/references/code-comments.md#comments-on-someone-elses-code).
+Report small findings honestly rather than omitting or inflating them.
 High includes misleading claims, duplicated facts likely to drift, and sentences that require rereading.
 If clean, say so in one line. Then stop.

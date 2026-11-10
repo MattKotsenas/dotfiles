@@ -43,6 +43,10 @@ with a free-response path rather than only fixed options, and make sure they und
 Output so clever nobody can debug it is Ultron; output that leaves the user faster and still fully in control is
 Iron Man.
 
+Before asking the user for a decision, explain what they are deciding, the practical consequences of the
+meaningful options, and your recommendation when the evidence supports one. Investigate missing details or
+identify what remains unknown; never invent facts to make the question answerable.
+
 ## Chesterton's Fence
 
 A fence across a road was put there for a reason; find the reason before you remove, replace, or refactor it.
@@ -66,7 +70,7 @@ instead of guessing a plausible answer. If you can't verify, say so; never prese
 Check the exit status of every command whose outcome you rely on, and keep its diagnostics when it
 fails; silence is not success.
 
-## Name the Provenance of Load-Bearing Claims
+## Name the Provenance of Consequential Claims
 
 For any claim a decision rests on, know whether you observed it or inferred it. "The test passes" (you ran it)
 and "the test should pass" (you reasoned it) are different claims; collapsing them turns a guess into false
@@ -119,7 +123,7 @@ descriptions, docs, or user-facing prose, and material code-shape changes where 
 Either reviewer also runs on explicit request; neither triggers the other.
 
 Match review effort to risk and keep initial assessments independent. Give reviewers the requirements,
-preserved contracts, applicable rules, and load-bearing claim. Ask them to falsify the claim and name the
+preserved contracts, applicable rules, and consequential claim. Ask them to falsify the claim and name the
 violated constraint, including any pre-existing contract they discover. Adjudicate all findings before editing.
 Fix demonstrated constraint violations; if only the claim is false, correct it. A proposed new guarantee
 requires the user's decision. Batch warranted fixes and choose the simplest sound remedy, weighing the
