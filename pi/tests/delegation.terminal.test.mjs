@@ -72,10 +72,12 @@ test("delegates leave the terminal parent's mapping intact across cwd changes, r
 test("delegate quota errors reach the parent without waiting and preserve the handle for an explicit retry", {
   timeout: 15000,
 }, async (t) => {
-  const { parent } = await fixture(t, {
+  const { parent, authPath } = await fixture(t, {
     persisted: true,
     providerModule: fileURLToPath(new URL("./delegation/quota-provider.mjs", import.meta.url)),
   });
+  const quotaAvailable = join(dirname(authPath), "quota-available");
+  await assert.rejects(readFile(quotaAvailable), { code: "ENOENT" }, "precondition: provider quota is unavailable");
   const waiting = Promise.withResolvers();
   await parent.bindExtensions({
     mode: "tui",
@@ -122,6 +124,8 @@ test("delegate quota errors reach the parent without waiting and preserve the ha
     1,
     "quota must not retry automatically",
   );
+  // Quota recovery belongs to the provider, not to the child runtime's lifetime.
+  await writeFile(quotaAvailable, "");
   assert.equal(
     answer(await invoke(parent, { handle: record.handle, prompt: "Retry the review." })),
     "REVIEW_COMPLETED",

@@ -8,6 +8,8 @@ import { modelId, providerId } from "./delegation/ui-extension.mjs";
 
 for (const mode of ["tui", "rpc", "print"]) {
   test(`child UI preserves display state and prompt results with a ${mode} parent`, async (t) => {
+    const diagnostics = [];
+    t.mock.method(console, "error", (...args) => diagnostics.push(args));
     const { parent, authPath } = await fixture(t, { persisted: true });
     const extensions = join(dirname(authPath), "extensions");
     await writeFile(
@@ -88,10 +90,11 @@ for (const mode of ["tui", "rpc", "print"]) {
       custom: mode === "tui" ? "custom-result" : null,
       editorText: "",
     });
-    assert.deepEqual(notifications, mode === "print" ? [] : [["Child notification", "info"]]);
     displayWrites.length = 0;
     parent.extensionRunner.setUIContext(undefined, "print");
     await parent.reload();
+    assert.deepEqual(notifications, mode === "print" ? [] : [["Child notification", "info"]]);
+    assert.deepEqual(diagnostics, [], "successful cleanup must not warn");
     assert.deepEqual(displayWrites, [], "child shutdown must not clear or replace parent chrome");
     assert.equal(status.get("compact-model"), parentModel);
   });

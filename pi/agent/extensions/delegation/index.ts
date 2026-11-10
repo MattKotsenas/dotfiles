@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { statSync } from "node:fs";
 import { resolve } from "node:path";
+import { type ExtensionAPI, type ExtensionContext, SessionManager } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { SessionManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { closeChild, startChild, type ChildRuntime } from "./child.ts";
-import { createChildSession, entryType, openChild, restoreChildren, type ChildRecord } from "./storage.ts";
 import { usageSince } from "../shared/usage.ts";
+import { type ChildRuntime, closeChild, startChild } from "./child.ts";
+import { type ChildRecord, createChildSession, entryType, openChild, restoreChildren } from "./storage.ts";
 
 const parameters = Type.Object(
   {
@@ -111,8 +111,15 @@ const resultSchema = Type.Object({
 type Child = {
   record: ChildRecord;
   live?: ChildRuntime;
+  memory?: SessionManager;
+  // Keep deferred failures observable without an unhandled background rejection.
+  cleanup?: Promise<Error | undefined>;
   operation?: { done: Promise<void>; stop: AbortController };
 };
+
+// Only delegated in-memory ledgers retain descendants across runtime teardown.
+// Weak keys tie those checkpoints to the owning conversation, not to the runtime.
+const memoryChildren = new WeakMap<ExtensionContext["sessionManager"], Map<string, Child>>();
 
 export default function delegation(pi: ExtensionAPI): void {
   const children = new Map<string, Child>();
@@ -124,13 +131,15 @@ export default function delegation(pi: ExtensionAPI): void {
     const closing = [...children.values()];
     children.clear();
     for (const child of closing) child.operation?.stop.abort();
-    const closed = await Promise.allSettled(
+    const results = await Promise.all(
       closing.map(async (child) => {
         await child.operation?.done;
-        if (child.live) await closeChild(child.live);
+        const error = await child.cleanup;
+        child.cleanup = undefined;
+        return error;
       }),
     );
-    const errors = closed.flatMap((result) => (result.status === "rejected" ? [result.reason] : []));
+    const errors = results.filter((error) => error !== undefined);
     if (errors.length) throw new AggregateError(errors, errors.map(String).join("; "));
   };
   const save = (child: Child) => {
@@ -147,6 +156,9 @@ export default function delegation(pi: ExtensionAPI): void {
   };
   pi.on("session_start", (_event, ctx) => {
     children.clear();
+    const retained = memoryChildren.get(ctx.sessionManager);
+    for (const [handle, child] of retained ?? []) children.set(handle, child);
+    retained?.clear();
     for (const [handle, record] of restoreChildren(ctx)) children.set(handle, { record });
   });
   pi.on("session_before_tree", (_event, ctx) => {
@@ -161,7 +173,15 @@ export default function delegation(pi: ExtensionAPI): void {
     for (const [handle, record] of restoreChildren(ctx)) children.set(handle, { record });
     ready = true;
   });
-  pi.on("session_shutdown", closeChildren);
+  pi.on("session_shutdown", async (event, ctx) => {
+    const retained = event.reason === "quit" ? memoryChildren.get(ctx.sessionManager) : undefined;
+    const checkpoints = [...children];
+    try {
+      await closeChildren();
+    } finally {
+      for (const [handle, child] of checkpoints) retained?.set(handle, child);
+    }
+  });
   const namespace = { name: "delegation", description: "Run child Pi sessions and discover their conversations." };
   pi.registerTool({
     name: "delegates",
@@ -209,7 +229,7 @@ export default function delegation(pi: ExtensionAPI): void {
       }
       const handle = params.handle ?? randomUUID();
       let child = children.get(handle);
-      let manager: SessionManager | undefined;
+      let manager = child?.memory;
       if (params.handle === undefined) {
         if (!ctx.model) throw new Error("No parent model selected");
         const provider = params.provider ?? ctx.model.provider;
@@ -236,9 +256,29 @@ export default function delegation(pi: ExtensionAPI): void {
             leafId: null,
           },
         };
+        if (!manager.getSessionFile()) {
+          child.memory = manager;
+          memoryChildren.set(manager, new Map());
+        }
         children.set(handle, child);
       }
       if (!child) throw new Error("Unknown delegation handle for this session");
+      const cleanup = child.cleanup;
+      if (cleanup) {
+        const error = await cleanup;
+        signal?.throwIfAborted();
+        assertReady();
+        if (children.get(handle) !== child)
+          throw new Error("Delegated conversation was closed while waiting for cleanup");
+        if (child.cleanup === cleanup) child.cleanup = undefined;
+        if (error)
+          throw new Error(
+            `Delegate ${handle}: cleanup from the previous turn failed: ${error.message}\n` +
+              "This prompt was not processed. The previous turn's result is unchanged. " +
+              "Inspect the cause before deciding whether to retry this prompt with the same handle.",
+            { cause: error },
+          );
+      }
       if (child.operation) throw new Error("This child already has a call in progress or is stopping");
       const done = Promise.withResolvers<void>();
       const stop = new AbortController();
@@ -260,6 +300,7 @@ export default function delegation(pi: ExtensionAPI): void {
         return usage;
       };
       try {
+        let answer = "";
         save(child);
         if (!child.live) {
           if (!manager) {
@@ -287,14 +328,15 @@ export default function delegation(pi: ExtensionAPI): void {
         stop.signal.throwIfAborted();
         if (last?.stopReason !== "stop") throw new Error(last?.errorMessage ?? "Child did not finish successfully");
         child.record.status = "completed";
+        answer = session.getLastAssistantText() ?? "";
+        stop.signal.throwIfAborted();
         const result = {
-          content: [{ type: "text" as const, text: session.getLastAssistantText() ?? "" }],
+          content: [{ type: "text" as const, text: answer }],
           details: { handle },
           usage: { ...reportUsage() },
         };
         return { ...result, structuredContent: result };
       } catch (error) {
-        await child.live?.session.abort();
         child.record.status = stop.signal.aborted ? "interrupted" : "failed";
         return {
           content: [{ type: "text" as const, text: error instanceof Error ? error.message : String(error) }],
@@ -304,8 +346,28 @@ export default function delegation(pi: ExtensionAPI): void {
         };
       } finally {
         signal?.removeEventListener("abort", forwardAbort);
-        child.operation = undefined;
-        done.resolve();
+        stop.signal.removeEventListener("abort", abort);
+        child.cleanup = (child.live ? closeChild(child.live) : Promise.resolve())
+          .finally(() => save(active))
+          .then(
+            () => undefined,
+            (error: unknown) => {
+              const failure = error instanceof Error ? error : new Error(String(error));
+              const message = `Delegate ${handle} cleanup failed: ${failure.message}`;
+              try {
+                if (ctx.hasUI) ctx.ui.notify(message, "warning");
+                else console.error(message);
+              } catch (notificationError) {
+                console.error(message, notificationError);
+              }
+              return failure;
+            },
+          )
+          .finally(() => {
+            active.live = undefined;
+            active.operation = undefined;
+            done.resolve();
+          });
       }
     },
   });

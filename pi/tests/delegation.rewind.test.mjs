@@ -1,15 +1,12 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { once } from "node:events";
-import { setImmediate as nextTick } from "node:timers/promises";
 import { rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { describe, test } from "node:test";
 import { answer, fixture, invoke, runCode } from "./delegation/fixture.mjs";
 import { network, usage } from "./delegation/usage-provider.mjs";
-import { lifecycle } from "./delegation/lifecycle-extension.mjs";
 
 const providerModule = fileURLToPath(new URL("./delegation/usage-provider.mjs", import.meta.url));
 const worker = fileURLToPath(new URL("./delegation/resume-parent.mjs", import.meta.url));
@@ -202,93 +199,26 @@ describe("delegation parent rewind", { concurrency: false }, () => {
     assert.match(result.content.map((block) => block.text).join("\n"), /Remember violet; Remember amber/);
   });
 
-  test("reload waits for every child cleanup before reporting a sibling shutdown failure", {
+  test("a failed dehydration reports to its caller without leaving navigation blocked", {
     timeout: 20000,
   }, async (t) => {
     const { parent, authPath } = await fixture(t, { providerModule, persisted: true });
-    const extension = join(dirname(authPath), "extensions/child-shutdown.ts");
-    await writeFile(
-      extension,
-      `
-      import { lifecycle } from ${JSON.stringify(new URL("./delegation/lifecycle-extension.mjs", import.meta.url).href)};
-      export default function(pi) { pi.on("session_shutdown", async (_event, ctx) => {
-        if (ctx.getSystemPrompt().includes("FAIL_SHUTDOWN")) throw new Error("FAST_SHUTDOWN_FAILURE");
-        await new Promise(resolve => lifecycle.emit("slow-close-entered", resolve));
-        lifecycle.emit("slow-close-finished");
-      }); }
-    `,
-    );
-    await invoke(parent, { prompt: "Remember violet", tools: [], systemPrompt: { replace: "FAIL_SHUTDOWN" } });
-    await invoke(parent, { prompt: "Remember amber", tools: [], systemPrompt: { replace: "SLOW_SHUTDOWN" } });
-    const controller = new AbortController();
-    t.after(() => controller.abort());
-    const entered = once(lifecycle, "slow-close-entered", { signal: controller.signal });
-    let finished = false;
-    const markFinished = () => {
-      finished = true;
-    };
-    lifecycle.on("slow-close-finished", markFinished);
-    t.after(() => lifecycle.off("slow-close-finished", markFinished));
-    let settled = false;
-    const reloading = parent.reload().then(
-      () => {
-        settled = true;
-        return null;
-      },
-      (error) => {
-        settled = true;
-        return error;
-      },
-    );
-    const [release] = await entered;
-    let error;
-    try {
-      assert.equal(finished, false);
-      await nextTick();
-      assert.equal(settled, false, "reload must still own the blocked sibling cleanup after another child fails");
-    } finally {
-      release();
-      error = await reloading;
-      await rm(extension);
-    }
-    assert(error instanceof Error);
-    assert.match(error.message, /FAST_SHUTDOWN_FAILURE/);
-    assert.equal(finished, true, "every child cleanup must finish before reload reports failure");
-  });
-
-  test("a child shutdown failure blocks branch restoration and new work", { timeout: 20000 }, async (t) => {
-    const { parent, authPath } = await fixture(t, { providerModule, persisted: true });
     await listing(parent);
     const target = parent.sessionManager.getLeafId();
+    const extension = join(dirname(authPath), "extensions/failing-shutdown.ts");
     await writeFile(
-      join(dirname(authPath), "extensions/failing-shutdown.ts"),
-      `export default function(pi) { pi.on("session_shutdown", () => { throw new Error("SHUTDOWN_FAILED"); }); }`,
+      extension,
+      'export default function(pi) { pi.on("session_shutdown", () => { throw new Error("SHUTDOWN_FAILED"); }); }',
     );
     const first = await invoke(parent, { prompt: "Remember violet", tools: [] });
-    assert.equal((await listing(parent))[0].handle, first.details.handle);
-    await assert.rejects(parent.navigateTree(target), /SHUTDOWN_FAILED/);
-    assert.equal(parent.sessionManager.getLeafId(), target, "Pi has already switched branches when teardown fails");
-    const requests = [];
-    const collect = (prompt) => {
-      if (!prompt.startsWith("ACCEPTANCE_CODE:")) requests.push(prompt);
-    };
-    network.on("request", collect);
-    t.after(() => network.off("request", collect));
-    for (const code of [
-      "await tools.delegates({});",
-      'await tools.delegate({ prompt: "Remember forbidden", tools: [] });',
-    ]) {
-      const output = await runCode(
-        parent,
-        `try { ${code} text("UNEXPECTED_SUCCESS"); } catch(error) { text(error.message); }`,
-      );
-      assert.match(output, /restoring parent branch state/);
-      assert.doesNotMatch(output, /UNEXPECTED_SUCCESS/);
-    }
-    assert.deepEqual(requests, [], "failed teardown must not admit a replacement runtime");
-    await rm(join(dirname(authPath), "extensions/failing-shutdown.ts"));
-    await parent.reload();
-    assert.deepEqual(await listing(parent), [], "reload must recover without reusing the disposed child");
+    assert.equal(answer(first), "REMEMBERED");
+    await assert.rejects(invoke(parent, { handle: first.details.handle, prompt: "History" }), /SHUTDOWN_FAILED/);
+    assert.equal((await listing(parent))[0].status, "completed");
+    assert.notEqual(parent.sessionManager.getLeafId(), target);
+    await navigate(parent, target);
+    assert.deepEqual(await listing(parent), []);
+    await rm(extension);
+    assert.equal(answer(await invoke(parent, { prompt: "Remember recovered", tools: [] })), "REMEMBERED");
   });
 
   test("completed navigation invalidates ephemeral children and reload cannot recover them", {

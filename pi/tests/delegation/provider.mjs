@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { ai, sdk } from "./sdk.mjs";
 
 export const providerId = "delegation-acceptance";
@@ -13,7 +14,7 @@ const text = (message) =>
         .join("\n");
 
 // The model is the fake edge. Pi, codemode, delegation, tools and session storage stay real.
-export default function acceptanceProvider(pi) {
+export default function acceptanceProvider(pi, { responseDelayMs = 0 } = {}) {
   const fake = ai.fauxProvider({ provider: providerId, models: [{ id: modelId }], tokensPerSecond: 0 });
   pi.registerProvider({
     ...fake.provider,
@@ -70,7 +71,14 @@ export default function acceptanceProvider(pi) {
               : "CHILD_SYSTEM_PROMPT_MISSING",
         );
       } else throw new Error(`Unexpected test prompt: ${prompt}`);
-      fake.setResponses([response]);
+      fake.setResponses([
+        responseDelayMs
+          ? async () => {
+              await delay(responseDelayMs);
+              return response;
+            }
+          : response,
+      ]);
       return fake.provider.streamSimple(model, context, options);
     },
   });

@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, test } from "node:test";
+import { fileURLToPath } from "node:url";
 import { answer, fixture, invoke, runCode } from "./delegation/fixture.mjs";
 import { lifecycle } from "./delegation/lifecycle-extension.mjs";
 import { network, usage } from "./delegation/usage-provider.mjs";
@@ -143,7 +143,7 @@ describe("delegation policy and cooperative cancellation", { concurrency: false 
       assert.equal(result.isError, true, text(result));
       assert.doesNotMatch(text(result), /UNEXPECTED_SUCCESS/);
       assert.equal(await readFile(marker, "utf8"), "entered\ncancelled\n");
-      assert.equal(closed.length, 0, "interruption must keep the child session available");
+      assert.equal(closed.length, 1, "interruption must release runtime resources while keeping the conversation");
       assert.deepEqual(
         requests.map(([value]) => value).filter((value) => value === prompt),
         [prompt],
@@ -151,7 +151,7 @@ describe("delegation policy and cooperative cancellation", { concurrency: false 
       );
       const continued = await invoke(parent, { handle: first.details.handle, prompt: "Recall" });
       assert.equal(answer(continued), "Remember violet");
-      assert.equal(closed.length, 0);
+      assert.equal(closed.length, 2, "the restored runtime must also close");
       assert.equal(await readFile(marker, "utf8"), "entered\ncancelled\n");
       assert.match(await runCode(parent, 'text("PARENT_STILL_USABLE");'), /PARENT_STILL_USABLE/);
     });
@@ -223,7 +223,7 @@ describe("delegation policy and cooperative cancellation", { concurrency: false 
       const result = await running;
       assert.equal(result.isError, true, text(result));
       assert.doesNotMatch(text(result), /UNEXPECTED_SUCCESS/);
-      assert.equal(closed.length, 0);
+      assert.equal(closed.length, 1, "cancelled startup must release its runtime");
       assert.equal(requests.filter(([value]) => value === "Remember never-started").length, 0);
       const zero = {
         input: 0,

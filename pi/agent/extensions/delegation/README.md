@@ -3,6 +3,9 @@
 `delegate` runs a child Pi session and returns its answer and a follow-up handle.
 Call it through codemode as `tools.delegate(...)`. Each child has its own
 conversation, extensions, provider setup, policy hooks, tools and virtual router.
+After each turn, delegation returns its result while child shutdown and disposal
+run in the background. MCP connections remain until cleanup finishes; the
+conversation and handle remain available for follow-ups.
 
 ## Use
 
@@ -58,10 +61,22 @@ its cancellation cleanup is still running.
 During parent navigation, Pi rejects user prompts, but custom-message turns can still
 run and lose accepted history ([Pi #9154](https://github.com/earendil-works/pi/issues/9154)).
 
-Follow-ups accept only `handle` and `prompt`. Concurrent calls to the same child
-are rejected. Cancellation stops the current turn and preserves the conversation;
-it does not undo completed actions. Failed turns also keep their handles.
-A child cannot accept a follow-up until its current turn and cancellation cleanup finish.
+Follow-ups accept only `handle` and `prompt`. Calls that overlap a running turn
+are rejected. A follow-up arriving during background cleanup waits for it;
+other children can proceed independently. Cancellation stops the current turn
+and preserves the conversation; it does not undo completed actions or change a
+finished turn's status. Failed turns also keep their handles.
+
+Cleanup failures immediately trigger a warning through Pi's notification API
+when a UI is available, or through stderr otherwise. If the notification fails,
+the warning falls back to stderr.
+
+The next follow-up reports the saved error to the calling agent without
+processing its prompt. That error includes the cleanup failure and guidance to
+inspect the cause before deciding whether to retry the follow-up with the same
+handle. The previous turn's result is unchanged, and no work is retried
+automatically. Unreported cleanup errors also surface when switching parent
+conversation branches or shutting down.
 
 `delegates` returns `details.children` with each child's `handle`, initial `prompt`, and `status`:
 `running`, `stopping`, `interrupted`, `completed`, or `failed`. Listing starts no work
@@ -139,3 +154,6 @@ SDK compatibility tests exercise the adapter directly to catch changes in Pi's
 private behavior. Separate workers let SDK background work finish before fixture
 files are deleted. All tests use isolated configuration and synthetic credentials;
 live use provides additional evidence about provider compatibility.
+
+For MCP resource and startup comparisons, see the
+[resource benchmark](../../../tests/delegation/resource-benchmark.md).

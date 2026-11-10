@@ -1,6 +1,8 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import quotaResume from "../../agent/extensions/openai-quota-resume/index.ts";
 import acceptanceProvider from "./provider.mjs";
-import { ai } from "./sdk.mjs";
+import { ai, sdk } from "./sdk.mjs";
 
 export const providerId = "openai";
 export const modelId = "quota-scripted";
@@ -20,7 +22,7 @@ export default function quotaProvider(pi) {
     streamSimple(model, context, options) {
       pi.appendEntry("quota-request", { attempt: ++requests });
       fake.setResponses([
-        requests === 1
+        !existsSync(join(sdk.getAgentDir(), "quota-available"))
           ? ai.fauxAssistantMessage([], {
               stopReason: "error",
               errorMessage: `OpenAI API error (429): ${JSON.stringify({ code: quotaCode, resets_in_seconds: 3600 })}`,

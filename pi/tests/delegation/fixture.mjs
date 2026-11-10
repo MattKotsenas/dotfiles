@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdtemp, mkdir, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { sdk } from "./sdk.mjs";
 import { modelId, providerId } from "./provider.mjs";
+import { sdk } from "./sdk.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const entry = resolve(here, "../../agent/extensions/delegation/index.ts");
+const defaultEntry = resolve(here, "../../agent/extensions/delegation/index.ts");
 const text = (message) =>
   message.content
     .filter((block) => block.type === "text")
@@ -23,6 +23,7 @@ export async function fixture(
     providerModule = join(here, "provider.mjs"),
     persisted = false,
     discoverDelegation = false,
+    entry = defaultEntry,
   } = {},
 ) {
   const root = await mkdtemp(join(tmpdir(), "pi-delegation-acceptance-"));
