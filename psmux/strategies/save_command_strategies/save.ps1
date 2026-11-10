@@ -7,13 +7,12 @@ param(
 )
 
 $first = (($Command -split '\s+', 2)[0] -split '[\\/]' | Select-Object -Last 1) -replace '\.exe$', ''
-$resolvers = switch ($first) {
-    { $_ -in @('clod', 'copilot') } { 'copilot' }
-    'pi' { 'pi' }
-    'node' { 'copilot'; 'pi' }
-}
-foreach ($resolver in $resolvers) {
-    $resolved = & (Join-Path $PSScriptRoot "$resolver.ps1") $Command $PanePid $Directory
+if ($first -in @('clod', 'copilot', 'node')) {
+    $resolved = & (Join-Path $PSScriptRoot 'copilot.ps1') $Command $PanePid $Directory
     if ($resolved -and $resolved -ne $Command) { Write-Output $resolved; return }
 }
+
+$resolved = & (Join-Path $PSScriptRoot 'pi.ps1') $Command $PanePid $Directory
+if ($resolved -and $resolved -ne $Command) { Write-Output $resolved; return }
+
 Write-Output $Command

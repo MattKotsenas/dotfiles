@@ -65,8 +65,9 @@ try {
     Check-Argument (Resolve 'pi' $first.Pane) $smartFile
     Seed $first 'first' $fileA
     Check 'second pane in the same directory resolves a different session' ((Resolve 'pi' $second.Pane) -eq (Expected $fileB))
-    Check 'node command dispatch reaches Pi after Copilot passes through' ((Resolve 'node' $first.Pane) -eq (Expected $fileA))
-    Check 'unrelated commands pass through' ((Resolve 'vim' $first.Pane) -eq 'vim')
+    foreach ($reportedCommand in @('node', 'agency', 'git', 'python', 'pwsh', 'vim')) {
+        Check "Pi session is saved when psmux reports $reportedCommand" ((Resolve $reportedCommand $first.Pane) -eq (Expected $fileA))
+    }
     Check 'invalid pane PID passes through' ((Resolve 'pi' 'invalid') -eq 'pi')
     Seed $first 'second' $fileB
     Check 'session replacement changes the saved command' ((Resolve 'pi' $first.Pane) -eq (Expected $fileB))
@@ -85,7 +86,9 @@ try {
     'setInterval(() => {}, 1000);' | Set-Content $otherCli
     $other = Start-Pane $otherCli
     Seed $other 'first' $fileA
-    Check 'mapping on an unrelated Node process is ignored' ((Resolve 'node' $other.Pane) -eq 'node')
+    foreach ($reportedCommand in @('node', 'agency', 'git', 'python', 'pwsh', 'vim')) {
+        Check "non-Pi pane preserves $reportedCommand despite an unrelated Node mapping" ((Resolve $reportedCommand $other.Pane) -eq $reportedCommand)
+    }
     Check 'Copilot dispatch preserves the original fallback' ((Resolve 'clod' $other.Pane) -eq 'clod')
 
     # Windows preserves an orphan's original parent ID. A reused PID is not an ancestor.

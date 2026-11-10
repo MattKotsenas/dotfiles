@@ -7,10 +7,8 @@ param(
     [Parameter(Position = 2)] [AllowEmptyString()] [string] $Directory
 )
 $ErrorActionPreference = 'Stop'
-$first = (($Command -split '\s+', 2)[0] -split '[\\/]' | Select-Object -Last 1) -replace '\.exe$', ''
 $panePidInt = 0
-if ($first -notin @('pi', 'node') -or
-    -not [int]::TryParse($PanePid, [ref]$panePidInt) -or $panePidInt -le 0) {
+if (-not [int]::TryParse($PanePid, [ref]$panePidInt) -or $panePidInt -le 0) {
     Write-Output $Command; return
 }
 
