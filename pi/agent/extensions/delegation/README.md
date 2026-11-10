@@ -46,8 +46,8 @@ In the same cwd,
 project discovery respects the parent's trust decision. Another cwd uses its saved
 trust decision or the global `defaultProjectTrust` setting. With no saved decision,
 `ask` skips protected project resources. Child dialogs and notifications use the parent's
-available UI. Other child UI operations use Pi's no-op defaults and cannot overwrite
-the parent's display or draft.
+available UI. Children use the SDK's non-terminal mode; other child UI operations
+use Pi's no-op defaults and cannot overwrite the parent's display or draft.
 
 When you switch parent branches, each child's next follow-up uses the checkpoint
 saved on that branch. Children created later on another branch are absent from

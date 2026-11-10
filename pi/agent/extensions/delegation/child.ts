@@ -98,7 +98,7 @@ export async function startChild(
           notify: ui.notify.bind(ui),
         }
       : undefined;
-    await session.bindExtensions({ mode: ctx.mode, uiContext });
+    await session.bindExtensions({ uiContext });
     const model = modelRuntime.getModel(provider, modelId);
     if (!model) throw new Error(`Child model is unavailable: ${provider}/${modelId}`);
     return child;

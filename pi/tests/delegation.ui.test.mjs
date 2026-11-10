@@ -7,7 +7,7 @@ import { sdk } from "./delegation/sdk.mjs";
 import { modelId, providerId } from "./delegation/ui-extension.mjs";
 
 for (const mode of ["tui", "rpc", "print"]) {
-  test(`child UI preserves parent display state and prompt results in ${mode} mode`, async (t) => {
+  test(`child UI preserves display state and prompt results with a ${mode} parent`, async (t) => {
     const { parent, authPath } = await fixture(t, { persisted: true });
     const extensions = join(dirname(authPath), "extensions");
     await writeFile(
@@ -79,7 +79,7 @@ for (const mode of ["tui", "rpc", "print"]) {
       .getEntries()
       .find((entry) => entry.type === "custom" && entry.customType === "child-ui").data;
     assert.deepEqual(observed, {
-      mode,
+      mode: "print",
       hasUI: mode !== "print",
       selected: mode === "print" ? null : "allow",
       confirmed: mode === "tui",
