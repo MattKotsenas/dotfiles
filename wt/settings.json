@@ -88,6 +88,7 @@
     {
         "defaults": 
         {
+            "cursorShape": "bar",
             "backgroundImage": "C:\\Users\\mattkot\\Documents\\PowerShell\\background.png",
             "backgroundImageOpacity": 0.68,
             "backgroundImageStretchMode": "uniformToFill",

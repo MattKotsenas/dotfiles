@@ -1,8 +1,3 @@
-# Set the cursor to a solid bar (reset after neovim changes it).
-# Guard against stdout redirection so escape codes don't leak when the profile
-# is loaded non-interactively (e.g. pwsh -c).
-if (-not [Console]::IsOutputRedirected) { [Console]::Write("`e[6 q") }
-
 # Pi
 # Send clipboard text to attached clients even without SSH detection.
 # https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/environment-variables.md#pi-process-configuration
@@ -69,6 +64,11 @@ function prompt {
             }
 
             function Set-PoshContexts {
+                # Restore the terminal's default cursor whenever the shell renders its prompt.
+                if (-not [Console]::IsOutputRedirected) {
+                    [Console]::Write("`e[0 q")
+                }
+
                 Set-PoshJobInfo
             }
 
