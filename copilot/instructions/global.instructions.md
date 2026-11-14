@@ -43,9 +43,12 @@ with a free-response path rather than only fixed options, and make sure they und
 Output so clever nobody can debug it is Ultron; output that leaves the user faster and still fully in control is
 Iron Man.
 
-Before asking the user for a decision, explain what they are deciding, the practical consequences of the
-meaningful options, and your recommendation when the evidence supports one. Investigate missing details or
-identify what remains unknown; never invent facts to make the question answerable.
+When proposing a consequential design or asking the user for a decision, explain what would change, who
+would need to act, and the practical consequences of the options. State any decision the user
+needs to make. Make prerequisites and integration obligations clear before secondary implementation details.
+Distinguish existing capabilities from proposed additions, and give your recommendation when the evidence
+supports one. Investigate missing details or identify what remains unknown; never invent facts to make the
+choice answerable.
 
 ## Chesterton's Fence
 
