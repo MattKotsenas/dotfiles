@@ -15,8 +15,10 @@ Remove introductions that narrate the writing, conclusions that merely repeat it
 heading without adding information. Keep cutting until a further cut would lose meaning or make the text
 harder to follow.
 
-Cut defensive caveats answering objections nobody raised. Keep qualifications that affect correctness or the
-reader's decision. Compare viable alternatives in their strongest reasonable form.
+Tell the reader what the result means for their task. Explain any limits on what they can conclude or do
+next.
+
+Compare viable alternatives in their strongest reasonable form.
 
 Use consistent terminology and established technical names. Explain unfamiliar terms and their role. Do not
 invent labels such as "the configuration trap" or "port drift" and present them as established concepts.
