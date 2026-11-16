@@ -18,8 +18,18 @@
     "npm:pi-powerline-footer",
     "npm:pi-vim-editor@0.4.0",
     "git:github.com/otahontas/pi-coding-agent-catppuccin",
-    "npm:pi-exit"
+    "npm:pi-exit",
+    "npm:pi-simple-snippets"
   ],
+  "piSimpleSnippets": {
+    "expandOnCompletion": true,
+    "snippets": {
+      "no-side-effects": "No externally visible side effects, please. You may make local edits or run experiements, but do not cause effects visible outside this machine",
+      "tuicr": "Open the changes in tuicr for review.",
+      "comments": "I've left comments in tuicr. Read them, then let's discuss before making changes.",
+      "cr": "Please review this PR. Do not post comments or submit a review on the hosting service. Present your findings here so we can discuss them.\n\nPR: "
+    }
+  },
   "powerline": {
     "preset": "default",
     "customItems": [
@@ -119,6 +129,7 @@
     "reserveTokens": 32768
   },
   "extensionChangelogVersions": {
-    "{\"source\":\"npm:pi-powerline-footer\",\"scope\":\"user\"}": "0.20.1"
+    "{\"source\":\"npm:pi-powerline-footer\",\"scope\":\"user\"}": "0.20.1",
+    "{\"source\":\"npm:pi-simple-snippets\",\"scope\":\"user\"}": "0.2.0"
   }
 }
