@@ -34,6 +34,10 @@ runs end to end - not "it compiles and tests pass," which verifies each step, no
 state a brief plan with a check for each step. If the request doesn't make the finish line obvious, ask what you
 should be able to demonstrate when it's done.
 
+## 4. Writing
+
+Use the [writing skill](~/.pi/agent/skills/writing/SKILL.md) for all writing, including replies to the user.
+
 # Principles
 
 ## Iron Man, Not Ultron

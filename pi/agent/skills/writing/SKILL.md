@@ -1,20 +1,20 @@
 ---
 name: writing
-description: Draft, revise, and explain technical material with clear structure, direct language, and verified claims. Use for documentation, proposals, PR descriptions, commit messages, code and review comments, error messages, and conversational explanations. Also use when reviewing prose for clarity and style.
+description: Draft, revise, and review prose, including ordinary replies to the user. Use for documentation, proposals, PR descriptions, commit messages, code and review comments, error messages, and explanations.
 license: MIT
 ---
 
 # Writing
 
-Apply the [prose baseline](~/.copilot/instructions/prose.instructions.md); read it if it is not already in context.
-Read [Editing](references/editing.md) before finishing a draft. Load the artifact reference that applies:
+Apply [Editing](references/editing.md) to all writing and prose review, including ordinary replies to the user.
+Read it if it is not already in context. Load the artifact reference that applies:
 
 - [Documentation](references/documentation.md) for guides, tutorials, reference pages, and READMEs.
 - [Change descriptions](references/change-descriptions.md) for PR descriptions, commits, and changelogs.
 - [Code comments](references/code-comments.md) for source comments and comments on someone else's code.
 
-For proposals, error messages, and conversational explanations, use the baseline and editing guidance without
-forcing a document template. Match effort to the task. Do the work without narrating the checklist.
+For proposals, error messages, and conversational explanations, use the editing guidance without forcing a
+document template. Match effort to the task. Do the work without narrating the checklist.
 
 ## Compose
 
@@ -43,6 +43,6 @@ Skill activation does not itself require an external review.
 
 ## Review
 
-When assigned to review prose, apply the baseline, editing reference, and relevant artifact reference to the
-artifact. Investigate suspected violations and report findings using the assigned review procedure. Do not run
-the composition workflow or rewrite the artifact unless asked.
+When assigned to review prose, apply the editing and relevant artifact references to the artifact.
+Investigate suspected violations and report findings using the assigned review procedure. Do not run the
+composition workflow or rewrite the artifact unless asked.

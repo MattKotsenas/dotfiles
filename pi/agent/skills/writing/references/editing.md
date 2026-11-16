@@ -1,7 +1,14 @@
 # Editing
 
-Check the draft against the prose baseline, then make the following pass. These criteria also apply when
-reviewing someone else's prose. Examples of unwanted wording illustrate problems; they are not suggested text.
+Apply these guidelines when writing, revising, or reviewing prose, including replies to the user. Examples of
+unwanted wording illustrate problems; do not repeat the mistakes.
+
+## Reader and task
+
+Write for the reader and their task. Assume an experienced software engineer unless the task identifies another
+audience, without assuming familiarity with the particular product, language, runtime, or deployment model.
+Use plain, direct language and concrete objects, actions, and consequences. Preserve useful technical detail;
+brevity must not make the reader decode the explanation.
 
 ## Structure and emphasis
 
@@ -23,6 +30,14 @@ Compare viable alternatives in their strongest reasonable form.
 Use consistent terminology and established technical names. Explain unfamiliar terms and their role. Do not
 invent labels such as "the configuration trap" or "port drift" and present them as established concepts.
 
+## Claims and qualifications
+
+Represent claims faithfully. Preserve scope, intent, qualifications, and necessary disagreement. When intent is
+uncertain and matters, ask or state your interpretation. Ground disagreement in a claim someone actually made
+and support it with evidence. Match confidence to the facts: explain uncertainty and verification limits when
+they affect understanding or a decision. State the most likely answer without vague hedging; "may fail" and
+"fails" make different claims.
+
 ## Sentences
 
 Prefer verbs to nominal phrases: "decide" instead of "make a decision". Prefer active voice when it makes the
@@ -32,8 +47,9 @@ actor and action clear. Address the reader as "you" when giving instructions and
 Split a sentence when its qualifications or nested asides require rereading. Keep useful technical parentheses;
 remove those used for dramatic pauses or avoidable digressions.
 
-Watch for rhetorical corrective contrast such as "It's not X, it's Y", "The question isn't X", and "Not X.
-Not Y. Just Z." Apply the baseline's prohibition by stating the point directly.
+Do not use em dashes.
+
+State the point directly. Do not frame it as "X, not Y", "not X but Y", or "this validates X, not Y".
 
 Rewrite self-answered questions such as "The result? Faster startup." Write "Startup is faster." Replace
 fragments used for emphasis, such as "Local. Fast. Free.", with complete sentences. Vary sentence structure
@@ -54,7 +70,8 @@ literal technical meanings; do not corrupt source material to remove a word.
   paradigm, synergy, load-bearing, and "gated" meaning restricted. Use "use" instead of "utilize" or "leverage".
   Use "ecosystem" and "framework" only in their literal technical senses.
 
-Describe the action and consequence instead of inflating stakes or making an empty quotable claim.
+Drop marketing language, simulated enthusiasm, and politeness padding. Describe the action and consequence
+instead of inflating stakes or making an empty quotable claim.
 
 Cut filler transitions such as "It's worth noting", "Importantly", "Interestingly", "Notably", "Here's the
 thing", and "Here's the catch". Remove performative candor such as "And yes" and "To be honest". Say where
@@ -69,14 +86,16 @@ openings such as "Imagine a world where".
 
 ## Lists and formatting
 
+Use prose by default, lists for parallel items that form a stable set, and steps for ordered actions.
 Use tables for useful comparisons or lookup. Remove reflexive groups of three and counts announced before a
 list. A list should have the items the subject needs.
 Keep grammar and punctuation parallel: complete sentences take periods; fragments do not.
 
-Do not turn every bullet into a bold-led miniature section. Reserve repeated bold term labels for definitions
-where that format helps lookup. Keep headings specific and informative, using repository conventions for case.
+Do not turn every bullet into a bold-led miniature section or use bold lead-in labels ending in a period.
+Reserve repeated bold term labels for definitions where that format helps lookup. Keep headings specific and
+informative, using repository conventions for case.
 
-The baseline's bans include validation openers such as "Great question" and "You're absolutely right",
-conversational back-references such as "Yes, as we discussed", restatement filler such as "In other words" and
-"Simply put", and scaffolding such as "One important thing to note is". Delete them rather than substituting
-another empty lead-in.
+Do not use validation openers such as "Great question" and "You're absolutely right", conversational
+back-references such as "Yes, as we discussed", restatement filler such as "In other words" and "Simply put",
+or list scaffolding such as "One important thing to note is". Delete them rather than substituting another
+empty lead-in.
