@@ -89,8 +89,8 @@ function state(job: Job): string {
   return job.status === "exited" ? `exit ${job.exitCode}` : job.status;
 }
 
-function summary(job: Job): string {
-  return `${job.id} [${state(job)}, ${elapsed(job)}] ${job.command}\n  ${job.log ? `log: ${job.log}` : "output: memory"}`;
+function summary(job: Job, command = job.command): string {
+  return `${job.id} [${state(job)}, ${elapsed(job)}] ${command}\n  ${job.log ? `log: ${job.log}` : "output: memory"}`;
 }
 
 /** An output line as a terminal would last have shown it: without escape codes or control characters, and a progress bar redrawn with \r in its latest state only. */
@@ -136,6 +136,24 @@ class PiBackgroundExtension {
   private redrawJobs = () => {};
 
   constructor(pi: ExtensionAPI) {
+    const activeWaits = new Map<Job, number>();
+    const handledCompletions = new WeakSet<Job>();
+    const notifyCompletion = async (job: Job) => {
+      if (activeWaits.has(job) || handledCompletions.has(job)) return;
+      const output = await this.supervisor.tail(job);
+      // A wait may start or return completion while the notification reads the tail.
+      if (!this.supervisor.jobs.has(job.id) || activeWaits.has(job) || handledCompletions.has(job)) return;
+      handledCompletions.add(job);
+      report(
+        job,
+        `Background job finished: ${summary(job, shownCommand(job.command))}\nLast lines:\n${shownOutput(output)}`,
+        {
+          headline: `${job.id} ${job.status === "exited" ? `exited ${job.exitCode}` : job.status} · ${elapsed(job)}`,
+          last: output.text.split("\n").at(-1) || "(no output)",
+          error: job.status !== "exited" || job.exitCode !== 0,
+        },
+      );
+    };
     this.supervisor = new JobSupervisor({
       displayLine: (data) =>
         data
@@ -152,15 +170,7 @@ class PiBackgroundExtension {
         if (mode === "file") return new FileJobOutput(join(tmpdir(), "pi-bg", `${process.pid}-${id}.log`));
         throw new Error("background.output must be file or memory");
       },
-      completed: async (job) => {
-        const output = await this.supervisor.tail(job);
-        if (!this.supervisor.jobs.has(job.id)) return;
-        report(job, `Background job finished: ${summary(job)}\nLast lines:\n${shownOutput(output)}`, {
-          headline: `${job.id} ${job.status === "exited" ? `exited ${job.exitCode}` : job.status} · ${elapsed(job)}`,
-          last: output.text.split("\n").at(-1) || "(no output)",
-          error: job.status !== "exited" || job.exitCode !== 0,
-        });
-      },
+      completed: notifyCompletion,
     });
     const supervisor = this.supervisor;
     const jobs = supervisor.jobs;
@@ -516,7 +526,7 @@ class PiBackgroundExtension {
       }),
       async execute(_toolCallId, params) {
         if (!params.id) {
-          const text = [...jobs.values()].map(summary).join("\n") || "No background jobs.";
+          const text = [...jobs.values()].map((job) => summary(job)).join("\n") || "No background jobs.";
           return {
             content: [{ type: "text", text }],
             details: {},
@@ -566,14 +576,30 @@ class PiBackgroundExtension {
       }),
       async execute(_toolCallId, params, signal) {
         const job = find(params.id);
-        const completed = await supervisor.wait(job, params.timeout ?? DEFAULT_WAIT_SECS, signal);
-        const output = await supervisor.tail(job, tailLimits({ maxLines: params.lines, maxBytes: params.max_bytes }));
-        const text = `${summary(job)}\n${shownOutput(output)}${completed ? "" : "\nWait expired before completion was observed. Wait again with bg_wait or stop it with bg_kill."}`;
-        return {
-          content: [{ type: "text", text }],
-          details: {},
-          structuredContent: { ...job.snapshot(Date.now(), output.text, output.truncated), wait_timed_out: !completed },
-        };
+        activeWaits.set(job, (activeWaits.get(job) ?? 0) + 1);
+        try {
+          const completed = await supervisor.wait(job, params.timeout ?? DEFAULT_WAIT_SECS, signal);
+          const output = await supervisor.tail(job, tailLimits({ maxLines: params.lines, maxBytes: params.max_bytes }));
+          signal?.throwIfAborted();
+          const text = `${summary(job)}\n${shownOutput(output)}${completed ? "" : "\nWait expired before completion was observed. Wait again with bg_wait or stop it with bg_kill."}`;
+          if (completed) handledCompletions.add(job);
+          return {
+            content: [{ type: "text", text }],
+            details: {},
+            structuredContent: {
+              ...job.snapshot(Date.now(), output.text, output.truncated),
+              wait_timed_out: !completed,
+            },
+          };
+        } finally {
+          const remaining = (activeWaits.get(job) ?? 0) - 1;
+          if (remaining > 0) activeWaits.set(job, remaining);
+          else {
+            activeWaits.delete(job);
+            // Expired or cancelled observers must not consume an otherwise undelivered completion.
+            if (job.phase === "complete") void notifyCompletion(job);
+          }
+        }
       },
     });
 

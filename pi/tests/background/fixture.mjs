@@ -223,12 +223,19 @@ export async function createFixture({ output } = {}) {
     sessionManager: SessionManager.inMemory(cwd),
   });
   const session = runtime.session;
+  const notifications = [];
   const errors = [],
     ends = [],
     starts = [],
     logs = new Set();
   await session.bindExtensions({ mode: "json", onError: (error) => errors.push(error) });
   const unsubscribe = session.subscribe((event) => {
+    if (
+      event.type === "message_end" &&
+      event.message.role === "custom" &&
+      event.message.customType === "background-job"
+    )
+      notifications.push(event.message);
     if (event.type === "tool_execution_start") starts.push(event);
     if (event.type !== "tool_execution_end") return;
     ends.push(event);
@@ -247,6 +254,7 @@ export async function createFixture({ output } = {}) {
     session,
     ends,
     starts,
+    notifications,
     holds,
     definition(name) {
       return session.extensionRunner.getToolDefinition(name);

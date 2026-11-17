@@ -97,6 +97,8 @@ Selecting a store does not change Pi's shell execution or its combined stdout/st
 
 A `bg_wait` timeout ends the wait, not the command. The result sets `wait_timed_out`; use the same job id to wait again. A completed wait includes the final captured output tail. Cancelling a wait cancels observation, without itself requesting a stop.
 
+A pending `bg_wait` holds the completion notification until the wait returns. A wait that returns completion replaces the separate notice; expired or cancelled waits leave it enabled. Notices queued before a wait starts remain in the conversation. Completion notices use the same shortened command label as the jobs line, capped at 50 characters. Structured results keep the full command.
+
 `bg_status` with an id, `bg_wait`, automatic bash handoff results, and completion notifications default to the newest **200 lines, capped at 64 KiB**. `bg_status` and `bg_wait` accept optional `lines` and `max_bytes` positive-integer overrides; both limits apply together. Omit them to use the defaults. `output_truncated` reports excluded output, including memory eviction or the bounded pre-handoff buffer. Increasing the limits can retrieve more retained output, but cannot recover discarded bytes. The `/bg` viewer keeps a shorter tail to fit the terminal.
 
 A job becomes complete after its capture store finishes flushing. Capture failure produces status `failed` with an output diagnostic and preserves the command exit code when one is known.
