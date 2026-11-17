@@ -384,7 +384,7 @@ const tricky = [
 test("POSIX command preserves whitespace, quotes, and shell metacharacters", () => {
   const script = launchCommand(tricky, "/an agent directory", "linux");
   const probe = `pi() { printf '%s\\0' "$@"; }; ${script}`;
-  const actual = execFileSync("bash", ["-c", probe], { encoding: "utf8" });
+  const actual = execFileSync("bash", ["-c", probe], { encoding: "utf8", windowsHide: true });
   assert.deepEqual(actual.split("\0").slice(0, -1), tricky);
 });
 
@@ -395,7 +395,7 @@ if (process.platform === "win32") {
     const actual = execFileSync(
       "pwsh",
       ["-NoLogo", "-NoProfile", "-EncodedCommand", Buffer.from(probe, "utf16le").toString("base64")],
-      { encoding: "utf8" },
+      { encoding: "utf8", windowsHide: true },
     );
     assert.deepEqual(JSON.parse(Buffer.from(actual.trim(), "base64").toString("utf8")), tricky);
   });

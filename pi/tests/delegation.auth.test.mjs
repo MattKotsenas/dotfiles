@@ -18,6 +18,7 @@ test("production auth adapter SDK compatibility", { timeout: 150000 }, async (t)
       env,
       encoding: "utf8",
       timeout: 120000,
+      windowsHide: true,
     });
     const output = (result.stdout ?? "") + (result.stderr ?? "");
     assert.ifError(result.error);

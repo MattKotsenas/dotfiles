@@ -66,7 +66,7 @@ describe("delegation parent rewind", { concurrency: false }, () => {
         dirname(authPath),
         JSON.stringify({ handle, prompt: "History" }),
       ],
-      { env: process.env, timeout: 20000, maxBuffer: 1024 * 1024 },
+      { env: process.env, timeout: 20000, maxBuffer: 1024 * 1024, windowsHide: true },
     );
     const resumed = JSON.parse(stdout.match(/^RESUMED:(.+)$/m)[1]);
     assert.equal(answer(resumed.result), "Remember violet", "fresh-process resume must use the selected checkpoint");

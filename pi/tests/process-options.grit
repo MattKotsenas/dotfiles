@@ -1,0 +1,22 @@
+pattern hidden_options() {
+  object($properties) where { $properties[-1] <: `windowsHide: true` }
+}
+
+`$fn($args)` as $call where {
+  $filename <: r".*\.test\.mjs",
+  $fn <: or {
+    `spawn`, `spawnSync`, `exec`, `execSync`,
+    `execFile`, `execFileCallback`, `execFileSync`, `fork`, `promisify(execFile)`
+  },
+  $call <: not or {
+    `$fn($command, $options)` where { $options <: hidden_options() },
+    `$fn($command, $argv, $options)` where { $options <: hidden_options() },
+    `$fn($command, $options, $callback)` where { $options <: hidden_options() },
+    `$fn($command, $argv, $options, $callback)` where { $options <: hidden_options() }
+  },
+  register_diagnostic(
+    span = $call,
+    message = "Set windowsHide: true as the last subprocess option to suppress Windows console windows.",
+    severity = "error"
+  )
+}

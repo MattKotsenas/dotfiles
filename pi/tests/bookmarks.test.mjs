@@ -507,7 +507,9 @@ test("separate processes publish complete captures into one collection", async (
     await saveBookmark(process.argv[1], {kind:'more',note:process.argv[2],response:'Response '+process.argv[2],
       source:{sessionId:process.argv[2],entryId:'entry',cwd:process.cwd()}});`;
   await Promise.all(
-    ["one", "two"].map((id) => execFile(process.execPath, ["--input-type=module", "-e", code, f.directory, id])),
+    ["one", "two"].map((id) =>
+      execFile(process.execPath, ["--input-type=module", "-e", code, f.directory, id], { windowsHide: true }),
+    ),
   );
   const records = await f.records();
   assert.equal(records.length, 2);
@@ -541,7 +543,7 @@ test("fresh CLI discovery captures positive and negative examples without a mode
         f.runtime.session.sessionFile,
         `/bookmark ${alias} captured in a fresh process`,
       ],
-      { cwd: f.cwd, env: { ...process.env, PI_CODING_AGENT_DIR: f.root }, timeout: 30000 },
+      { cwd: f.cwd, env: { ...process.env, PI_CODING_AGENT_DIR: f.root }, timeout: 30000, windowsHide: true },
     );
     run.child.stdin.end();
     const { stdout, stderr } = await run;

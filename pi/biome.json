@@ -7,6 +7,7 @@
       "tests/background.*.test.mjs",
       "tests/background/*.mjs",
       "tests/bookmarks.test.mjs",
+      "tests/subprocess-options.test.mjs",
       "tests/bookmarks.pty.mjs",
       "agent/extensions/tangent.ts",
       "agent/extensions/compact-footer.ts",
@@ -33,5 +34,6 @@
     "lineWidth": 120,
     "lineEnding": "lf"
   },
-  "linter": { "rules": { "preset": "recommended" } }
+  "linter": { "rules": { "preset": "recommended" } },
+  "plugins": ["./tests/process-options.grit"]
 }

@@ -126,7 +126,7 @@ describe("delegation conversation restoration", { concurrency: false }, () => {
         dirname(authPath),
         JSON.stringify({ handle: first.details.handle, prompt: "Recall" }),
       ],
-      { env: process.env, timeout: 20000, maxBuffer: 1024 * 1024 },
+      { env: process.env, timeout: 20000, maxBuffer: 1024 * 1024, windowsHide: true },
     );
     const restored = JSON.parse(stdout.match(/^RESUMED:(.+)$/m)[1]);
     assert.match(restored.listing, new RegExp(first.details.handle));
@@ -180,7 +180,7 @@ describe("delegation conversation restoration", { concurrency: false }, () => {
           dirname(authPath),
           JSON.stringify({ handle: first.details.handle, prompt: "Recall" }),
         ],
-        { env: process.env, timeout: 20000, maxBuffer: 1024 * 1024 },
+        { env: process.env, timeout: 20000, maxBuffer: 1024 * 1024, windowsHide: true },
       ),
       (error) => {
         assert.match(error.stdout, /"children":\[\]/);

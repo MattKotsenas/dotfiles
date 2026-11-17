@@ -36,6 +36,7 @@ test("packaged CLI loads delegation and returns a real child file read", { timeo
       input: "",
       encoding: "utf8",
       timeout: 90000,
+      windowsHide: true,
     },
   );
   assert.ifError(result.error);
