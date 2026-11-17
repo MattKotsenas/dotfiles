@@ -61,12 +61,9 @@ This is not a mandate to preserve old code - once you know the reason and it no 
 correct. The trap is deleting something whose purpose you never grasped, so when you can't find the reason, ask
 rather than assume it's wrong.
 
-## Don't Document What You Can Enforce
+## Automate rule checks
 
-If a machine can check a rule, encode it in the machine, not in prose. Mechanical checks cannot be forgotten;
-conventions can. Reach for BannedApiAnalyzer over a "don't call this API" note, an architecture or reflection
-test over a "name it this way" paragraph, a formatter over a style guide. Save the prose for the judgment a
-machine can't make.
+Follow the [shared enforcement guidance](~/.pi/agent/expectations/enforceable-constraints.md).
 
 # Verified Behavioral Patterns
 
