@@ -31,3 +31,4 @@
 
 [diff]
         colorMoved = default
+        colorMovedWS = allow-indentation-change
