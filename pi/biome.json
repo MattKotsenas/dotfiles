@@ -3,6 +3,9 @@
   "files": {
     "includes": [
       "agent/extensions/bookmarks/*.ts",
+      "agent/extensions/background/*.ts",
+      "tests/background.*.test.mjs",
+      "tests/background/*.mjs",
       "tests/bookmarks.test.mjs",
       "tests/bookmarks.pty.mjs",
       "agent/extensions/tangent.ts",

@@ -1,5 +1,12 @@
 # Pi
 
+## Background commands
+
+[`agent/extensions/background`](agent/extensions/background/README.md) provides same-execution bash
+handoff, structured background-job results, bounded waits, run-owned cancellation, `/bg`, and `/reap`.
+It is maintained directly in dotfiles. File capture is the default; memory capture is optional.
+Run `cd pi && npm run test:background` for its SDK/process and pure-state checks.
+
 ## Cost
 
 [`agent/extensions/cost`](agent/extensions/cost/README.md) provides `/cost`,
