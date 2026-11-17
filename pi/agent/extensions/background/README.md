@@ -8,6 +8,32 @@ after linking them. Do not also load the published `pi-background` package: both
 and commands. To try the unlinked source for one invocation, run
 `pi -e ./pi/agent/extensions/background` from the dotfiles root.
 
+## Disable background
+
+Add this entry to `extensions` in `~/.pi/agent/settings.json`, preserving any other entries, then run
+`/reload` or restart Pi:
+
+```json
+{
+  "extensions": ["-extensions/background/index.ts"]
+}
+```
+
+This is Pi's native load-time exclusion. It removes the background tools. When no other extension
+replaces bash, Pi's built-in bash is restored.
+Remove that entry and reload to enable background again. Let important jobs finish before reloading;
+extension shutdown requests best-effort cancellation.
+
+Dotfiles sets `"codemode": { "mode": "only" }` and keeps `"defaultTools": ["+codemode"]`.
+The model sees only codemode; the other enabled tools remain callable inside its scripts. To restore
+direct tool declarations, set `codemode.mode` to `"on"` and reload.
+
+If Pi cannot start normally, this invocation skips all extensions and gives the model the native tools:
+
+```sh
+pi --no-extensions --tools "read,bash,edit,write"
+```
+
 ## Maintenance and provenance
 
 The source comes from [Pringled/pi-extensions](https://github.com/Pringled/pi-extensions/tree/main/packages/pi-background),

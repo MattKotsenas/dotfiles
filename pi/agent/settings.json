@@ -11,6 +11,9 @@
   "defaultTools": [
     "+codemode"
   ],
+  "codemode": {
+    "mode": "only"
+  },
   "lastChangelogVersion": "1.5.2",
   "packages": [
     "./extensions/powerline-chrome.ts",
