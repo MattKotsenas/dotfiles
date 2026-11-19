@@ -326,9 +326,13 @@ properties:
         description: Install komorebi
         allowPrerelease: true
       settings:
-        # fix/stale-rdp-monitors: https://github.com/LGUG2Z/komorebi/pull/1761
+        # temp/integration: upstream 72aa4c97 plus reviewed fixes:
+        # RDP recovery: https://github.com/LGUG2Z/komorebi/pull/1761
+        # Cached-container cleanup: https://github.com/LGUG2Z/komorebi/pull/1773
+        # Monocle activation: https://github.com/LGUG2Z/komorebi/pull/1772
+        # Includes libz-sys 1.1.33 for RUSTSEC-2026-0544.
         Url: https://github.com/MattKotsenas/komorebi.git
-        Rev: f98ddf946a78ebd6a8314e7b42c076d380f5343d
+        Rev: 63609ca06a036dfb66eb8e90b96a11c213aaca35
         Crates:
           - komorebi
           - komorebic
