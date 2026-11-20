@@ -20,6 +20,7 @@ install -d -m 0700 "$HOME/.config/pi-sandbox"
 install -m 0700 pi/sandbox/pi-sandboxctl "$HOME/.local/bin/pi-sandboxctl"
 install -m 0700 pi/sandbox/github-token "$HOME/.config/pi-sandbox/github-token"
 install -m 0600 pi/sandbox/config.example.json "$HOME/.config/pi-sandbox/config.json"
+install -m 0644 pi/sandbox/OPERATIONS.md "$HOME/.config/pi-sandbox/OPERATIONS.md"
 install -m 0644 pi/sandbox/sandbox.ts "$HOME/.pi/agent/extensions/sandbox.ts"
 sudo -n docker pull mcr.microsoft.com/devcontainers/universal@sha256:d247757d344fecd9a77467767e64a1479367047b74ad82453c08ff17a13ff7ec
 ```
@@ -66,6 +67,9 @@ If you use Powerline, its custom status key is `sandbox`. Add
 `"custom:sandbox"` in your footer layout.
 
 ## Use
+
+See the [operator runbook](OPERATIONS.md) for lifecycle calls, workspace
+approval, and host diagnostics.
 
 Start `pi` normally. It starts in **HOST** mode for system administration.
 

@@ -13,3 +13,11 @@ Provide the requirements, preserved contracts, applicable rules, and claim to
 falsify. Keep execution and write tools available for experiments; instruct the
 reviewer to leave the reviewed artifact and live user state untouched. Follow
 the review triggers and limits in `global.instructions.md`.
+
+## Pi sandbox on Linux
+
+If `sandbox_manage` is available, read `~/.config/pi-sandbox/OPERATIONS.md`
+before operating or troubleshooting the sandbox. Use SANDBOX for project
+commands and HOST for host administration. Only the user can switch modes.
+If a sandbox call fails, diagnose it without retrying the project command on
+the host.
