@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+unset GH_TOKEN GITHUB_TOKEN
+gh="$HOME/.local/bin/gh"
+status=$("$gh" auth status --hostname github.com 2>&1)
+grep -Fq 'Expiring token that gh refreshes automatically' <<<"$status"
+"$gh" auth token --hostname github.com

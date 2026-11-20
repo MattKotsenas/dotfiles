@@ -1,5 +1,9 @@
 # Pi
 
+## Linux sandboxes
+
+See [Pi sandboxes on Linux](sandbox/README.md) for an optional setup that keeps Pi on the host and runs shell and file tools in a project container.
+
 ## Background commands
 
 [`agent/extensions/background`](agent/extensions/background/README.md) provides same-execution bash

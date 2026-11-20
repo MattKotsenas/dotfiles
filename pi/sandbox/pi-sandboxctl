@@ -1,0 +1,286 @@
+#!/usr/bin/python3
+"""Host-only lifecycle controller. Never pass provider output to a caller."""
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from datetime import datetime, timezone
+
+HOME = Path.home()
+BASE = Path("/data/dev")
+STATE = Path(f"/run/user/{os.getuid()}/pi-sandboxctl")
+CONFIG = HOME / ".config/pi-sandbox/config.json"
+PROXY = Path("/usr/local/lib/pi-sandbox/iron-proxy")
+DOCKER = ["/usr/bin/sudo", "-n", "/usr/bin/docker"]
+IMAGE = "docker@sha256:2a232a42256f70d78e3cc5d2b5d6b3276710a0de0596c145f627ecfae90282ac"
+
+
+def docker(*args, **kwargs):
+    return subprocess.run([*DOCKER, *args], check=True, capture_output=True, timeout=45, **kwargs).stdout
+
+
+def atomic(path, data):
+    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as file:
+        file.write(data)
+    os.replace(file.name, path)
+
+
+def provider(name, command):
+    try:
+        result = subprocess.run(command, cwd=HOME, stdout=subprocess.PIPE,
+                                stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
+                                timeout=15, check=True)
+    except (OSError, subprocess.SubprocessError):
+        raise RuntimeError(f"Credential provider {name!r} failed") from None
+    secret = result.stdout.rstrip(b"\r\n")
+    if not re.fullmatch(rb"[!-~]{1,16384}", secret):
+        raise RuntimeError(f"Credential provider {name!r} must emit one nonempty token")
+    return secret
+
+
+def names(sid):
+    return (sid, sid + "-broker", sid + "-net")
+
+
+def refresh(directory, profile, settings):
+    bindings = profile.get("bindings", [])
+    if not bindings:
+        return
+    # Collect first: a failed provider leaves the current snapshots in place.
+    secrets = [provider(b["provider"], settings["providers"][b["provider"]])
+               for b in bindings]
+    for i, secret in enumerate(secrets):
+        atomic(directory / "broker" / f"secret-{i}", secret)
+    atomic(directory / "refreshed-at",
+           datetime.now(timezone.utc).isoformat().encode())
+
+
+def remove(sid):
+    box, broker, network = names(sid)
+    for name in (box, broker):
+        exists = subprocess.run([*DOCKER, "container", "inspect", name],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+        if exists.returncode == 0:
+            docker("rm", "-fv", name)
+    exists = subprocess.run([*DOCKER, "network", "inspect", network],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+    if exists.returncode == 0:
+        docker("network", "rm", network)
+    shutil.rmtree(STATE / sid)
+
+
+def start_broker(directory, profile, network, broker):
+    location = directory / "broker"
+    subprocess.run(["/usr/bin/openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+                    "-days", "30", "-subj", "/CN=local-pi-sandbox",
+                    "-addext", "basicConstraints=critical,CA:TRUE",
+                    "-addext", "keyUsage=critical,keyCertSign,cRLSign",
+                    "-keyout", str(location / "ca.key"), "-out", str(location / "ca.crt")],
+                   check=True, capture_output=True, timeout=15)
+    secrets = [
+        {"source": {"type": "file", "path": f"/broker/secret-{i}"},
+         "replace": {"proxy_value": b["sentinel"], "match_headers": ["Authorization"]},
+         "rules": [{**rule, "require_tls": True} for rule in b["rules"]]}
+        for i, b in enumerate(profile.get("bindings", []))
+    ]
+    config = {
+        "dns": {"listen": "127.0.0.1:1053", "proxy_ip": "127.0.0.1"},
+        "proxy": {"http_listen": "127.0.0.1:8081", "https_listen": "127.0.0.1:8443",
+                  "tunnel_listen": ":8080"},
+        "tls": {"ca_cert": "/broker/ca.crt", "ca_key": "/broker/ca.key"},
+        "transforms": [{"name": "allowlist", "config": {"domains": profile["domains"]}},
+                       {"name": "secrets", "config": {"secrets": secrets}}],
+    }
+    atomic(location / "config.json", json.dumps(config).encode())
+    docker("run", "-d", "--name", broker, "--network", "bridge",
+           "--mount", f"type=bind,src={location},dst=/broker,readonly",
+           "--mount", f"type=bind,src={PROXY},dst=/usr/local/bin/iron-proxy,readonly",
+           "--entrypoint", "/usr/local/bin/iron-proxy", IMAGE, "-config", "/broker/config.json")
+    docker("network", "connect", "--alias", "broker", network, broker)
+    if docker("inspect", "-f", "{{.State.Running}}", broker).strip() != b"true":
+        raise RuntimeError("Broker failed to start")
+    return (location / "ca.crt").read_bytes()
+
+
+def configure_guest(box, profile, cert):
+    docker("exec", "-i", box, "sh", "-ec",
+           "umask 022; tee /etc/pi-broker-ca.crt >/dev/null", input=cert)
+    for host, binding in profile.get("git_https", {}).items():
+        sentinel = profile["bindings"][binding]["sentinel"]
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", sentinel):
+            raise RuntimeError("Invalid Git sentinel")
+        settings = {
+            f"http.https://{host}.proxy": "http://broker:8080",
+            f"http.https://{host}.sslCAInfo": "/etc/pi-broker-ca.crt",
+            f"credential.https://{host}.helper":
+                '!f() { if [ "$1" = get ]; then printf "username=x-access-token\\npassword='
+                + sentinel + '\\n"; fi; }; f',
+        }
+        for key, value in settings.items():
+            docker("exec", box, "git", "config", "--system", "--replace-all", key, value)
+
+
+def fingerprint(profile):
+    return hashlib.sha256(json.dumps(profile, sort_keys=True).encode()).hexdigest()
+
+
+def managed_name(session_id):
+    if not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?", session_id):
+        raise RuntimeError("Invalid Pi session ID")
+    return "pi-managed-" + hashlib.sha256(session_id.encode()).hexdigest()[:32]
+
+
+def approved_profile(workspace, profile_name, settings):
+    declared = settings["workspaces"].get(workspace)
+    if declared is None or profile_name not in declared["profiles"]:
+        raise RuntimeError("Profile is not approved for this workspace")
+    return settings["profiles"][profile_name]
+
+
+def workspace_directory(workspace):
+    directory = BASE / workspace
+    if (not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]*", workspace)
+            or not directory.is_dir() or directory.resolve() != directory):
+        raise RuntimeError("Workspace must be an existing directory under /data/dev")
+    mount = subprocess.run(["/usr/bin/findmnt", "-n", "-o", "TARGET", "--target", str(directory)],
+                           check=True, capture_output=True, text=True, timeout=5)
+    if mount.stdout.strip() != "/data":
+        raise RuntimeError("Workspace must be on the /data mount, not a separate mount")
+    mounts = subprocess.run(["/usr/bin/findmnt", "--json", "--list", "-o", "TARGET"],
+                            check=True, capture_output=True, timeout=5)
+    if any(entry["target"].startswith(f"{directory}/")
+           for entry in json.loads(mounts.stdout)["filesystems"]):
+        raise RuntimeError("Workspace contains a host mount; unmount it before starting the sandbox")
+    return directory
+
+
+def create(session_id, workspace, profile_name, settings):
+    profile = approved_profile(workspace, profile_name, settings)
+    directory = workspace_directory(workspace)
+    sid = managed_name(session_id)
+    state = STATE / sid
+    if state.exists():
+        raise RuntimeError("This session already has a sandbox; use status or destroy it first")
+    if len(list(STATE.glob("pi-managed-*"))) >= 4:
+        raise RuntimeError("Managed sandbox limit reached; destroy one first")
+    state.mkdir(mode=0o700)
+    (state / "broker").mkdir(mode=0o700)
+    box, broker, network = names(sid)
+    meta = {"id": session_id, "workspace": workspace, "profile": profile_name}
+    atomic(state / "metadata.json", json.dumps({**meta, "policy": fingerprint(profile), "broker": bool(profile.get("domains"))}).encode())
+    try:
+        refresh(state, profile, settings)
+        docker("network", "create", "--internal", network)
+        cert = start_broker(state, profile, network, broker) if profile.get("domains") else None
+        docker("run", "-d", "--name", box, "--runtime", "sysbox-runc", "--network", network,
+               "--mount", f"type=bind,src={directory},dst=/workspace",
+               "--workdir", "/workspace",
+               "-e", "DOCKER_TLS_CERTDIR=", IMAGE, "dockerd", "--host=unix:///var/run/docker.sock",
+               f"--group={os.getgid()}")
+        if cert is not None:
+            configure_guest(box, profile, cert)
+    except Exception:
+        try:
+            remove(sid)
+        except Exception:
+            print(f"Cleanup incomplete; inspect sandbox {sid}", file=sys.stderr)
+        raise
+    return meta
+
+
+def ensure_running(session_id, settings):
+    sid = managed_name(session_id)
+    metadata_path = STATE / sid / "metadata.json"
+    if not metadata_path.is_file():
+        default = settings["default"]
+        create(session_id, default["workspace"], default["profile"], settings)
+        return sid
+
+    box, broker, _ = names(sid)
+    if docker("inspect", "-f", "{{.State.Status}}", box).strip() != b"running":
+        metadata = json.loads(metadata_path.read_text())
+        profile = approved_profile(metadata["workspace"], metadata["profile"], settings)
+        if fingerprint(profile) != metadata["policy"]:
+            raise RuntimeError("Profile policy changed; recreate the sandbox")
+        workspace_directory(metadata["workspace"])
+        if metadata["broker"]:
+            docker("start", broker)
+        docker("start", box)
+    return sid
+
+
+def operate(args, settings):
+    if args.action == "create":
+        return create(args.id, args.workspace, args.profile, settings)
+    sid = managed_name(args.id)
+    directory = STATE / sid
+    metadata_path = directory / "metadata.json"
+    if not metadata_path.is_file():
+        if args.action == "status":
+            return {"id": args.id, "state": "absent"}
+        raise RuntimeError("This session has no sandbox")
+    metadata = json.loads(metadata_path.read_text())
+    box, broker, _ = names(sid)
+    if args.action == "destroy":
+        remove(sid)
+        return {"id": args.id, "state": "destroyed"}
+    policy = metadata.pop("policy")
+    has_broker = metadata.pop("broker")
+    if args.action == "refresh_credentials":
+        profile = settings["profiles"][metadata["profile"]]
+        approved = settings["workspaces"][metadata["workspace"]]["profiles"]
+        if metadata["profile"] not in approved or fingerprint(profile) != policy:
+            raise RuntimeError("Profile policy changed; recreate the sandbox")
+        refresh(directory, profile, settings)
+    elif args.action == "stop":
+        docker("stop", box)
+        if has_broker:
+            docker("stop", broker)
+    stamp = directory / "refreshed-at"
+    return {**metadata, "state": docker("inspect", "-f", "{{.State.Status}}", box).decode().strip(),
+            "credentials_loaded_at": stamp.read_text() if stamp.exists() else None}
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    actions = parser.add_subparsers(dest="action", required=True)
+    start = actions.add_parser("create")
+    start.add_argument("id")
+    start.add_argument("workspace")
+    start.add_argument("profile")
+    for action in ("status", "refresh_credentials", "stop", "destroy"):
+        actions.add_parser(action).add_argument("id")
+    command = actions.add_parser("exec")
+    command.add_argument("id")
+    command.add_argument("command", nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+    STATE.mkdir(mode=0o700, exist_ok=True)
+    with (STATE / ".lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        settings = json.loads(CONFIG.read_text())
+        if args.action != "exec":
+            print(json.dumps(operate(args, settings)))
+            return
+        if not args.command:
+            raise RuntimeError("Expected a sandbox command")
+        sid = ensure_running(args.id, settings)
+    os.execv(DOCKER[0], [*DOCKER, "exec", "-i", "--user", f"{os.getuid()}:{os.getgid()}",
+                         "--workdir", "/workspace", sid, *args.command])
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except subprocess.CalledProcessError as exc:
+        print(f"Host operation failed (exit {exc.returncode})", file=sys.stderr)
+        sys.exit(1)
+    except (OSError, ValueError, RuntimeError, KeyError, subprocess.TimeoutExpired) as exc:
+        print(f"Sandbox operation failed: {exc}", file=sys.stderr)
+        sys.exit(1)

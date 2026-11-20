@@ -1,0 +1,54 @@
+{
+  "default": { "workspace": "sandbox-managed", "profile": "offline" },
+  "providers": {
+    "github": [
+      "./.config/pi-sandbox/github-token"
+    ]
+  },
+  "workspaces": {
+    "sandbox-managed": {
+      "profiles": [
+        "offline",
+        "github-git"
+      ]
+    }
+  },
+  "profiles": {
+    "offline": {},
+    "github-git": {
+      "domains": [
+        "github.com"
+      ],
+      "bindings": [
+        {
+          "provider": "github",
+          "sentinel": "pi-git-sentinel",
+          "rules": [
+            {
+              "host": "github.com",
+              "methods": [
+                "GET"
+              ],
+              "paths": [
+                "/*/*/info/refs"
+              ]
+            },
+            {
+              "host": "github.com",
+              "methods": [
+                "POST"
+              ],
+              "paths": [
+                "/*/*/git-upload-pack",
+                "/*/*/git-receive-pack"
+              ]
+            }
+          ]
+        }
+      ],
+      "git_https": {
+        "github.com": 0
+      }
+    }
+  }
+}
