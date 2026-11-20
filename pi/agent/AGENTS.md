@@ -17,7 +17,9 @@ the review triggers and limits in `global.instructions.md`.
 ## Pi sandbox on Linux
 
 If `sandbox_manage` is available, read `~/.config/pi-sandbox/OPERATIONS.md`
-before operating or troubleshooting the sandbox. Use SANDBOX for project
-commands and HOST for host administration. Only the user can switch modes.
+before operating or troubleshooting the sandbox. In SANDBOX, use
+`sandbox_read` for skills and instructions at their advertised paths. Use
+SANDBOX for project commands and HOST for host administration. Only the user
+can switch modes.
 If a sandbox call fails, diagnose it without retrying the project command on
 the host.

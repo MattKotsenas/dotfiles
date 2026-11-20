@@ -98,8 +98,10 @@ or reach arbitrary network destinations. Run those commands in SANDBOX mode.
 
 Pi and its model credentials stay on the host. The sandbox sees the approved
 workspace as a writable mount and has its own Docker daemon. It does not get
-the host home directory or Docker socket. Dependencies can still read or alter
-the mounted checkout and exercise the network permissions of its profile.
+the host home directory or Docker socket. It gets separate read-only mounts
+for the [guidance paths](OPERATIONS.md#start-work-or-change-profiles).
+Dependencies can read the guidance, alter the mounted checkout, and exercise
+the network permissions of the profile.
 This setup does not aim to contain a malicious agent or withstand a host escape.
 
 The controller mounts only an approved directory directly under `/data/dev`

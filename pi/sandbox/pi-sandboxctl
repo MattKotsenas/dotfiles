@@ -18,6 +18,12 @@ BASE = Path("/data/dev")
 STATE = Path(f"/run/user/{os.getuid()}/pi-sandboxctl")
 CONFIG = HOME / ".config/pi-sandbox/config.json"
 PROXY = Path("/usr/local/lib/pi-sandbox/iron-proxy")
+GUIDANCE = (
+    HOME / ".pi/agent/skills",
+    HOME / ".pi/agent/expectations",
+    HOME / ".copilot/instructions",
+    HOME / ".config/pi-sandbox/OPERATIONS.md",
+)
 DOCKER = ["/usr/bin/sudo", "-n", "/usr/bin/docker"]
 BROKER_IMAGE = "docker@sha256:2a232a42256f70d78e3cc5d2b5d6b3276710a0de0596c145f627ecfae90282ac"
 
@@ -156,17 +162,42 @@ def workspace_directory(workspace):
                            check=True, capture_output=True, text=True, timeout=5)
     if mount.stdout.strip() != "/data":
         raise RuntimeError("Workspace must be on the /data mount, not a separate mount")
+    reject_submounts(directory)
+    return directory
+
+
+def reject_submounts(path, include_root=False):
     mounts = subprocess.run(["/usr/bin/findmnt", "--json", "--list", "-o", "TARGET"],
                             check=True, capture_output=True, timeout=5)
-    if any(entry["target"].startswith(f"{directory}/")
+    if any(entry["target"].startswith(f"{path}/")
+           or (include_root and entry["target"] == str(path))
            for entry in json.loads(mounts.stdout)["filesystems"]):
-        raise RuntimeError("Workspace contains a host mount; unmount it before starting the sandbox")
-    return directory
+        raise RuntimeError(f"{path} contains a host mount; unmount it before starting the sandbox")
+
+
+def check_guidance_source(source, destination, workspace):
+    valid_type = source.is_file() if destination.suffix == ".md" else source.is_dir()
+    if (not valid_type or source.name != destination.name
+            or not (source.is_relative_to(HOME) or source.is_relative_to(BASE))
+            or workspace.is_relative_to(source) or source.is_relative_to(workspace)):
+        raise RuntimeError(f"Unsafe guidance source for {destination}: {source}")
+    reject_submounts(source, include_root=True)
+
+
+def guidance_mounts(workspace):
+    flags = []
+    for destination in GUIDANCE:
+        if destination.exists():
+            source = destination.resolve(strict=True)
+            check_guidance_source(source, destination, workspace)
+            flags.extend(("--mount", f"type=bind,src={source},dst={destination},readonly,bind-recursive=disabled"))
+    return flags
 
 
 def create(session_id, workspace, profile_name, settings):
     profile = approved_profile(workspace, profile_name, settings)
     directory = workspace_directory(workspace)
+    mounts = guidance_mounts(directory)
     sid = managed_name(session_id)
     state = STATE / sid
     if state.exists():
@@ -184,7 +215,7 @@ def create(session_id, workspace, profile_name, settings):
         cert = start_broker(state, profile, network, broker) if profile.get("domains") else None
         docker("run", "-d", "--name", box, "--runtime", "sysbox-runc", "--network", network,
                "--mount", f"type=bind,src={directory},dst=/workspace",
-               "--workdir", "/workspace",
+               *mounts, "--workdir", "/workspace",
                GUEST_IMAGE, "dockerd", "--host=unix:///var/run/docker.sock",
                f"--group={os.getgid()}")
         if cert is not None:
@@ -212,7 +243,15 @@ def ensure_running(session_id, settings):
         profile = approved_profile(metadata["workspace"], metadata["profile"], settings)
         if fingerprint(profile) != metadata["policy"]:
             raise RuntimeError("Profile policy changed; recreate the sandbox")
-        workspace_directory(metadata["workspace"])
+        workspace = workspace_directory(metadata["workspace"])
+        mounts = json.loads(docker("inspect", "-f", "{{json .Mounts}}", box))
+        for mount in mounts:
+            destination = Path(mount["Destination"])
+            if destination in GUIDANCE:
+                source = Path(mount["Source"])
+                if mount["RW"] or source.resolve(strict=True) != source:
+                    raise RuntimeError(f"Unsafe guidance mount for {destination}")
+                check_guidance_source(source, destination, workspace)
         if metadata["broker"]:
             docker("start", broker)
         docker("start", box)

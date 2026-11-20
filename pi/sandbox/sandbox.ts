@@ -26,19 +26,34 @@ async function manage(args: string[]) {
 const tool = "sandbox_shell";
 const sandboxTools = [tool, "sandbox_read", "sandbox_edit"];
 const workspace = "/workspace";
+const guidance = [
+  ".pi/agent/skills",
+  ".pi/agent/expectations",
+  ".copilot/instructions",
+  ".config/pi-sandbox/OPERATIONS.md",
+].map(path => join(homedir(), path));
+const readRoots = [workspace, ...guidance];
+const editRoots = [workspace];
 const fileOptions = { timeout: 15_000, maxBuffer: 4 * 1024 * 1024, env: { PATH: "/usr/bin:/bin" } };
 
-function workspacePath(path: string) {
-  const absolute = posix.resolve(workspace, path);
-  if (!absolute.startsWith(workspace + "/")) throw new Error("Expected a file path under /workspace.");
-  return absolute;
+function filePath(path: string, roots: string[]) {
+  const absolute = posix.resolve(workspace, path.startsWith("~/") ? join(homedir(), path.slice(2)) : path);
+  const root = roots.find(dir => absolute === dir || absolute.startsWith(dir + "/"));
+  if (!root || absolute === workspace) {
+    throw new Error(roots === editRoots
+      ? "Expected a file under /workspace."
+      : "Expected a file under /workspace or in an allowed read-only guidance path.");
+  }
+  return { absolute, root };
 }
 
 // Resolve symlinks and check file type inside the container before opening a file.
 async function fileOperation(target: Target, operation: "read" | "write" | "check-read" | "check-edit", path: string, input?: string) {
+  const reading = operation === "read" || operation === "check-read";
+  const { absolute, root } = filePath(path, reading ? readRoots : editRoots);
   const pending = exec(...dispatch(target, ["/bin/sh", "-ec", `
-    file=$(realpath "$2")
-    case "$file" in /workspace/*) ;; *) echo "File resolves outside /workspace" >&2; exit 1;; esac
+    file=$(realpath -e -- "$2")
+    case "$file" in "$3"|"$3"/*) ;; *) echo "File resolves outside its allowed root" >&2; exit 1;; esac
     test -f "$file" || { echo "Expected a regular file" >&2; exit 1; }
     case "$1" in
       read) exec head -c 4194305 -- "$file";;
@@ -46,7 +61,7 @@ async function fileOperation(target: Target, operation: "read" | "write" | "chec
       check-read) test -r "$file";;
       check-edit) test -r "$file" && test -w "$file";;
     esac
-  `, "sandbox-file", operation, path]), { ...fileOptions, encoding: "buffer" });
+  `, "sandbox-file", operation, absolute, root]), { ...fileOptions, encoding: "buffer" });
   pending.child.stdin?.on("error", () => { /* Dispatcher errors are reported by execFile. */ });
   pending.child.stdin?.end(input);
   return (await pending).stdout;
@@ -107,9 +122,9 @@ export default function (pi: ExtensionAPI) {
   });
   pi.registerTool({
     ...read, name: "sandbox_read", label: "Sandbox read", defaultActive: false,
-    description: "Read a workspace file inside the sandbox, optionally selecting a line range. Relative paths start at /workspace.",
+    description: "Read a workspace file or mounted read-only guidance inside the sandbox. Relative project paths start at /workspace. For user skills, instructions, expectations, or OPERATIONS.md, use their advertised host paths unchanged.",
     execute(id, args, signal, update, ctx) {
-      return read.execute(id, { ...args, path: workspacePath(args.path) }, signal, update, ctx);
+      return read.execute(id, { ...args, path: filePath(args.path, readRoots).absolute }, signal, update, ctx);
     },
   });
 
@@ -124,7 +139,7 @@ export default function (pi: ExtensionAPI) {
     ...edit, name: "sandbox_edit", label: "Sandbox edit", defaultActive: false,
     description: "Apply exact text replacements to an existing workspace file inside the sandbox. Relative paths start at /workspace.",
     execute(id, args, signal, update, ctx) {
-      return edit.execute(id, { ...args, path: workspacePath(args.path) }, signal, update, ctx);
+      return edit.execute(id, { ...args, path: filePath(args.path, editRoots).absolute }, signal, update, ctx);
     },
   });
 

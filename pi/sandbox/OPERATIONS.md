@@ -26,6 +26,20 @@ After the user runs `/sandbox on`, the first shell or file call creates a
 missing sandbox from the `default` in `~/.config/pi-sandbox/config.json`
 (`sandbox-managed` and `offline` on this host) or starts a stopped sandbox.
 Use `sandbox_shell`, `sandbox_read`, and `sandbox_edit` for project work.
+Use `sandbox_read` at the original paths for mounted guidance:
+
+- `~/.pi/agent/skills/`, including skill references
+- `~/.pi/agent/expectations/`
+- `~/.copilot/instructions/`
+- `~/.config/pi-sandbox/OPERATIONS.md`
+
+New containers mount these locations read-only when present. Other host paths,
+including additional skill directories, are not mounted. The guidance also
+becomes readable to programs inside the sandbox, so keep credentials and
+private configuration out of these locations. If the approved workspace
+contains a guidance source, use a separate checkout for project work.
+Existing containers need to be recreated to get the mounts.
+
 For a routing check, run this after switching; it may start the sandbox:
 
 ```js
