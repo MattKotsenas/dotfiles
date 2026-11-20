@@ -5,8 +5,11 @@
 Use a Linux host with Pi 1.5.2, Python 3, OpenSSL, `findmnt`, Docker with the
 `sysbox-runc` runtime, and an ext4 data disk mounted at `/data`. The controller
 uses `sudo -n /usr/bin/docker` on the host. It does not pass that socket or
-sudo access into the workspace. This setup uses the pinned amd64 Docker image
-and iron-proxy release below.
+sudo access into the workspace. New sandboxes use the pinned amd64 Dev
+Containers Universal 6.1 image, with Ubuntu, common language runtimes, and
+an inner Docker daemon. Budget about 15 GiB for the image cache. With Docker's
+containerd image store, that space is used under containerd's root, which is
+configured separately from Docker's `data-root`.
 
 From the dotfiles repository, copy the files into place. If a destination
 already exists, back it up and merge your settings before replacing it.
@@ -18,10 +21,20 @@ install -m 0700 pi/sandbox/pi-sandboxctl "$HOME/.local/bin/pi-sandboxctl"
 install -m 0700 pi/sandbox/github-token "$HOME/.config/pi-sandbox/github-token"
 install -m 0600 pi/sandbox/config.example.json "$HOME/.config/pi-sandbox/config.json"
 install -m 0644 pi/sandbox/sandbox.ts "$HOME/.pi/agent/extensions/sandbox.ts"
+sudo -n docker pull mcr.microsoft.com/devcontainers/universal@sha256:d247757d344fecd9a77467767e64a1479367047b74ad82453c08ff17a13ff7ec
+```
+
+Existing containers keep their original image. To move an existing sandbox
+to Universal, destroy and recreate it. The checkout survives; files and
+nested images stored only inside the old sandbox do not.
+
+For the `github-git` profile, pull the broker image:
+
+```sh
 sudo -n docker pull docker@sha256:2a232a42256f70d78e3cc5d2b5d6b3276710a0de0596c145f627ecfae90282ac
 ```
 
-For the `github-git` profile, install [iron-proxy v0.58.0](https://github.com/ironsh/iron-proxy/releases/tag/v0.58.0)
+Then install [iron-proxy v0.58.0](https://github.com/ironsh/iron-proxy/releases/tag/v0.58.0)
 at `/usr/local/lib/pi-sandbox/iron-proxy`. On Linux amd64, verify the release
 archive before extracting:
 

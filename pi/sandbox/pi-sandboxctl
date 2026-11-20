@@ -19,7 +19,10 @@ STATE = Path(f"/run/user/{os.getuid()}/pi-sandboxctl")
 CONFIG = HOME / ".config/pi-sandbox/config.json"
 PROXY = Path("/usr/local/lib/pi-sandbox/iron-proxy")
 DOCKER = ["/usr/bin/sudo", "-n", "/usr/bin/docker"]
-IMAGE = "docker@sha256:2a232a42256f70d78e3cc5d2b5d6b3276710a0de0596c145f627ecfae90282ac"
+BROKER_IMAGE = "docker@sha256:2a232a42256f70d78e3cc5d2b5d6b3276710a0de0596c145f627ecfae90282ac"
+
+
+GUEST_IMAGE = "mcr.microsoft.com/devcontainers/universal@sha256:d247757d344fecd9a77467767e64a1479367047b74ad82453c08ff17a13ff7ec"
 
 
 def docker(*args, **kwargs):
@@ -102,7 +105,7 @@ def start_broker(directory, profile, network, broker):
     docker("run", "-d", "--name", broker, "--network", "bridge",
            "--mount", f"type=bind,src={location},dst=/broker,readonly",
            "--mount", f"type=bind,src={PROXY},dst=/usr/local/bin/iron-proxy,readonly",
-           "--entrypoint", "/usr/local/bin/iron-proxy", IMAGE, "-config", "/broker/config.json")
+           "--entrypoint", "/usr/local/bin/iron-proxy", BROKER_IMAGE, "-config", "/broker/config.json")
     docker("network", "connect", "--alias", "broker", network, broker)
     if docker("inspect", "-f", "{{.State.Running}}", broker).strip() != b"true":
         raise RuntimeError("Broker failed to start")
@@ -182,7 +185,7 @@ def create(session_id, workspace, profile_name, settings):
         docker("run", "-d", "--name", box, "--runtime", "sysbox-runc", "--network", network,
                "--mount", f"type=bind,src={directory},dst=/workspace",
                "--workdir", "/workspace",
-               "-e", "DOCKER_TLS_CERTDIR=", IMAGE, "dockerd", "--host=unix:///var/run/docker.sock",
+               GUEST_IMAGE, "dockerd", "--host=unix:///var/run/docker.sock",
                f"--group={os.getgid()}")
         if cert is not None:
             configure_guest(box, profile, cert)
