@@ -84,6 +84,11 @@ export default function (pi: ExtensionAPI) {
     ctx.ui.setStatus("sandbox", modeStatus(target));
   });
 
+  pi.on("session_shutdown", event => {
+    // Reload carries the active tools into a new extension instance, which starts in HOST.
+    if (event.reason === "reload" && target) pi.setActiveTools(hostTools);
+  });
+
   // Also gate inactive tools in case another feature attempts a nested tool call.
   pi.on("tool_call", (event) => {
     if (target && !sandboxTools.includes(event.toolName) && event.toolName !== "codemode" && event.toolName !== manager) {
