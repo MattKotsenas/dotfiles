@@ -10,6 +10,9 @@
         lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)%an <%ae>%Creset' --abbrev-commit
         root = rev-parse --show-toplevel
         nuke = "!f() { export GIT_ASK_YESNO=false; git clean -xdf ; git reset --hard; }; f"
+[gc "refs/agent/*"]
+        reflogExpire = 90.days
+        reflogExpireUnreachable = 90.days
 [rerere]
         enabled = true
 [filter "pi-settings"]
