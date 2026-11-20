@@ -1,7 +1,7 @@
 ---
 name: mallard
 description: MattKotsenas's correctness reviewer - bugs, logic, and design flaws in code and plans.
-model: gpt-6.1-sol
+model: gpt-6.2-sol
 reasoning-effort: medium
 ---
 

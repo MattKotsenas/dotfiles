@@ -1,5 +1,5 @@
 {
-  "defaultModel": "gpt-6.1-sol",
+  "defaultModel": "gpt-6.2-sol",
   "defaultProvider": "github-copilot",
   "defaultThinkingLevel": "medium",
   "cacheWarming": "idle",
@@ -123,9 +123,9 @@
   "hideThinkingBlock": true,
   "enabledModels": [
     "github-copilot/gpt-6-luna",
-    "github-copilot/gpt-6.1-sol",
+    "github-copilot/gpt-6.2-sol",
     "openai/gpt-6-luna",
-    "openai/gpt-6.1-sol"
+    "openai/gpt-6.2-sol"
   ],
   "compaction": {
     "enabled": true,
