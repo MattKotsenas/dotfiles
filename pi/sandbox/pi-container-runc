@@ -1,0 +1,202 @@
+#!/usr/bin/python3
+"""Supply sandbox networking at the OCI boundary without changing image layers."""
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import sys
+import tempfile
+
+REAL_RUNTIME = "/usr/bin/runc"
+POLICY = Path("/etc/pi-container-network.json")
+AUDIT = Path("/var/log/pi-container-network.jsonl")
+CA_PATHS = (
+    "/etc/ssl/certs/ca-certificates.crt",
+    "/etc/ssl/cert.pem",
+    "/etc/pki/tls/certs/ca-bundle.crt",
+    "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",
+)
+GLOBAL_VALUES = {"--root", "--log", "--log-format", "--criu", "--rootless"}
+COMMAND_VALUES = {
+    "--bundle", "-b", "--console-socket", "--pidfd-socket", "--pid-file",
+    "--preserve-fds", "--cwd", "--env", "-e", "--user", "-u", "--additional-gids",
+    "-g", "--process", "-p", "--process-label", "--apparmor", "--cap", "-c", "--cgroup",
+}
+
+
+def runtime_command(arguments):
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        if argument == "--":
+            index += 1
+            break
+        if not argument.startswith("-"):
+            break
+        index += 2 if argument in GLOBAL_VALUES else 1
+    return (arguments[index], arguments[index + 1:]) if index < len(arguments) else ("", [])
+
+
+def option(arguments, names):
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        if argument == "--" or not argument.startswith("-"):
+            break
+        if argument in names:
+            if index + 1 >= len(arguments):
+                raise RuntimeError(f"Missing value for {argument}")
+            return arguments[index + 1]
+        key, separator, value = argument.partition("=")
+        if separator and key in names:
+            return value
+        index += 2 if argument in COMMAND_VALUES else 1
+    return None
+
+
+def write_atomic(path, data, mode):
+    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as temporary:
+        name = temporary.name
+        try:
+            os.fchmod(temporary.fileno(), mode)
+            temporary.write(data)
+            temporary.flush()
+            os.replace(name, path)
+        finally:
+            if os.path.exists(name):
+                os.unlink(name)
+
+
+def write_json(path, document):
+    write_atomic(path, json.dumps(document).encode(), path.stat().st_mode & 0o777)
+
+
+def defaults(process, policy):
+    if not isinstance(process, dict):
+        raise RuntimeError("OCI process must be an object")
+    environment = process.setdefault("env", [])
+    if not isinstance(environment, list) or any(not isinstance(entry, str) for entry in environment):
+        raise RuntimeError("OCI process environment must be a list of strings")
+    names = {entry.partition("=")[0] for entry in environment}
+    added = []
+    for upper, lower, value in (
+        ("HTTP_PROXY", "http_proxy", policy["proxy"]),
+        ("HTTPS_PROXY", "https_proxy", policy["proxy"]),
+        ("NO_PROXY", "no_proxy", policy["no_proxy"]),
+    ):
+        if not names.intersection((upper, lower)):
+            environment.extend((f"{upper}={value}", f"{lower}={value}"))
+            added.extend((upper, lower))
+    return added
+
+
+def container_path(root, name):
+    """Resolve image symlinks inside the container root, including absolute links."""
+    pending = list(PurePosixPath(name).parts)
+    resolved = []
+    links = 0
+    while pending:
+        part = pending.pop(0)
+        if part in ("", "/", "."):
+            continue
+        if part == "..":
+            if resolved:
+                resolved.pop()
+            continue
+        candidate = root.joinpath(*resolved, part)
+        if candidate.is_symlink():
+            links += 1
+            if links > 40:
+                raise RuntimeError(f"CA symlink loop: {name}")
+            target = PurePosixPath(os.readlink(candidate))
+            if target.is_absolute():
+                resolved = []
+            pending = list(target.parts) + pending
+        else:
+            resolved.append(part)
+    return root.joinpath(*resolved)
+
+
+def prepare_bundle(bundle, policy):
+    path = bundle / "config.json"
+    spec = json.loads(path.read_text())
+    if not isinstance(spec, dict) or not isinstance(spec.get("root"), dict):
+        raise RuntimeError("OCI bundle must describe a root filesystem")
+    if not isinstance(spec["root"].get("path"), str):
+        raise RuntimeError("OCI root path must be a string")
+    added = defaults(spec.get("process"), policy)
+    root = (bundle / spec["root"]["path"]).resolve()
+    mounts = spec.setdefault("mounts", [])
+    if not isinstance(mounts, list):
+        raise RuntimeError("OCI mounts must be a list")
+
+    certificates = {}
+    for target in CA_PATHS:
+        source = container_path(root, target)
+        if source.is_file():
+            certificates["/" + source.relative_to(root).as_posix()] = source.read_bytes()
+    if not certificates:
+        target = container_path(root, CA_PATHS[0])
+        certificates["/" + target.relative_to(root).as_posix()] = b""
+
+    broker_ca = Path(policy["ca_file"]).read_bytes()
+    if not broker_ca:
+        raise RuntimeError("Broker CA is empty")
+    for destination, image_ca in certificates.items():
+        digest = hashlib.sha256(destination.encode()).hexdigest()[:16]
+        source = bundle / f"pi-network-ca-{digest}.pem"
+        existing = next((mount for mount in mounts
+                         if mount.get("destination") == destination
+                         and mount.get("source") == str(source)), None)
+        for mount in mounts:
+            resolved_mount = container_path(root, mount["destination"])
+            mounted = PurePosixPath("/" + resolved_mount.relative_to(root).as_posix())
+            if mount is not existing and PurePosixPath(destination).is_relative_to(mounted):
+                raise RuntimeError(f"CA bundle overlaps an existing mount: {mounted}")
+        merged = image_ca
+        if broker_ca not in image_ca:
+            merged += (b"\n" if merged and not merged.endswith(b"\n") else b"") + broker_ca
+        write_atomic(source, merged, 0o644)
+        if existing is None:
+            mounts.append({"destination": destination, "type": "bind", "source": str(source),
+                           "options": ["bind", "ro", "nosuid", "nodev", "noexec"]})
+    write_json(path, spec)
+    return {"ca_mounts": list(certificates), "proxy_defaults": added}
+
+
+def prepare_invocation(arguments, policy):
+    command, arguments = runtime_command(arguments)
+    if command in ("create", "run"):
+        bundle = Path(option(arguments, ("--bundle", "-b")) or os.getcwd()).resolve()
+        return {"operation": command, **prepare_bundle(bundle, policy)}
+    if command == "exec":
+        process_file = option(arguments, ("--process", "-p"))
+        if process_file:
+            path = Path(process_file)
+            process = json.loads(path.read_text())
+            added = defaults(process, policy)
+            write_json(path, process)
+            return {"operation": command, "proxy_defaults": added}
+    return None
+
+
+def main():
+    arguments = sys.argv[1:]
+    command, _ = runtime_command(arguments)
+    if command in ("create", "run", "exec") and not any(flag in arguments for flag in ("--help", "-h")):
+        policy = json.loads(POLICY.read_text())
+        event = prepare_invocation(arguments, policy)
+        if event is not None:
+            # Record decisions, never process arguments, environment values, or credentials.
+            with AUDIT.open("a") as audit:
+                audit.write(json.dumps(event) + "\n")
+    # Keep native PID, stdio, signals and exit behavior.
+    os.execv(REAL_RUNTIME, [REAL_RUNTIME, *arguments])
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (OSError, ValueError, RuntimeError, KeyError, TypeError) as error:
+        print(f"Sandbox container networking failed: {error}", file=sys.stderr)
+        sys.exit(1)

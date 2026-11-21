@@ -66,10 +66,16 @@ text(await tools.sandbox_manage({
 }));
 ```
 
+Profile edits, including `container_proxy` changes, take effect only after
+recreation. Install the host launcher described in the
+[installation guide](README.md#install) before creating a `container_proxy`
+profile. Stopping and restarting keeps the existing profile configuration.
+
 If this session already has a sandbox, confirm what needs to be kept before
-destroying it. Destruction preserves the mounted checkout. It removes files
-and nested Docker state stored only inside the container. Save anything
-needed under the workspace first, then use
+destroying it. Destruction preserves the mounted checkout but removes files
+and nested Docker state stored only inside the container. Export any needed
+inner Docker images or caches and save other required files under the
+workspace first, then use
 `tools.sandbox_manage({ action: "destroy" })` and explicitly create the
 replacement before running project commands. Use
 `tools.sandbox_manage({ action: "stop" })` for a pause; the next sandbox shell
@@ -92,6 +98,70 @@ With host access enabled, run `~/.local/bin/gh auth status --hostname github.com
 and ask the user to reauthenticate if needed. Never run the provider directly to
 diagnose it, print a token, copy a broker snapshot, or pass a host credential
 to the container. The guest credential helper supplies a placeholder.
+
+## Diagnose nested-container networking
+
+Check the failing layer before changing application settings:
+
+1. Confirm the sandbox uses the intended profile. `downloads` and
+   `development-read` enable `container_proxy`; `offline` has no broker.
+   Editing the live profile does not retrofit a running container.
+2. If the outer container can download but an inner container or Dockerfile
+   `RUN` cannot, check that the read-only launcher is mounted at
+   `/usr/local/bin/runc` and that `/usr/bin/runc` remains the native runtime.
+   Inspect `/etc/pi-container-network.json` inside the outer container for
+   the concrete broker IPv4 endpoint, bypass list, and public CA path.
+   Nested DNS cannot resolve the broker name.
+3. Inspect explicit proxy variables in the affected process. An uppercase
+   or lowercase value prevents defaults for that variable group. A custom
+   or Java trust store needs its own public-CA configuration. For an
+   overlapping CA mount error, resolve the caller's mount/trust requirement;
+   do not remove it merely to suppress the error.
+4. Distinguish connection failures, TLS trust failures, and broker HTTP 403
+   responses. A 403 indicates a policy rejection; compare the host, method,
+   and path with the profile rules. Do not widen write permissions to fix
+   a download.
+
+The outer container's `/var/log/pi-container-network.jsonl` records launcher
+operations, CA mount destinations, and names of added environment keys.
+It omits environment values and command arguments. A missing key can mean
+the caller supplied an explicit value; a missing event does not establish
+that no process ran, since pass-through calls are outside this audit.
+Keep runtime audit evidence alongside broker diagnostics when investigating
+a failure. Never collect private keys, credential snapshots, or token values.
+
+## Verify container networking
+
+From the repository root, run the focused launcher unit checks:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s pi/sandbox -p 'test_container_runc.py' -v
+```
+
+Run the maintained native verifier on the host with host access enabled
+and the normal controller prerequisites installed:
+
+```sh
+python3 pi/sandbox/verify-container-network.py \
+  --output /tmp/pi-container-network-check \
+  2>/tmp/pi-container-network-check.stderr
+```
+
+It accepts `--controller`, `--runtime`, `--config`, and `--output`.
+Defaults use the adjacent controller and runtime files, the live sandbox
+configuration, and the `downloads` profile. It uses an existing approved
+workspace with its own disposable managed sandbox and never deletes the
+main session's sandbox. Remote GET downloads require network access; the
+write and out-of-scope storage-read probes run after external network
+disconnection.
+
+Retain the caller-saved stderr and the output directory's broker and runtime
+audit evidence. A successful unit run alone does not verify Docker or
+BuildKit integration. Repeat native checks after Docker, BuildKit, runc,
+guest-image, or launcher changes; the observed runtime versions and probe
+results are recorded in the
+[networking explanation](README.md#permissions-and-verification-limits).
+Application test suites require separate verification.
 
 ## Diagnose startup and reboot failures
 

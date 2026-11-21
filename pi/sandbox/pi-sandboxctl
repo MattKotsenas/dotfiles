@@ -18,6 +18,7 @@ BASE = Path("/data/dev")
 STATE = Path(f"/run/user/{os.getuid()}/pi-sandboxctl")
 CONFIG = HOME / ".config/pi-sandbox/config.json"
 PROXY = Path("/usr/local/lib/pi-sandbox/iron-proxy")
+CONTAINER_RUNTIME = Path("/usr/local/lib/pi-sandbox/pi-container-runc")
 GUIDANCE = (
     HOME / ".pi/agent/skills",
     HOME / ".pi/agent/expectations",
@@ -104,7 +105,10 @@ def start_broker(directory, profile, network, broker):
         "proxy": {"http_listen": "127.0.0.1:8081", "https_listen": "127.0.0.1:8443",
                   "tunnel_listen": ":8080"},
         "tls": {"ca_cert": "/broker/ca.crt", "ca_key": "/broker/ca.key"},
-        "transforms": [{"name": "allowlist", "config": {"domains": profile["domains"]}},
+        "transforms": [{"name": "allowlist", "config": {
+            "domains": profile.get("domains", []),
+            "rules": profile.get("rules", []),
+        }},
                        {"name": "secrets", "config": {"secrets": secrets}}],
     }
     atomic(location / "config.json", json.dumps(config).encode())
@@ -121,6 +125,22 @@ def start_broker(directory, profile, network, broker):
 def configure_guest(box, profile, cert):
     docker("exec", "-i", box, "sh", "-ec",
            "umask 022; tee /etc/pi-broker-ca.crt >/dev/null", input=cert)
+    if profile.get("proxy"):
+        docker("exec", box, "sh", "-ec",
+               "install -m 0644 /etc/pi-broker-ca.crt "
+               "/usr/local/share/ca-certificates/pi-broker.crt; "
+               "update-ca-certificates")
+    if profile.get("container_proxy"):
+        broker_network = json.loads(docker("inspect", box + "-broker"))[0]["NetworkSettings"]["Networks"][box + "-net"]
+        address = broker_network["IPAddress"]
+        policy = {
+            "proxy": f"http://{address}:8080",
+            "no_proxy": "localhost,127.0.0.1,::1,[::1],broker",
+            "ca_file": "/etc/pi-broker-ca.crt",
+        }
+        docker("exec", "-i", box, "sh", "-ec",
+               "umask 022; tee /etc/pi-container-network.json >/dev/null",
+               input=json.dumps(policy).encode())
     for host, binding in profile.get("git_https", {}).items():
         sentinel = profile["bindings"][binding]["sentinel"]
         if not re.fullmatch(r"[A-Za-z0-9_-]+", sentinel):
@@ -198,6 +218,10 @@ def create(session_id, workspace, profile_name, settings):
     profile = approved_profile(workspace, profile_name, settings)
     directory = workspace_directory(workspace)
     mounts = guidance_mounts(directory)
+    if profile.get("container_proxy"):
+        if not profile.get("proxy") or not CONTAINER_RUNTIME.is_file():
+            raise RuntimeError("Container proxy requires proxy routing and the installed OCI launcher")
+        mounts.extend(("--mount", f"type=bind,src={CONTAINER_RUNTIME},dst=/usr/local/bin/runc,readonly"))
     sid = managed_name(session_id)
     state = STATE / sid
     if state.exists():
@@ -208,12 +232,28 @@ def create(session_id, workspace, profile_name, settings):
     (state / "broker").mkdir(mode=0o700)
     box, broker, network = names(sid)
     meta = {"id": session_id, "workspace": workspace, "profile": profile_name}
-    atomic(state / "metadata.json", json.dumps({**meta, "policy": fingerprint(profile), "broker": bool(profile.get("domains"))}).encode())
+    has_broker = bool(profile.get("domains") or profile.get("rules"))
+    atomic(state / "metadata.json", json.dumps({**meta, "policy": fingerprint(profile), "broker": has_broker}).encode())
     try:
         refresh(state, profile, settings)
         docker("network", "create", "--internal", network)
-        cert = start_broker(state, profile, network, broker) if profile.get("domains") else None
+        cert = start_broker(state, profile, network, broker) if has_broker else None
+        environment = dict(profile.get("environment", {}))
+        if profile.get("proxy"):
+            if not has_broker:
+                raise RuntimeError("Proxy routing requires a broker allowlist")
+            environment.update({
+                "HTTP_PROXY": "http://broker:8080",
+                "HTTPS_PROXY": "http://broker:8080",
+                "NO_PROXY": "localhost,127.0.0.1,::1,[::1],broker",
+                "http_proxy": "http://broker:8080",
+                "https_proxy": "http://broker:8080",
+                "no_proxy": "localhost,127.0.0.1,::1,[::1],broker",
+            })
+        env_flags = [flag for key, value in environment.items()
+                     for flag in ("--env", f"{key}={value}")]
         docker("run", "-d", "--name", box, "--runtime", "sysbox-runc", "--network", network,
+               *env_flags,
                "--mount", f"type=bind,src={directory},dst=/workspace",
                *mounts, "--workdir", "/workspace",
                GUEST_IMAGE, "dockerd", "--host=unix:///var/run/docker.sock",

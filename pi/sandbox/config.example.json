@@ -1,5 +1,8 @@
 {
-  "default": { "workspace": "sandbox-managed", "profile": "offline" },
+  "default": {
+    "workspace": "sandbox-managed",
+    "profile": "offline"
+  },
   "providers": {
     "github": [
       "./.config/pi-sandbox/github-token"
@@ -9,7 +12,9 @@
     "sandbox-managed": {
       "profiles": [
         "offline",
-        "github-git"
+        "github-git",
+        "downloads",
+        "development-read"
       ]
     }
   },
@@ -49,6 +54,232 @@
       "git_https": {
         "github.com": 0
       }
+    },
+    "downloads": {
+      "proxy": true,
+      "rules": [
+        {
+          "host": "*.nuget.org",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "*.docker.io",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "*.docker.com",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "*.dockerusercontent.com",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "docker-images-prod.*.r2.cloudflarestorage.com",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "proxy.golang.org",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "sum.golang.org",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "storage.googleapis.com",
+          "methods": [
+            "CONNECT"
+          ]
+        },
+        {
+          "host": "storage.googleapis.com",
+          "methods": [
+            "GET",
+            "HEAD"
+          ],
+          "paths": [
+            "/proxy-golang-org-prod/*"
+          ]
+        }
+      ],
+      "container_proxy": true
+    },
+    "development-read": {
+      "proxy": true,
+      "rules": [
+        {
+          "host": "*.nuget.org",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "github.com",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "github.com",
+          "methods": [
+            "POST"
+          ],
+          "paths": [
+            "/*/*/git-upload-pack"
+          ]
+        },
+        {
+          "host": "api.github.com",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "*.docker.io",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "*.docker.com",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "*.dockerusercontent.com",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "docker-images-prod.*.r2.cloudflarestorage.com",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "proxy.golang.org",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "sum.golang.org",
+          "methods": [
+            "CONNECT",
+            "GET",
+            "HEAD"
+          ]
+        },
+        {
+          "host": "storage.googleapis.com",
+          "methods": [
+            "CONNECT"
+          ]
+        },
+        {
+          "host": "storage.googleapis.com",
+          "methods": [
+            "GET",
+            "HEAD"
+          ],
+          "paths": [
+            "/proxy-golang-org-prod/*"
+          ]
+        }
+      ],
+      "bindings": [
+        {
+          "provider": "github",
+          "sentinel": "pi-git-sentinel",
+          "rules": [
+            {
+              "host": "github.com",
+              "methods": [
+                "GET"
+              ],
+              "paths": [
+                "/*/*/info/refs"
+              ]
+            },
+            {
+              "host": "github.com",
+              "methods": [
+                "POST"
+              ],
+              "paths": [
+                "/*/*/git-upload-pack"
+              ]
+            }
+          ]
+        },
+        {
+          "provider": "github",
+          "sentinel": "pi-api-read-sentinel",
+          "rules": [
+            {
+              "host": "api.github.com",
+              "methods": [
+                "GET",
+                "HEAD"
+              ]
+            }
+          ]
+        }
+      ],
+      "git_https": {
+        "github.com": 0
+      },
+      "environment": {
+        "GH_TOKEN": "pi-api-read-sentinel"
+      },
+      "container_proxy": true
     }
   }
 }
