@@ -24,6 +24,8 @@ export async function fixture(
     persisted = false,
     discoverDelegation = false,
     entry = defaultEntry,
+    extraExtensions = [],
+    defaultTools = discoverDelegation ? ["+codemode"] : ["codemode"],
   } = {},
 ) {
   const root = await mkdtemp(join(tmpdir(), "pi-delegation-acceptance-"));
@@ -76,8 +78,8 @@ export async function fixture(
   await writeFile(
     join(agentDir, "settings.json"),
     JSON.stringify({
-      extensions: discoverDelegation ? [] : [entry],
-      defaultTools: discoverDelegation ? ["+codemode"] : ["codemode"],
+      extensions: [...(discoverDelegation ? [] : [entry]), ...extraExtensions],
+      defaultTools,
       compaction: { enabled: false },
       retry: { enabled: false },
       cacheWarming: "off",

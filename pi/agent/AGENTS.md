@@ -5,8 +5,10 @@ out to Pi. Start named reviewers in fresh child sessions; use the returned
 `systemPrompt: { append: definition }` and the assignment as `prompt`.
 On the initial call, set `model` and `thinkingLevel` from the definition and
 `provider` to the main session's provider. Set `cwd` when the assignment belongs
-in another directory. Follow-ups keep the initial call's configuration; pass only
-`handle` and `prompt`. If the main provider is unknown or the configured reviewer
+in another directory, except when the parent has sandbox routing. For those
+children, give the path in the prompt. Follow-ups keep the initial call's
+configuration and use the parent's current tool access; pass only `handle`
+and `prompt`. If the main provider is unknown or the configured reviewer
 model is unavailable through it, stop and ask. Never switch providers; the same
 model may be available through multiple providers.
 Provide the requirements, preserved contracts, applicable rules, and claim to
@@ -19,7 +21,7 @@ the review triggers and limits in `global.instructions.md`.
 If `sandbox_manage` is available, read `~/.config/pi-sandbox/OPERATIONS.md`
 before operating or troubleshooting the sandbox. In SANDBOX, use
 `sandbox_read` for skills and instructions at their advertised paths. Use
-SANDBOX for project commands and HOST for host administration. Only the user
-can switch modes.
-If a sandbox call fails, diagnose it without retrying the project command on
+sandbox tools for project work even when host access is enabled. Only the user
+can enable host tools with `/sandbox off` or block them with `/sandbox on`.
+Use host tools for host administration. Never retry a failed sandbox call on
 the host.

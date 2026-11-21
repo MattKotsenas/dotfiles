@@ -2,11 +2,11 @@
 
 ## Identify the mode and sandbox
 
-A fresh Pi session starts in HOST. The user can check the routing mode with
-`/sandbox status` or the HOST/SANDBOX footer. The user switches modes with
-`/sandbox on` and `/sandbox off`. Use HOST for host administration and
-SANDBOX for project commands. A failed sandbox operation is never a reason
-to retry a project command on the host.
+A fresh Pi session or reload starts in **SANDBOX ONLY**. The user can check
+host access with `/sandbox status` or the footer. `/sandbox off` adds host
+tools; `/sandbox on` blocks them. Use unprefixed host tools only for host
+administration. Use sandbox tools for project work in both modes. A failed
+sandbox call never falls back to the host.
 
 In either mode, use this codemode call to inspect the current Pi session's
 sandbox:
@@ -22,9 +22,9 @@ mode. Each Pi session manages its own sandbox; no ID argument is needed.
 
 ## Start work or change profiles
 
-After the user runs `/sandbox on`, the first shell or file call creates a
-missing sandbox from the `default` in `~/.config/pi-sandbox/config.json`
-(`sandbox-managed` and `offline` on this host) or starts a stopped sandbox.
+The first sandbox shell or file call starts a stopped sandbox or creates a
+missing one from the `default` in `~/.config/pi-sandbox/config.json`
+(`sandbox-managed` and `offline` on this host).
 Use `sandbox_shell`, `sandbox_read`, and `sandbox_edit` for project work.
 Use `sandbox_read` at the original paths for mounted guidance:
 
@@ -40,7 +40,7 @@ private configuration out of these locations. If the approved workspace
 contains a guidance source, use a separate checkout for project work.
 Existing containers need to be recreated to get the mounts.
 
-For a routing check, run this after switching; it may start the sandbox:
+For a routing check, run this in either mode; it may start the sandbox:
 
 ```js
 text(await tools.sandbox_shell({ command: "pwd" }));
@@ -49,7 +49,7 @@ text(await tools.sandbox_shell({ command: "pwd" }));
 Expect `/workspace`. The checkout and its Git metadata belong under
 `/workspace` to survive recreation.
 
-To approve a different workspace, work in HOST with the user's approval.
+To approve a different workspace, enable host access with the user's approval.
 Create or choose a real directory directly under `/data/dev`, on the
 `/data` filesystem, with no symlinks or nested mounts. Add its directory name
 to the live config's `workspaces` object with only the approved profiles.
@@ -88,15 +88,15 @@ text(await tools.sandbox_manage({ action: "refresh_credentials" }));
 
 Check the new `credentials_loaded_at` timestamp, then retry the Git
 operation in SANDBOX. If the provider fails, the old snapshot remains.
-Check `~/.local/bin/gh auth status --hostname github.com` in HOST and ask
-the user to reauthenticate if needed. Never run the provider directly to
+With host access enabled, run `~/.local/bin/gh auth status --hostname github.com`
+and ask the user to reauthenticate if needed. Never run the provider directly to
 diagnose it, print a token, copy a broker snapshot, or pass a host credential
 to the container. The guest credential helper supplies a placeholder.
 
 ## Diagnose startup and reboot failures
 
-Ask the user to switch to HOST before using host diagnostics. Start with
-read-only checks:
+Ask the user to enable host access with `/sandbox off` before using host
+diagnostics. Start with read-only checks:
 
 ```sh
 findmnt --mountpoint /data

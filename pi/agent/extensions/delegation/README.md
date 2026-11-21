@@ -83,6 +83,20 @@ conversation branches or shutting down.
 and recovers handles when a first call is interrupted before returning its answer.
 Cancellation before child creation leaves nothing to list.
 
+## Delegation with sandbox routing
+
+A child turn inherits the parent's current access. With sandbox-only enabled,
+it can run project tools in the parent's sandbox. If the user enables host
+access, the child can also use the parent's host tools. The next follow-up
+uses the current access with the same handle. The tool destinations and
+working directories are the parent's, so omit `cwd` on new calls. Give the
+child an absolute path to host files when it needs one.
+
+An explicit `tools` list narrows access to the named tools that are available
+for that turn. It cannot grant a tool the parent did not make available.
+Children cannot manage the sandbox or start further delegations in this
+configuration.
+
 ## Reload and resume
 
 For a persisted parent, handles survive `/reload` and exit/resume. Native child

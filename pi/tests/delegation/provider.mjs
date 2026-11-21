@@ -41,6 +41,13 @@ export default function acceptanceProvider(pi, { responseDelayMs = 0 } = {}) {
           : ai.fauxAssistantMessage(ai.fauxToolCall("codemode", { code: prompt.slice("ACCEPTANCE_CODE:".length) }), {
               stopReason: "toolUse",
             });
+      } else if (prompt.startsWith("SANDBOX_CHILD_CODE:")) {
+        const result = messages.slice(userIndex + 1).findLast(message => message.role === "toolResult");
+        response = result
+          ? ai.fauxAssistantMessage(text(result))
+          : ai.fauxAssistantMessage(ai.fauxToolCall("codemode", { code: prompt.slice("SANDBOX_CHILD_CODE:".length) }), {
+              stopReason: "toolUse",
+            });
       } else if (prompt.startsWith("Read note.txt")) {
         const read = messages
           .slice(userIndex + 1)

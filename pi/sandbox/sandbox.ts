@@ -1,4 +1,4 @@
-import { createEditToolDefinition, createReadToolDefinition, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { createEditToolDefinition, createReadToolDefinition, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { homedir } from "node:os";
 import { join, posix } from "node:path";
 import { execFile } from "node:child_process";
@@ -66,48 +66,69 @@ async function fileOperation(target: Target, operation: "read" | "write" | "chec
   pending.child.stdin?.end(input);
   return (await pending).stdout;
 }
-const modeStatus = (target?: Target) => target ? "\x1b[32mSANDBOX\x1b[39m" : "\x1b[31mHOST\x1b[39m";
+const sharedTools = ["codemode", manager, ...sandboxTools];
+const sharedCallableTools = [...sharedTools, "delegate", "delegates"];
+const hostLoadoutEntry = "sandbox.host-tools";
 
 export default function (pi: ExtensionAPI) {
-  let target: Target | undefined;
+  let hostEnabled = false;
   let hostTools: string[] = [];
+  let target: Target | undefined;
   const selected = () => {
-    if (!target) throw new Error("Sandbox mode is off.");
+    if (!target) throw new Error("Sandbox session is not ready.");
     return target;
   };
+  const isHostTool = (name: string) => !sharedCallableTools.includes(name);
+  const applyMode = () => pi.setActiveTools(hostEnabled ? [...sharedTools, ...hostTools] : sharedTools);
+  const modeStatus = () => hostEnabled ? "\x1b[31mHOST ENABLED\x1b[39m" : "\x1b[32mSANDBOX ONLY\x1b[39m";
+
+  function rememberHostTools(ctx: ExtensionContext) {
+    const active = pi.getActiveTools();
+    const previous = ctx.sessionManager.getBranch().findLast(entry => entry.type === "custom" && entry.customType === hostLoadoutEntry);
+    const saved = previous?.type === "custom" && Array.isArray(previous.data)
+      ? previous.data.filter((name): name is string => typeof name === "string" && isHostTool(name))
+      : [];
+    const current = active.filter(isHostTool);
+    hostTools = !hostEnabled && active.some(name => sandboxTools.includes(name)) && current.length === 0 ? saved : current;
+    if (JSON.stringify(hostTools) !== JSON.stringify(saved)) pi.appendEntry(hostLoadoutEntry, hostTools);
+  }
 
   pi.on("session_start", (_event, ctx) => {
-    if (target && target.id !== ctx.sessionManager.getSessionId()) {
-      pi.setActiveTools(hostTools);
-      target = undefined;
-    }
-    ctx.ui.setStatus("sandbox", modeStatus(target));
+    target = { id: ctx.sessionManager.getSessionId() };
+    hostEnabled = false;
+    rememberHostTools(ctx);
+    applyMode();
+    ctx.ui.setStatus("sandbox", modeStatus());
   });
 
   pi.on("session_shutdown", event => {
-    // Reload carries the active tools into a new extension instance, which starts in HOST.
-    if (event.reason === "reload" && target) pi.setActiveTools(hostTools);
+    // Pi carries the active loadout into the new runtime before the new session_start.
+    if (event.reason === "reload" && !hostEnabled) pi.setActiveTools([...sharedTools, ...hostTools]);
   });
 
-  // Also gate inactive tools in case another feature attempts a nested tool call.
-  pi.on("tool_call", (event) => {
-    if (target && !sandboxTools.includes(event.toolName) && event.toolName !== "codemode" && event.toolName !== manager) {
-      return { block: true, reason: "SANDBOX mode: use sandbox_shell, sandbox_read, or sandbox_edit in /workspace." };
-    }
-    if (!target && sandboxTools.includes(event.toolName)) {
-      return { block: true, reason: "The sandbox is off. Only the user can enable it with /sandbox on." };
+  pi.on("tool_call", event => {
+    if (!hostEnabled && isHostTool(event.toolName)) {
+      return { block: true, reason: "Sandbox only: host tools are blocked. Use sandbox_shell, sandbox_read, or sandbox_edit." };
     }
   });
 
   pi.on("user_bash", () => {
-    if (target) return { result: { output: "Host ! commands are disabled in SANDBOX mode. Use /sandbox off to run host commands.", exitCode: 1, cancelled: false, truncated: false } };
+    if (!hostEnabled) return { result: { output: "Host ! commands are disabled. Use /sandbox off to enable host access.", exitCode: 1, cancelled: false, truncated: false } };
+  });
+
+  // Child session runners request the current project-tool boundary when starting a turn.
+  pi.events.on("child-execution:policy", request => {
+    const { accept } = request as { accept: (policy: { tools: string[]; hostEnabled: boolean; ownerTool: string }) => void };
+    if (typeof accept !== "function") return;
+    const tools = hostEnabled ? [...sandboxTools, ...pi.getActiveTools().filter(isHostTool)] : sandboxTools;
+    accept({ tools, hostEnabled, ownerTool: manager });
   });
 
   pi.registerTool({
     name: tool,
     label: "Sandbox shell",
     description: "Run a POSIX shell command inside the selected sandbox. Working directory: /workspace. Use this for shell commands, search, and creating files. Paths refer to the container, not the host.",
-    promptGuidelines: ["Sandbox mode: use /workspace for project files. Do not assume the host working directory is accessible."],
+    promptGuidelines: ["Use sandbox tools for project commands and files under /workspace, even when host access is enabled. Unprefixed shell and file tools target the host."],
     defaultActive: false,
     parameters: Type.Object({ command: Type.String({ description: "Shell command to execute inside the sandbox" }) }),
     async execute(_id, { command }, signal) {
@@ -151,7 +172,7 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: manager,
     label: "Sandbox lifecycle",
-    description: "Create, inspect, refresh, stop, or destroy this Pi session’s sandbox in either mode. Create requires an approved workspace and profile. Use /sandbox on to select it.",
+    description: "Create, inspect, refresh, stop, or destroy this Pi session’s sandbox. Create requires an approved workspace and profile. Sandbox tools always use this sandbox.",
     defaultActive: false,
     parameters: Type.Object({
       action: Type.Union([
@@ -172,32 +193,29 @@ export default function (pi: ExtensionAPI) {
         throw new Error("Create requires workspace and profile; all other actions take no additional arguments.");
       }
       const result = await manage(args);
-      if (action === "create") result.select = "/sandbox on";
       return { content: [{ type: "text", text: JSON.stringify(result) }], details: {} };
     },
   });
 
   const usage = "Usage: /sandbox on | /sandbox off | /sandbox status";
   pi.registerCommand("sandbox", {
-    description: "Switch between this session’s sandbox and host tools: /sandbox on | off | status",
+    description: "Toggle sandbox-only access: /sandbox on | off | status",
     handler: async (args, ctx) => {
       const mode = args.trim();
       if (mode && !["on", "off", "status"].includes(mode)) {
         ctx.ui.notify(usage, "warning");
         return;
       }
-      if (mode === "on" || mode === "off") await ctx.waitForIdle();
-      if (mode === "on") {
-        if (!target) hostTools = pi.getActiveTools().filter(name => !sandboxTools.includes(name));
-        target = { id: ctx.sessionManager.getSessionId() };
-        const shared = hostTools.filter(name => name === "codemode" || name === manager);
-        pi.setActiveTools([...shared, ...sandboxTools]);
-      } else if (mode === "off" && target) {
-        pi.setActiveTools(hostTools);
-        target = undefined;
+      if (mode === "on" || mode === "off") {
+        await ctx.waitForIdle();
+        if (hostEnabled) rememberHostTools(ctx);
+        hostEnabled = mode === "off";
+        applyMode();
       }
-      ctx.ui.setStatus("sandbox", modeStatus(target));
-      ctx.ui.notify(target ? "SANDBOX: shell and file tools start this session’s sandbox on demand. No host fallback." : "HOST: host tools are enabled.", "info");
+      ctx.ui.setStatus("sandbox", modeStatus());
+      ctx.ui.notify(hostEnabled
+        ? "HOST ACCESS ENABLED. Use sandbox tools for project work."
+        : "SANDBOX ONLY. Host tools are blocked.", "info");
     },
   });
 }

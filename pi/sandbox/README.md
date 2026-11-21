@@ -22,6 +22,9 @@ install -m 0700 pi/sandbox/github-token "$HOME/.config/pi-sandbox/github-token"
 install -m 0600 pi/sandbox/config.example.json "$HOME/.config/pi-sandbox/config.json"
 install -m 0644 pi/sandbox/OPERATIONS.md "$HOME/.config/pi-sandbox/OPERATIONS.md"
 install -m 0644 pi/sandbox/sandbox.ts "$HOME/.pi/agent/extensions/sandbox.ts"
+install -d "$HOME/.pi/agent/extensions/shared"
+install -m 0644 pi/agent/extensions/shared/usage.ts "$HOME/.pi/agent/extensions/shared/usage.ts"
+cp -R pi/agent/extensions/delegation "$HOME/.pi/agent/extensions/"
 sudo -n docker pull mcr.microsoft.com/devcontainers/universal@sha256:d247757d344fecd9a77467767e64a1479367047b74ad82453c08ff17a13ff7ec
 ```
 
@@ -71,18 +74,21 @@ If you use Powerline, its custom status key is `sandbox`. Add
 See the [operator runbook](OPERATIONS.md) for lifecycle calls, workspace
 approval, and host diagnostics.
 
-Start `pi` normally. It starts in **HOST** mode for system administration.
+Start `pi` normally. It starts in **SANDBOX ONLY**, including after
+`/reload`. Sandbox shell and file tools stay available in both modes. The
+first such call runs in `/workspace`, creating or restarting the sandbox
+if needed. A missing sandbox uses the default in
+`~/.config/pi-sandbox/config.json`: `sandbox-managed` with `offline`. For a
+different approved workspace or profile, explicitly create the sandbox
+before using its tools. The host working directory is never mounted
+automatically.
 
-Run `/sandbox on` to switch to sandbox routing. The first shell or file call
-starts this session's sandbox and runs in `/workspace`. If the sandbox is
-missing, Pi creates it using the default workspace and profile in
-`~/.config/pi-sandbox/config.json`: `sandbox-managed` with `offline`. The host
-working directory is never mounted automatically. For a different approved
-workspace or profile, explicitly create the sandbox before using its tools.
-
-Use `/sandbox off` to restore host shell and file tools without stopping the
-sandbox. `/sandbox status` shows the routing mode; `sandbox_manage` reports
-the container state and profile.
+Only the user can use `/sandbox off` to add host tools or `/sandbox on` to
+block them. Unprefixed tools such as `bash` and `read` target the host;
+`sandbox_shell` and `sandbox_read` always target the container. Neither
+command changes the workspace, profile, or container state. Use
+`/sandbox status` to check host access and `sandbox_manage` to inspect
+the container.
 
 Pi can manage its session's sandbox in either mode. The next sandbox tool call
 restarts a stopped sandbox with its existing profile or replaces a destroyed
@@ -111,13 +117,14 @@ for the [guidance paths](OPERATIONS.md#start-work-or-change-profiles).
 Dependencies can read the guidance, alter the mounted checkout, and exercise
 the network permissions of the profile.
 
-The current tool filter applies to the interactive Pi session. It does not
-automatically carry over to child sessions, so delegation stays unavailable
-in SANDBOX mode. The design rule for enabling it is **a child gets no more
-authority than its parent**. Enforce that when creating any child session:
-a child of a sandboxed agent must use the same sandbox, workspace, and
-credential profile and must never fall back to host tools. A different model
-or prompt does not change that boundary.
+**A child gets no more tool authority than its parent.** Child-session runners
+can ask for the parent's current execution policy. The delegation extension
+uses it to forward only allowed tool calls through the parent. The same
+sandbox, workspace, and credential profile apply to both agents. A child
+cannot manage the sandbox or switch modes. The user's mode change applies to
+the next child turn, including follow-ups to the same handle. In-flight turns
+finish or are cancelled before the mode changes. Failed sandbox calls never
+fall back to the host.
 
 The controller mounts only an approved directory directly under `/data/dev`
 as `/workspace`. The directory must be on the `/data` filesystem. The controller

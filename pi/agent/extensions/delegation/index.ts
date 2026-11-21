@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { type ExtensionAPI, type ExtensionContext, SessionManager } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { usageSince } from "../shared/usage.ts";
-import { type ChildRuntime, closeChild, startChild } from "./child.ts";
+import { type ChildExecutionPolicy, type ChildRuntime, closeChild, startChild } from "./child.ts";
 import { type ChildRecord, createChildSession, entryType, openChild, restoreChildren } from "./storage.ts";
 
 const parameters = Type.Object(
@@ -227,6 +227,15 @@ export default function delegation(pi: ExtensionAPI): void {
       ) {
         throw new Error("A follow-up accepts only handle and prompt");
       }
+      let policy: ChildExecutionPolicy | undefined;
+      pi.events.emit("child-execution:policy", {
+        accept: (value: ChildExecutionPolicy) => {
+          if (policy) throw new Error("Multiple child execution policies are active");
+          policy = value;
+        },
+      });
+      if (policy && params.cwd !== undefined)
+        throw new Error("A sandbox-managed child uses the parent's tool working directories. Omit cwd.");
       const handle = params.handle ?? randomUUID();
       let child = children.get(handle);
       let manager = child?.memory;
@@ -313,7 +322,7 @@ export default function delegation(pi: ExtensionAPI): void {
             child.record.thinkingLevel =
               (context.thinkingLevel as ChildRecord["thinkingLevel"]) ?? child.record.thinkingLevel;
           }
-          child.live = await startChild(ctx, child.record, manager);
+          child.live = await startChild(ctx, child.record, manager, policy);
         }
         const { session, waitForRefreshes } = child.live;
         stop.signal.throwIfAborted();
