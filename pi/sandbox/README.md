@@ -91,10 +91,18 @@ Failed startup returns an error with no host fallback.
 
 ## Threat model
 
-We trust the agent. The sandbox guards against **confused-deputy mistakes**,
+We trust the agent and every Pi extension we load, regardless of where the
+extension runs. The sandbox guards against **confused-deputy mistakes**,
 such as running a project command with host privileges, and **untrusted
-dependencies**, such as an npm install script that tries to read host secrets
-or reach arbitrary network destinations. Run those commands in SANDBOX mode.
+project dependencies**, such as an npm install script that tries to read host
+secrets or reach arbitrary network destinations. Run project commands in
+SANDBOX mode.
+
+Treat a malicious extension as a compromised agent. A host extension can use
+host filesystem and process APIs directly. An extension running inside the
+sandbox can still steer the agent, alter the mounted checkout, and use the
+profile's network permissions. The sandbox does not promise to contain a
+malicious agent or withstand a host escape.
 
 Pi and its model credentials stay on the host. The sandbox sees the approved
 workspace as a writable mount and has its own Docker daemon. It does not get
@@ -102,7 +110,14 @@ the host home directory or Docker socket. It gets separate read-only mounts
 for the [guidance paths](OPERATIONS.md#start-work-or-change-profiles).
 Dependencies can read the guidance, alter the mounted checkout, and exercise
 the network permissions of the profile.
-This setup does not aim to contain a malicious agent or withstand a host escape.
+
+The current tool filter applies to the interactive Pi session. It does not
+automatically carry over to child sessions, so delegation stays unavailable
+in SANDBOX mode. The design rule for enabling it is **a child gets no more
+authority than its parent**. Enforce that when creating any child session:
+a child of a sandboxed agent must use the same sandbox, workspace, and
+credential profile and must never fall back to host tools. A different model
+or prompt does not change that boundary.
 
 The controller mounts only an approved directory directly under `/data/dev`
 as `/workspace`. The directory must be on the `/data` filesystem. The controller
