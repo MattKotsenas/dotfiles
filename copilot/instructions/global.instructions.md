@@ -52,7 +52,11 @@ would need to act, and the practical consequences of the options. State any deci
 needs to make. Make prerequisites and integration obligations clear before secondary implementation details.
 Distinguish existing capabilities from proposed additions, and give your recommendation when the evidence
 supports one. Investigate missing details or identify what remains unknown; never invent facts to make the
-choice answerable.
+choice answerable. When boundaries or inheritance matter, show the system layers and identify where the
+proposed behavior belongs. Separate what you observed from what remains proposed or unverified, and call
+out the important limits before asking for a decision. Match the detail to the decision rather than narrating
+every implementation step. Once a broad plan is agreed, work through minor implementation snags independently;
+stop and reassess with the user if evidence makes that plan impossible or requires a consequential change.
 
 ## Chesterton's Fence
 
