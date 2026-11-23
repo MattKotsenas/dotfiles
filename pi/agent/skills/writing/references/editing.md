@@ -10,6 +10,10 @@ audience, without assuming familiarity with the particular product, language, ru
 Use plain, direct language and concrete objects, actions, and consequences. Preserve useful technical detail;
 brevity must not make the reader decode the explanation.
 
+Keep relationships explicit. Unpack noun clusters when the reader must infer who acts, what gets acted on, or
+how the terms relate. Retain words that explain cause, sequence, scope, and ownership when they save the
+reader from reconstructing the meaning.
+
 ## Structure and emphasis
 
 Give each fact one authoritative home. Change that home when the fact changes; elsewhere, reference it rather
