@@ -7,6 +7,9 @@
           "promptCache": {
             "short": 1800
           }
+        },
+        "gpt-6.2-sol": {
+          "contextWindow": 266384
         }
       }
     }
