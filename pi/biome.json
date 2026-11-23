@@ -2,6 +2,9 @@
   "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "files": {
     "includes": [
+      "agent/extensions/workspace/*.ts",
+      "tests/workspace.test.mjs",
+      "tests/workspace/*.mjs",
       "agent/extensions/bookmarks/*.ts",
       "agent/extensions/background/*.ts",
       "tests/background.*.test.mjs",

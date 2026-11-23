@@ -1,5 +1,12 @@
 # Pi
 
+## Workspace
+
+[`agent/extensions/workspace`](agent/extensions/workspace/README.md) provides `/cd` to move the
+current conversation to another working directory. The footer uses a commit-pinned temporary
+fork with its bundled `/cd` disabled; see the extension README for the upstream replacement condition.
+Run `cd pi && node --test tests/workspace.test.mjs` for the isolated SDK regressions.
+
 ## Background commands
 
 [`agent/extensions/background`](agent/extensions/background/README.md) provides same-execution bash

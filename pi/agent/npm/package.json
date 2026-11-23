@@ -3,7 +3,6 @@
   "private": true,
   "dependencies": {
     "pi-exit": "^0.3.0",
-    "pi-powerline-footer": "^0.20.1",
     "pi-simple-snippets": "^0.2.0",
     "pi-vim-editor": "^0.4.0"
   }

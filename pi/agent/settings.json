@@ -18,7 +18,7 @@
   "packages": [
     "./extensions/powerline-chrome.ts",
     "./extensions/vim-navigation.ts",
-    "npm:pi-powerline-footer",
+    "git:github.com/MattKotsenas/pi-powerline-footer@941a9ea6620e17e782f4c88c909e0e74d5c4d7af",
     "npm:pi-vim-editor@0.4.0",
     "git:github.com/otahontas/pi-coding-agent-catppuccin",
     "npm:pi-exit",
@@ -34,6 +34,7 @@
     }
   },
   "powerline": {
+    "cdCommand": false,
     "preset": "default",
     "customItems": [
       {
@@ -132,7 +133,6 @@
     "reserveTokens": 32768
   },
   "extensionChangelogVersions": {
-    "{\"source\":\"npm:pi-powerline-footer\",\"scope\":\"user\"}": "0.20.1",
     "{\"source\":\"npm:pi-simple-snippets\",\"scope\":\"user\"}": "0.2.0"
   }
 }

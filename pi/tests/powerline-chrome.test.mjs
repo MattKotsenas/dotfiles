@@ -21,17 +21,33 @@ const jiti = createJiti(import.meta.url, {
   },
 });
 const { default: chrome } = await jiti.import("../agent/extensions/powerline-chrome.ts");
-const { Editor, CURSOR_MARKER, visibleWidth, stripTerminalSequences } = await import(pathToFileURL(tuiPath));
+const { CURSOR_MARKER, visibleWidth, stripTerminalSequences, KeybindingsManager, TUI_KEYBINDINGS } = await import(pathToFileURL(tuiPath));
 
 // Exercise the installed Powerline render seam with the real Pi editor, without starting its services.
-const powerlinePath = join(process.env.USERPROFILE, ".pi/agent/npm/node_modules/pi-powerline-footer/index.ts");
+const powerlinePath = join(process.env.USERPROFILE, ".pi/agent/git/github.com/MattKotsenas/pi-powerline-footer/index.ts");
 const { renderFastPowerlineEditor } = await jiti.import(powerlinePath);
 const source = readFileSync(powerlinePath, "utf8");
 const start = source.indexOf("editor.render = (width: number): string[] =>");
 const end = source.indexOf("\n      };", start);
 assert.ok(start >= 0 && end > start, "installed Powerline must expose the expected render seam");
 const renderSource = source.slice(start, end) + "\n};";
-class BashModeEditor extends Editor {}
+const { BashModeEditor } = await jiti.import(join(dirname(powerlinePath), "bash-mode/editor.ts"));
+
+function createEditor(tui, theme) {
+  const keybindings = new KeybindingsManager(TUI_KEYBINDINGS);
+  return new BashModeEditor(tui, theme, keybindings, {
+    keybindings,
+    isBashModeActive: () => false,
+    isShellRunning: () => false,
+    areCompletionsEnabled: () => false,
+    onExitBashMode() {},
+    onSubmitCommand() {},
+    onInterrupt() {},
+    onNotify() {},
+    getHistoryEntries: () => [],
+    resolveGhostSuggestion: async () => null,
+  });
+}
 
 function harness(mode = "tui") {
   const handlers = new Map();
@@ -59,7 +75,7 @@ function harness(mode = "tui") {
   startSession();
   const installEditor = (fastRender = false) => {
     ui.setEditorComponent((tui, theme) => {
-      const base = new BashModeEditor(tui, theme);
+      const base = createEditor(tui, theme);
       base.focused = true;
       const originalRender = base.render.bind(base);
       vm.runInNewContext(stripTypeScriptTypes(renderSource), {
@@ -94,7 +110,8 @@ test("configured package order loads chrome before Powerline exactly once", asyn
   const settings = JSON.parse(readFileSync(new URL("../agent/settings.json", import.meta.url), "utf8"));
   assert.equal(settings.packages[0], "./extensions/powerline-chrome.ts");
   assert.equal(settings.packages[1], "./extensions/vim-navigation.ts");
-  assert.equal(settings.packages[2], "npm:pi-powerline-footer");
+  assert.match(settings.packages[2], /^git:github\.com\/MattKotsenas\/pi-powerline-footer@[a-f0-9]{40}$/);
+  assert.equal(settings.powerline.cdCommand, false);
   const previous = process.env.PI_OFFLINE;
   process.env.PI_OFFLINE = "1";
   try {
@@ -111,7 +128,7 @@ test("configured package order loads chrome before Powerline exactly once", asyn
     const vimIndex = paths.findIndex((path) => path.endsWith("/pi-vim-editor/src/index.ts"));
     assert.ok(chromeIndex >= 0 && powerlineIndex > chromeIndex, JSON.stringify(paths));
     assert.ok(navigationIndex > chromeIndex && powerlineIndex > navigationIndex && vimIndex > powerlineIndex, JSON.stringify(paths));
-    for (const suffix of ["/powerline-chrome.ts", "/vim-navigation.ts", "/pi-vim-editor/src/index.ts"]) {
+    for (const suffix of ["/powerline-chrome.ts", "/vim-navigation.ts", "/pi-vim-editor/src/index.ts", "/workspace/index.ts", "/pi-powerline-footer/index.ts"]) {
       assert.equal(paths.filter((path) => path.endsWith(suffix)).length, 1);
     }
   } finally {
@@ -274,7 +291,7 @@ test("unexpected Powerline output restores its independent status row and full-w
   const h = harness();
   const widths = [];
   h.ui.setEditorComponent((tui, theme) => {
-    const editor = new BashModeEditor(tui, theme);
+    const editor = createEditor(tui, theme);
     editor.render = (width) => { widths.push(width); return ["changed renderer"]; };
     return editor;
   });
@@ -300,7 +317,7 @@ test("native-frame fallback and recovery preserve content, cursor and completion
   const h = harness();
   let changedLayout = false;
   h.ui.setEditorComponent((tui, theme) => {
-    const editor = new BashModeEditor(tui, theme);
+    const editor = createEditor(tui, theme);
     editor.focused = true;
     editor.setPaddingX(2);
     editor[Symbol.for("dotfiles.vim-native-frame")] = true;

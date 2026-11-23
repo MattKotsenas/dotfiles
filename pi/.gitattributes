@@ -1,3 +1,6 @@
+agent/extensions/workspace/*.ts text eol=lf
+tests/workspace.test.mjs text eol=lf
+tests/workspace/*.mjs text eol=lf
 agent/extensions/delegation/*.ts text eol=lf
 tests/delegation.*.test.mjs text eol=lf
 tests/delegation/**/*.mjs text eol=lf

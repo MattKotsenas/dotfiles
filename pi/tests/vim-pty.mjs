@@ -14,7 +14,7 @@ const agent = join(scratch, "agent");
 mkdirSync(agent);
 writeFileSync(join(scratch, "navigation-fixture.txt"), "Autocomplete fixture.\n");
 const forward = (path) => path.replaceAll("\\", "/");
-const powerline = join(process.env.USERPROFILE, ".pi/agent/npm/node_modules/pi-powerline-footer");
+const powerline = join(process.env.USERPROFILE, ".pi/agent/git/github.com/MattKotsenas/pi-powerline-footer");
 const vim = process.env.PI_VIM_EDITOR ?? join(process.env.USERPROFILE, ".pi/agent/npm/node_modules/pi-vim-editor/src/index.ts");
 const settings = JSON.parse(readFileSync(join(repo, "pi/agent/settings.json"), "utf8"));
 settings.packages = [

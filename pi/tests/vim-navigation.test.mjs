@@ -443,7 +443,9 @@ for (const mode of ["print", "json", "rpc"]) {
 
 test("package order prepares native rendering before Vim, with mode in the Powerline layout", () => {
   const settings = JSON.parse(readFileSync(new URL("../agent/settings.json", import.meta.url), "utf8"));
-  assert.ok(settings.packages.indexOf("./extensions/vim-navigation.ts") < settings.packages.indexOf("npm:pi-powerline-footer"));
-  assert.ok(settings.packages.indexOf("npm:pi-powerline-footer") < settings.packages.indexOf("npm:pi-vim-editor@0.4.0"));
+  const footer = settings.packages.find((source) => /^git:github\.com\/MattKotsenas\/pi-powerline-footer@[a-f0-9]{40}$/.test(source));
+  assert.ok(footer, "the footer must use the commit-pinned fork");
+  assert.ok(settings.packages.indexOf("./extensions/vim-navigation.ts") < settings.packages.indexOf(footer));
+  assert.ok(settings.packages.indexOf(footer) < settings.packages.indexOf("npm:pi-vim-editor@0.4.0"));
   assert.ok(settings.powerline.layout.left.includes("custom:vim-mode"));
 });
