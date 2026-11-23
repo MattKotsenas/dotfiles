@@ -6,14 +6,15 @@ license: MIT
 
 # Writing
 
-Apply [Editing](references/editing.md) to all writing and prose review, including ordinary replies to the user.
-Read it if it is not already in context. Load the artifact reference that applies:
+Apply [Editing](references/editing.md) and [Persuasion](references/persuasion.md) to all writing and prose
+review, including ordinary replies to the user. Read both if they are not already in context.
+Load the artifact reference that applies:
 
 - [Documentation](references/documentation.md) for guides, tutorials, reference pages, and READMEs.
 - [Change descriptions](references/change-descriptions.md) for PR descriptions, commits, and changelogs.
 - [Code comments](references/code-comments.md) for source comments and comments on someone else's code.
 
-For proposals, error messages, and conversational explanations, use the editing guidance without forcing a
+For proposals, error messages, and conversational explanations, use these references without forcing a
 document template. Match effort to the task. Do the work without narrating the checklist.
 
 ## Compose
@@ -32,7 +33,7 @@ structure using the applicable artifact reference.
 
 ## Edit and verify
 
-Perform a separate editing pass after drafting. Apply the editing reference to the actual text, including its
+Perform a separate editing pass after drafting. Apply both references to the actual text, including its
 opening, headings, examples, and ending. Revise passages that fail its criteria. Preserve technical meaning and
 qualifications when cutting or simplifying.
 
@@ -43,6 +44,6 @@ Skill activation does not itself require an external review.
 
 ## Review
 
-When assigned to review prose, apply the editing and relevant artifact references to the artifact.
+When assigned to review prose, apply the editing, persuasion, and relevant artifact references to the artifact.
 Investigate suspected violations and report findings using the assigned review procedure. Do not run the
 composition workflow or rewrite the artifact unless asked.
