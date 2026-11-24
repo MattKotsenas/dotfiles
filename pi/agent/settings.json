@@ -123,10 +123,11 @@
   "theme": "catppuccin-mocha",
   "hideThinkingBlock": true,
   "enabledModels": [
-    "github-copilot/gpt-6-luna",
     "github-copilot/gpt-6.2-sol",
-    "openai/gpt-6-luna",
-    "openai/gpt-6.2-sol"
+    "openai/gpt-6.2-sol",
+    "github-copilot/mai-code-2",
+    "github-copilot/gpt-6-luna",
+    "openai/gpt-6-luna"
   ],
   "compaction": {
     "enabled": true,
