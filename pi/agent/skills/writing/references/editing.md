@@ -74,6 +74,9 @@ literal technical meanings; do not corrupt source material to remove a word.
   paradigm, synergy, load-bearing, and "gated" meaning restricted. Use "use" instead of "utilize" or "leverage".
   Use "ecosystem" and "framework" only in their literal technical senses.
 
+  Avoid "native" and "natively" as catchalls. Say "existing" when something is already in place, "built-in"
+  when the product includes it, or name the component that provides it. Keep precise terms such as "native code".
+
 Drop marketing language, simulated enthusiasm, and politeness padding. Describe the action and consequence
 instead of inflating stakes or making an empty quotable claim.
 
