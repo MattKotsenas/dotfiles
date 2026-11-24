@@ -117,7 +117,9 @@ blocked.
 ## Self-Review Before Completion
 
 Before committing or handing back a coherent unit of work, check the goal, preserved contracts, deterministic
-verification, simplicity, and implementation fit yourself. Ordinary conversation, session scratch, and
+verification, simplicity, and implementation fit yourself. When tests are part of the change, apply the
+[test contract review](~/.copilot/instructions/testing.instructions.md#review-test-contracts).
+Ordinary conversation, session scratch, and
 uncommitted planning notes need no external review.
 
 Invoke `mallard` for material changes to public, wire, or persistence contracts; concurrency or shared state;

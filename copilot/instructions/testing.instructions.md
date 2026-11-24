@@ -1,5 +1,5 @@
 ---
-description: Rules and best practices for writing high quality tests. Read before authoring or updating tests.
+description: Rules and best practices for writing high quality tests. Read before planning, authoring, updating, or reviewing tests.
 applyTo: '**'
 ---
 
@@ -10,6 +10,19 @@ Write each test so it can fail for a real reason. A test that cannot fail when t
 ## Test behavior, not wiring
 
 Assert observable outcomes: given this input, does the system produce the right output; with the feature off, does nothing happen? A test that a constructor set a property, that DI resolved, or that a mock was called proves the code is connected, not that it works.
+
+## Review test contracts
+
+Assert requirements, invariants, and compatibility guarantees that consumers rely on. Treat internal call order, intermediate state, and collection layout as contracts only when they are required behavior. A correct alternative implementation should still pass.
+
+Place detailed coverage at the lowest layer that owns the contract. Higher-layer tests should catch failures in how components work together, such as supplying the wrong context, selecting the wrong policy, or losing a result. Repeating a lower layer's behavior matrix needs a distinct failure it catches. Add missing lower-layer coverage at its owning layer when that layer is available to change.
+
+When planning, authoring, or reviewing tests, ask:
+
+- What requirement or preserved contract would this failure identify?
+- Could a correct implementation fail this assertion?
+- Which layer owns this guarantee?
+- What does this test catch that existing lower-layer coverage cannot? If that coverage is missing, does it belong there?
 
 ## Prove the test can fail
 
