@@ -13,3 +13,11 @@ Provide the requirements, preserved contracts, applicable rules, and claim to
 falsify. Keep execution and write tools available for experiments; instruct the
 reviewer to leave the reviewed artifact and live user state untouched. Follow
 the review triggers and limits in `global.instructions.md`.
+
+## .NET CLI isolation
+
+When a command or helper sets a temporary `DOTNET_CLI_HOME`, set
+`DOTNET_ADD_GLOBAL_TOOLS_TO_PATH=0` in the same child environment, after any
+filtering of inherited variables. Otherwise, the .NET SDK can add the temporary
+home's tool directory to the saved Windows user PATH. If you only need a
+different SDK version, select the SDK without changing `DOTNET_CLI_HOME`.
