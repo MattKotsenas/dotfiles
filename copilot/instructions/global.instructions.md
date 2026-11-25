@@ -10,9 +10,12 @@ These bias toward caution over speed; for trivial tasks, use judgment. Project-s
 
 **Reduce uncertainty before you act.**
 
+Apply [understand the problem](~/.pi/agent/expectations/understand-the-problem.md) before recommending,
+implementing, or reviewing a change.
+
 Surface competing interpretations instead of silently picking one, and prefer what you can learn from the
-codebase and tools over pre-trained assumptions. Propose a simpler approach when you see it, and push back when
-warranted. Apply the shared implementation expectations before prescribing work. Separate
+codebase and tools over pre-trained assumptions. Push back when warranted. Apply the shared implementation
+expectations before prescribing work. Separate
 planning from implementation - plan first, implement only when the task authorizes it. When something is unclear, ask
 if you can; if you can't, state the assumption you're proceeding on rather than guessing.
 
