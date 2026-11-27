@@ -1,10 +1,67 @@
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
 import { dirname, join } from "node:path";
 import { describe, test } from "node:test";
 import { answer, fixture, invoke, providerId, runCode } from "./delegation/fixture.mjs";
 
 describe("delegation review regressions", { concurrency: false }, () => {
+  test("delegates to a model available only in the local catalog cache", { timeout: 15000 }, async (t) => {
+    const { parent, modelRuntime, authPath } = await fixture(t, { useModelsFile: true });
+    const provider = "openai";
+    const model = "delegation-cache-only";
+    const key = "synthetic-catalog-key";
+    const expected = "CACHE_ONLY_MODEL_READY";
+    const requests = [];
+    const server = createServer(async (request, response) => {
+      const body = await Array.fromAsync(request);
+      requests.push({
+        path: request.url,
+        authorization: request.headers.authorization,
+        model: JSON.parse(Buffer.concat(body)).model,
+      });
+      const item = {
+        type: "message",
+        id: "msg_delegation",
+        role: "assistant",
+        status: "completed",
+        content: [{ type: "output_text", text: expected, annotations: [] }],
+      };
+      const events = [
+        { type: "response.output_item.done", output_index: 0, item },
+        { type: "response.completed", response: { id: "resp_delegation", status: "completed", output: [item] } },
+      ];
+      response.writeHead(200, { "content-type": "text/event-stream" });
+      response.end(events.map((event) => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(""));
+    });
+    t.after(() => new Promise((resolve) => server.close(resolve)));
+    await new Promise((resolve, reject) => server.listen(0, "127.0.0.1", resolve).once("error", reject));
+    const baseline = modelRuntime.getModel(provider, "gpt-4o-mini");
+    assert(baseline, "the bundled catalog must supply an OpenAI Responses model");
+    assert.equal(
+      modelRuntime.getModel(provider, model),
+      undefined,
+      "the model must be absent before loading the cache",
+    );
+    await writeFile(
+      join(dirname(authPath), "models-store.json"),
+      JSON.stringify({
+        [provider]: {
+          lastModified: Date.now(),
+          models: [{ ...baseline, id: model, baseUrl: `http://127.0.0.1:${server.address().port}/v1` }],
+        },
+      }),
+    );
+    await modelRuntime.setRuntimeApiKey(provider, key);
+    const refresh = await modelRuntime.refresh({ allowNetwork: false });
+    assert.equal(refresh.errors.size, 0);
+    assert(modelRuntime.getModel(provider, model), "the parent must resolve the model from the local cache");
+
+    const result = await invoke(parent, { prompt: "Say ready", provider, model, tools: [] });
+    assert.equal(answer(result), expected);
+    assert.deepEqual(requests, [{ path: "/v1/responses", authorization: `Bearer ${key}`, model }]);
+  });
+
   for (const trusted of [false, true]) {
     test(`child project extension discovery respects parent trust=${trusted}`, { timeout: 15000 }, async (t) => {
       const { parent } = await fixture(t);

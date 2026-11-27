@@ -323,6 +323,9 @@ export default function delegation(pi: ExtensionAPI): void {
           throw new Error(`Child provider refresh failed: ${[...refreshed.errors.values()].join("; ")}`);
         await waitForRefreshes(stop.signal);
         stop.signal.throwIfAborted();
+        // A model may exist only in the cached catalog loaded by the refresh.
+        const { provider, model } = child.record;
+        if (!runtime.getModel(provider, model)) throw new Error(`Child model is unavailable: ${provider}/${model}`);
         await session.prompt(params.prompt);
         const last = session.messages.findLast((message) => message.role === "assistant");
         stop.signal.throwIfAborted();

@@ -99,8 +99,6 @@ export async function startChild(
         }
       : undefined;
     await session.bindExtensions({ uiContext });
-    const model = modelRuntime.getModel(provider, modelId);
-    if (!model) throw new Error(`Child model is unavailable: ${provider}/${modelId}`);
     return child;
   } catch (error) {
     await closeChild(child);

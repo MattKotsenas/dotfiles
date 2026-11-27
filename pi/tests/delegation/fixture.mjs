@@ -22,6 +22,7 @@ export async function fixture(
     tools,
     providerModule = join(here, "provider.mjs"),
     persisted = false,
+    useModelsFile = false,
     discoverDelegation = false,
     entry = defaultEntry,
   } = {},
@@ -108,7 +109,11 @@ export async function fixture(
     ),
     "the delegation entry must load",
   );
-  const modelRuntime = await sdk.ModelRuntime.create({ authPath, modelsPath: null, refreshOnCreate: false });
+  const modelRuntime = await sdk.ModelRuntime.create({
+    authPath,
+    modelsPath: useModelsFile ? join(agentDir, "models.json") : null,
+    refreshOnCreate: false,
+  });
   ({ session: parent } = await sdk.createAgentSession({
     cwd,
     agentDir,
