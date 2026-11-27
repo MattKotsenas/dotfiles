@@ -104,7 +104,7 @@ exit, or a completed parent tree switch. Canceled navigation preserves them.
 
 ## Authentication and compatibility
 
-The adapter requires **Pi 1.5.2** and checks its private SDK layout before use.
+The adapter supports **Pi 1.5.2**, **Pi 1.6.1**, and **Pi 1.7.0** and checks the private SDK layout before use.
 Children share the parent's live credential store and use its API-key and OAuth
 methods. Temporary overrides and account changes reach existing children. Parent
 authentication failures stop child requests. Shared login and refresh writes reach

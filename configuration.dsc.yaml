@@ -62,6 +62,13 @@ properties:
         source: winget
         version: '7.6.3.0'
     - resource: Microsoft.WinGet.DSC/WinGetPackage
+      directives:
+        description: Install Pi coding agent
+      settings:
+        id: EarendilWorks.pi
+        source: winget
+        version: '1.6.1'
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: install-volta
       directives:
         description: Install Volta (Node toolchain manager)

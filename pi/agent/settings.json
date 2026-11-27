@@ -3,11 +3,6 @@
   "defaultProvider": "github-copilot",
   "defaultThinkingLevel": "medium",
   "cacheWarming": "idle",
-  "selfUpdateCommand": [
-    "volta",
-    "install",
-    "{installSpec}"
-  ],
   "defaultTools": [
     "+codemode"
   ],
