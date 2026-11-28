@@ -40,6 +40,7 @@ public static class Program
         builder.Services.AddSingleton<IEventRule, IntentDispatchRule>();
         builder.Services.AddSingleton<IEventRule, AppLayerRouter>();
         builder.Services.AddSingleton<IEventRule, SerenaDashboardRule>();
+        builder.Services.AddSingleton<IEventRule, RexSshWindowRule>();
         builder.Services.AddSingleton<IEventRule, TeamsWindowPlacement>();
 
         // Komorebi listener is separate (different protocol, different server)

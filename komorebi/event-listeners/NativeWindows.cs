@@ -31,6 +31,7 @@ public static partial class NativeWindows
     private const long WS_EX_TOOLWINDOW = 0x00000080L;
     private const long WS_EX_NOACTIVATE = 0x08000000L;
     private const uint DWMWA_CLOAKED = 14;
+    private const int SW_HIDE = 0;
     private const int SW_RESTORE = 9;
     private const byte VK_MENU = 0x12;
     private const uint KEYEVENTF_KEYUP = 0x0002;
@@ -84,6 +85,10 @@ public static partial class NativeWindows
 
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool ShowWindowAsync(nint hWnd, int nCmdShow);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool AttachThreadInput(uint idAttach, uint idAttachTo, [MarshalAs(UnmanagedType.Bool)] bool fAttach);
 
     [LibraryImport("kernel32.dll")]
@@ -94,6 +99,16 @@ public static partial class NativeWindows
 
     /// <summary>Handle of the current foreground window (0 if none).</summary>
     public static nint GetForeground() => GetForegroundWindow();
+
+    internal static bool HideIfMatches(nint hwnd, string processName, string title)
+    {
+        // The title or the window itself may have changed since Komorebi sent the event.
+        var window = Describe(hwnd);
+        return window.IsVisible &&
+            string.Equals(window.Exe, processName, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(window.Title, title, StringComparison.Ordinal) &&
+            ShowWindowAsync(hwnd, SW_HIDE);
+    }
 
     /// <summary>Enumerate every top-level window in Z-order.</summary>
     public static IReadOnlyList<WindowInfo> EnumerateTopLevel()

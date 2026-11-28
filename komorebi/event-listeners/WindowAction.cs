@@ -60,6 +60,9 @@ public sealed class WindowAction : IWindowAction
         }
     }
 
+    public bool HideIfMatches(long hwnd, string exe, string title) =>
+        NativeWindows.HideIfMatches((nint)hwnd, Path.GetFileNameWithoutExtension(exe), title);
+
     public void Close(long hwnd)
     {
         var hwndPtr = (nint)hwnd;

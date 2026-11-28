@@ -1,3 +1,19 @@
+# Windows OpenSSH can create a visible console for a non-PTY command. Tag just
+# the Rex transport so the window rule can hide it without closing the connection.
+if ($env:SSH_CONNECTION -and !$env:SSH_TTY) {
+    & {
+        $argv = [Environment]::GetCommandLineArgs()
+        if ($argv.Length -eq 3 -and $argv[1] -eq '-Command' -and
+            $argv[2] -in 'rex __internal dial-stdio', 'rex __internal dial-stdio --autostart=false') {
+            try {
+                $Host.UI.RawUI.WindowTitle = 'Rex SSH transport'
+            } catch {
+                [Console]::Error.WriteLine("Could not tag the Rex SSH window: $($_.Exception.Message)")
+            }
+        }
+    }
+}
+
 # Pi
 # Send clipboard text to attached clients even without SSH detection.
 # https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/environment-variables.md#pi-process-configuration

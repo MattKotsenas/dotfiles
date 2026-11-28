@@ -16,6 +16,9 @@ public interface IWindowAction
     /// </summary>
     void Close(long hwnd);
 
+    /// <summary>Requests that a visible window be hidden if its current executable and title still match.</summary>
+    bool HideIfMatches(long hwnd, string exe, string title);
+
     /// <summary>
     /// Moves the focused window to the given komorebi monitor index, landing on
     /// whichever workspace that monitor last had focused. False when the move failed.

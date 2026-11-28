@@ -16,6 +16,14 @@ public sealed class FakeWindowAction : IWindowAction
 
     public IReadOnlyCollection<long> ClosedHwnds => _closedHwnds.ToArray();
 
+    public List<(long Hwnd, string Exe, string Title)> HideRequests { get; } = [];
+
+    public bool HideIfMatches(long hwnd, string exe, string title)
+    {
+        HideRequests.Add((hwnd, exe, title));
+        return true;
+    }
+
     public int ToggleFloatCalls { get; private set; }
 
     /// <summary>
