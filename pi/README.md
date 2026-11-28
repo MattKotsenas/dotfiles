@@ -81,7 +81,7 @@ through compaction, without model-issued file reads.
 
 ## Navigation
 
-`pi-vim-editor@0.4.0` adds Vim editing to Powerline's prompt editor. The Powerline
+`pi-vim-editor` adds Vim editing to Powerline's prompt editor. The Powerline
 mode segment shows the mode and pending keys, such as `NORMAL · d`, or `BROWSE`.
 `r` waits to replace one character in NORMAL; `R` enters REPLACE. Escape enters
 NORMAL from INSERT; another Escape interrupts the agent. Search and dialogs
@@ -107,8 +107,8 @@ pending Vim commands and leave Visual or REPLACE mode before entering BROWSE.
 
 Search accepts ordinary query text, including `j`, `k`, and `n`. **Enter** moves
 forward; **Shift-Enter** moves backward. Pi's Ctrl-G / Ctrl-Shift-G defaults also
-work. Windows Terminal sends Shift-Enter as ESC+Enter, so `keybindings.json` adds
-Alt-Enter as a previous-match alias within search. Escape closes search and
+work. `keybindings.json` adds Alt-Enter as a previous-match alias within search.
+Escape closes search and
 resumes BROWSE. Closing search discards the query; there is no persistent `n/N`
 repeat outside the dialog. Search includes offscreen rendered content, with
 case-insensitive literal matching and normalized whitespace.

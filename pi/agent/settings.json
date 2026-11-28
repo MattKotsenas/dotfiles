@@ -14,7 +14,7 @@
     "./extensions/powerline-chrome.ts",
     "./extensions/vim-navigation.ts",
     "git:github.com/MattKotsenas/pi-powerline-footer@941a9ea6620e17e782f4c88c909e0e74d5c4d7af",
-    "npm:pi-vim-editor@0.4.0",
+    "npm:pi-vim-editor@0.10.0",
     "git:github.com/otahontas/pi-coding-agent-catppuccin",
     "npm:pi-exit",
     "npm:pi-simple-snippets"

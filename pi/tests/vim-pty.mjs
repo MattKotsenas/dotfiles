@@ -117,6 +117,15 @@ try {
   assert.match(capture("startup"), /INSERT/);
   await literal("alpha beta draft");
   assert.match(capture("indent"), /^ {2}alpha beta draft/m);
+  const end = await waitFor("draft in insert mode", (s) =>
+    s.text === "alpha beta draft" && s.vim.mode === "insert");
+  await keys("Left", "Left", "Left", "Left", "Left");
+  await waitFor("left arrows move the insert cursor", (s) =>
+    s.vim.mode === "insert" && s.cursor.col === end.cursor.col - 5);
+  assert.match(capture("insert-left"), /^ {2}alpha beta draft/m);
+  await keys("Right", "Right", "Right", "Right", "Right");
+  await waitFor("right arrows restore the insert cursor", (s) => s.cursor.col === end.cursor.col);
+  assert.match(capture("insert-right"), /^ {2}alpha beta draft/m);
   await keys("Escape");
   await waitFor("normal mode", (s) => s.vim.mode === "normal");
   await literal("0ciw"); await literal("first"); await keys("Escape");
@@ -187,12 +196,8 @@ try {
   const first = matchIndex("search");
   await keys("Enter");
   assert.equal(matchIndex("search-next"), first % 15 + 1);
-  const windowsTerminal = JSON.parse(readFileSync(join(repo, "wt/settings.json"), "utf8"));
-  const shiftEnter = windowsTerminal.keybindings.find((binding) => binding.keys === "shift+enter");
-  assert.equal(windowsTerminal.actions.find((action) => action.id === shiftEnter.id).command.input, "\x1b\r");
-  // psmux reads WT's ESC+Enter mapping as Alt-Enter; use its named-key path.
   await keys("M-Enter");
-  assert.equal(matchIndex("search-previous"), first, "the Windows Terminal Shift-Enter mapping moves backwards");
+  assert.equal(matchIndex("search-previous"), first, "Pi's Alt-Enter alias moves backwards");
   assert.equal(state().focused, false);
   await keys("Escape");
   await waitFor("search closes", (s) => s.focused);
